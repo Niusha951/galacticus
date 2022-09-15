@@ -1874,8 +1874,8 @@ contains
     integer                                              :: i
 
     if (.not.initialized) then
+       call interpolator_%create(energyMinimum,energyMaximum,energyCount,extrapolationType=[extrapolationTypeZero,extrapolationTypeZero])
        do i=1,energyCount
-          call interpolator_%create(energyMinimum,energyMaximum,energyCount,extrapolationType=[extrapolationTypeZero,extrapolationTypeZero])
           energy=interpolator_%x(i)
           ! Evaluate the Lyman and Werner band cross sections for para- and ortho- configurations.
           if         (energy > 14.675d0 .and. energy <= 16.820d0) then
@@ -1909,7 +1909,7 @@ contains
           end if
           ! Construct the combined cross-section weighted by the appropriate ortho- to para- ratio.
           crossSection=+(      1.0d0/(ratioOrthoToPara+1.0d0))*(crossSectionLymanPara +crossSectionWernerPara ) &
-               &      +(1.0d0-1.0d0/(ratioOrthoToPara+1.0d0))*(crossSectionLymanOrtho+crossSectionWernerOrtho)
+               &       +(1.0d0-1.0d0/(ratioOrthoToPara+1.0d0))*(crossSectionLymanOrtho+crossSectionWernerOrtho)
           call interpolator_%populate(crossSection,i)
        end do
        initialized=.true.
