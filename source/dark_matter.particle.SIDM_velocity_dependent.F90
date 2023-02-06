@@ -22,17 +22,17 @@ Contains a module which implements a selfInteracting dark matter particle class.
 !!}
 
   !![
-  <darkMatterParticle name="darkMatterParticleSelfInteractingDarkMatter">
-   <description>Provides a selfInteracting dark matter particle.</description>
+  <darkMatterParticle name="darkMatterParticleSIDMVelocityDependent">
+   <description>Provides a selfInteracting dark matter particle with velocity dependent cross section.</description>
   </darkMatterParticle>
   !!]
-  type, extends(darkMatterParticleClass) :: darkMatterParticleSelfInteractingDarkMatter
+  type, extends(darkMatterParticleSelfInteractingDarkMatter) :: darkMatterParticleSIDMVelocityDependent
      !!{
      A selfInteracting dark matter particle class.
      !!}
      private
-     class           (darkMatterParticleClass), pointer :: darkMatterParticle_          => null()
-     double precision                                   :: crossSectionSelfInteraction_
+     !!class           (darkMatterParticleClass), pointer :: darkMatterParticle_          => null()
+     !!double precision                                   :: crossSectionSelfInteraction_}
    contains
      !![
      <methods>
@@ -40,29 +40,27 @@ Contains a module which implements a selfInteracting dark matter particle class.
        <method description="Return the differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\Omega$, of the dark matter particle in units of cm$^2$ g$^{-1}$ ster$^{-1}$." method="crossSectionSelfInteractionDifferential"/>
      </methods>
      !!]
-     final     ::                                            selfInteractingDMDestructor
-     procedure :: mass                                    => selfInteractingDMMass
-     procedure :: crossSectionSelfInteraction             => selfInteractingDMCrossSectionSelfInteraction
-     procedure :: crossSectionSelfInteractionDifferential => selfInteractingDMCrossSectionSelfInteractionDifferential
-  end type darkMatterParticleSelfInteractingDarkMatter
+     final     ::                                            sidmVelocityDependentDestructor
+     procedure :: crossSectionSelfInteraction             => sidmVelocityDependentCrossSectionSelfInteraction
+  end type darkMatterParticleSIDMVelocityDependent
 
-  interface darkMatterParticleSelfInteractingDarkMatter
+  interface darkMatterParticleSIDMVelocityDependent
      !!{
      Constructors for the ``{\normalfont \ttfamily selfInteractingDarkMatter}'' dark matter particle class.
      !!}
-     module procedure selfInteractingDMConstructorParameters
-     module procedure selfInteractingDMConstructorInternal
-  end interface darkMatterParticleSelfInteractingDarkMatter
+     module procedure sidmVelocityDependentConstructorParameters
+     module procedure sidmVelocityDependentConstructorInternal
+  end interface darkMatterParticleSIDMVelocityDependent
 
 contains
 
-  function selfInteractingDMConstructorParameters(parameters) result(self)
+  function sidmVelocityDependentConstructorParameters(parameters) result(self)
     !!{
     Constructor for the ``{\normalfont \ttfamily selfInteractingDarkMatter}'' dark matter particle class which takes a parameter set as input.
     !!}
     use :: Input_Parameters, only : inputParameter, inputParameters
     implicit none
-    type            (darkMatterParticleSelfInteractingDarkMatter)                :: self
+    type            (darkMatterParticleSIDMVelocityDependent)                    :: self
     type            (inputParameters                            ), intent(inout) :: parameters
     class           (darkMatterParticleClass                    ), pointer       :: darkMatterParticle_
     double precision                                                             :: crossSectionSelfInteraction
@@ -75,20 +73,20 @@ contains
     </inputParameter>
     <objectBuilder class="darkMatterParticle"  name="darkMatterParticle_"  source="parameters"/>
     !!]
-    self=darkMatterParticleSelfInteractingDarkMatter(crossSectionSelfInteraction,darkMatterParticle_)
+    self=darkMatterParticleSIDMVelocityDependent(crossSectionSelfInteraction,darkMatterParticle_)
     !![
     <inputParametersValidate source="parameters"/>
     <objectDestructor name="darkMatterParticle_" />
     !!]
     return
-  end function selfInteractingDMConstructorParameters
+  end function sidmVelocityDependentConstructorParameters
 
-  function selfInteractingDMConstructorInternal(crossSectionSelfInteraction,darkMatterParticle_) result(self)
+  function sidmVelocityDependentConstructorInternal(crossSectionSelfInteraction,darkMatterParticle_) result(self)
     !!{
     Internal constructor for the ``{\normalfont \ttfamily selfInteractingDarkMatter}'' dark matter particle class.
     !!}
     implicit none
-    type            (darkMatterParticleSelfInteractingDarkMatter)                        :: self
+    type            (darkMatterParticleSIDMVelocityDependent)                        :: self
     class           (darkMatterParticleClass                    ), intent(in   ), target :: darkMatterParticle_
     double precision                                             , intent(in   )         :: crossSectionSelfInteraction
     !![
@@ -97,58 +95,58 @@ contains
 
     self%crossSectionSelfInteraction_=crossSectionSelfInteraction
     return
-  end function selfInteractingDMConstructorInternal
+  end function sidmVelocityDependentConstructorInternal
 
-  subroutine selfInteractingDMDestructor(self)
+  subroutine sidmVelocityDependentDestructor(self)
     !!{
     Destructor for the {\normalfont \ttfamily selfInteractingDarkMatter} dark matter particle class.
     !!}
     implicit none
-    type(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+    type(darkMatterParticleSIDMVelocityDependent), intent(inout) :: self
 
     !![
     <objectDestructor name="self%darkMatterParticle_" />
     !!]
     return
-  end subroutine selfInteractingDMDestructor
+  end subroutine sidmVelocityDependentDestructor
 
-  double precision function selfInteractingDMMass(self)
-    !!{
-    Return the mass, in units of keV, of a self-interacting dark matter particle.
-    !!}
-    implicit none
-    class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+!  double precision function selfInteractingDMMass(self)
+!    !!{
+!    Return the mass, in units of keV, of a self-interacting dark matter particle.
+!    !!}
+!    implicit none
+!    class(darkMatterParticleSIDMVelocityDependent), intent(inout) :: self
+!
+!    selfInteractingDMMass=self%darkMatterParticle_%mass()
+!    return
+!  end function selfInteractingDMMass
 
-    selfInteractingDMMass=self%darkMatterParticle_%mass()
-    return
-  end function selfInteractingDMMass
-
-  double precision function selfInteractingDMCrossSectionSelfInteraction(self,velocityRelative)
+  double precision function sidmVelocityDependentCrossSectionSelfInteraction(self,velocityRelative)
     !!{
     Return the self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
     !!}
     implicit none
-    class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+    class(darkMatterParticleSIDMVelocityDependent), intent(inout) :: self
    
     double precision, intent(in) :: velocityRelative
 
-    selfInteractingDMCrossSectionSelfInteraction=self%crossSectionSelfInteraction_
+    sidmVelocityDependentCrossSectionSelfInteraction=self%crossSectionSelfInteraction_
     return
-  end function selfInteractingDMCrossSectionSelfInteraction
+  end function sidmVelocityDependentCrossSectionSelfInteraction
 
-  double precision function selfInteractingDMCrossSectionSelfInteractionDifferential(self,theta,velocityRelative)
+  double precision function sidmVelocityDependentCrossSectionSelfInteractionDifferential(self,theta,velocityRelative)
     !!{
     Return the differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\theta$, in units of cm$^2$ g$^{-1}$
     ster$^{-1}$, of a self-interacting dark matter particle.
     !!}
     implicit none
-    class           (darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+    class           (darkMatterParticleSIDMVelocityDependent), intent(inout) :: self
     double precision, intent(in):: velocityRelative
     double precision                                             , intent(in   ) :: theta
 
     ! Currently isotropic scattering is assumed.
-    selfInteractingDMCrossSectionSelfInteractionDifferential=+self%crossSectionSelfInteraction(velocityRelative) &
+    sidmVelocityDependentCrossSectionSelfInteractionDifferential=+self%crossSectionSelfInteraction(velocityRelative) &
          &                                                   *0.5d0                              &
          &                                                   *sin(theta)
     return
-  end function selfInteractingDMCrossSectionSelfInteractionDifferential
+  end function sidmVelocityDependentCrossSectionSelfInteractionDifferential

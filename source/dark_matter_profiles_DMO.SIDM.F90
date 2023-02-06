@@ -94,7 +94,7 @@ contains
        end if
        select type (darkMatterParticle_ => self%darkMatterParticle_)
           class is (darkMatterParticleSelfInteractingDarkMatter)
-          crossSection_=+darkMatterParticle_%crossSectionSelfInteraction() &
+          crossSection_=+darkMatterParticle_%crossSectionSelfInteraction(self%darkMatterHaloScale_%velocityVirial(node)) &
                &        *centi     **2                                     &
                &        /megaParsec**2                                     &
                &        *kilo                                              &
