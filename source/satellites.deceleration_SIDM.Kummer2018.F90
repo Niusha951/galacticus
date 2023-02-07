@@ -24,7 +24,7 @@
 
   use :: Dark_Matter_Particles   , only : darkMatterParticleClass
   use :: Dark_Matter_Profiles_DMO, only : darkMatterProfileDMOClass
-  use :: Numerical_Interpolation , only : interpolator
+  use :: Numerical_Interpolation , only : interpolator2D
   use :: Galactic_Structure      , only : galacticStructureClass
 
   !![
@@ -41,8 +41,8 @@
      class           (darkMatterParticleClass  ), pointer     :: darkMatterParticle_         => null()
      class           (darkMatterProfileDMOClass), pointer     :: darkMatterProfileDMO_       => null()
      class           (galacticStructureClass   ), pointer     :: galacticStructure_          => null()
-     type            (interpolator             ), allocatable :: decelerationFactor
-     double precision                                         :: rateScatteringNormalization          , xMaximum
+     type            (interpolator2D           ), allocatable :: decelerationFactor
+     double precision                                         :: rateScatteringNormalization          , xMaximum, vMaximum, vMinimum
    contains
      !![
      <methods>
@@ -124,6 +124,8 @@ contains
     ! Initialize the maximum tabulated x to an unphysical value. This will force tabulation on the first attempt to evaulate the
     ! deceleration factor.
     self%xMaximum=-1.0d0
+    self%vMinimum=huge(0.0d0)
+    self%vMaximum=-huge(0.0d0)
     return
 
   end function kummer2018ConstructorInternal
@@ -222,7 +224,7 @@ contains
             &             )
        x            =+      velocityEscape    &
             &        /      speedOrbital
-       if (x > self%xMaximum) call self%tabulate(x+1.0d0)
+       if (x > self%xMaximum .or. speedOrbital > self%vMaximum .or. speedOrbital < self%vMinimum) call self%tabulate(x+1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
        ! Find the combined velocity dispersion of satellite and host, and evaluate the correction factor given in Appendix A of
        ! Kummer et al. (2018).
        velocityDispersionHost     =+self%darkMatterProfileDMO_%radialVelocityDispersion(nodeHost,radiusOrbital )
@@ -245,28 +247,29 @@ contains
             &                          *self%rateScatteringNormalization
        kummer2018Acceleration       =  -     velocity                                   &
             &                          *     rateScattering                             &
-            &                          *self%decelerationFactor         %interpolate(x) &
+            &                          *self%decelerationFactor         %interpolate(x,speedOrbital) &
             &                          *     dispersionFactor
     end if
     return
   end function kummer2018Acceleration
 
-  subroutine kummer2018Tabulate(self,xMaximum)
+  subroutine kummer2018Tabulate(self,xMaximum,vMinimum,vMaximum)
     !!{
     Tabulate the deceleration factor, $\chi_\mathrm{d}$.
     !!}
     use :: Dark_Matter_Particles, only : darkMatterParticleSelfInteractingDarkMatter
     use :: Numerical_Integration, only : integrator
-    use :: Numerical_Ranges     , only : Make_Range                                 , rangeTypeLinear
+    use :: Numerical_Ranges     , only : Make_Range                                 , rangeTypeLinear, rangeTypeLogarithmic
     implicit none
     class           (satelliteDecelerationSIDMKummer2018        ), intent(inout)               :: self
-    double precision                                             , intent(in   )               :: xMaximum
+    double precision                                             , intent(in   )               :: xMaximum, vMinimum, vMaximum
     class           (darkMatterParticleSelfInteractingDarkMatter), pointer                     :: darkMatterParticleSIDM_
-    double precision                                             , allocatable  , dimension(:) :: x                         , decelerationFactor
-    integer                                                      , parameter                   :: countPerUnit           =10
+    double precision                                             , allocatable  , dimension(:,:) :: decelerationFactor
+    double precision                                             , allocatable, dimension(:) :: x, v 
+    integer                                                      , parameter                   :: countPerUnit           =10, countPerDex           =10
     type            (integrator                                 )                              :: integrator_
     double precision                                                                           :: thetaCritical
-    integer                                                                                    :: i                         , countX
+    integer                                                                                    :: i, j                         , countX, countV
 
     select type (darkMatterParticle_ => self%darkMatterParticle_)
     class is (darkMatterParticleSelfInteractingDarkMatter)
@@ -274,8 +277,16 @@ contains
        self%xMaximum=xMaximum
        countX       =int(xMaximum*dble(countPerUnit))+1
        allocate(x                 (countX))
-       allocate(decelerationFactor(countX))
+       
+       self%vMaximum=vMaximum
+       self%vMinimum=vMinimum
+       countV = int(LOG10(vMaximum/vMinimum) * countPerDex) + 1
+       allocate(v                 (countV))
+       allocate(decelerationFactor(countX,countV))
+
+
        x                       =  Make_Range(0.0d0,xMaximum,countX,rangeTypeLinear)
+       v                       =  Make_Range(vMinimum,vMaximum,countV,rangeTypeLogarithmic)
        darkMatterParticleSIDM_ => darkMatterParticle_
        integrator_             =  integrator(integrandDecelerationFactor,toleranceAbsolute=1.0d-6,toleranceRelative=1.0d-3)
        do i=1,countX
@@ -283,14 +294,17 @@ contains
                &                      +(+x(i)**2-1.0d0) &
                &                      /(+x(i)**2+1.0d0) &
                &                     )
-          decelerationFactor(i)=+1.0d0                                                                &
+          do j=1,countV
+             
+             decelerationFactor(i,j)=+1.0d0                                                                &
                &                -integrator_        %integrate                  (0.0d0,thetaCritical) &
-               &                /darkMatterParticle_%crossSectionSelfInteraction(                   ) &
+               &                /darkMatterParticle_%crossSectionSelfInteraction(v(j)               ) &
                &                /sqrt(2.0d0)
+          end do
        end do
        if (allocated(self%decelerationFactor)) deallocate(self%decelerationFactor)
        allocate(self%decelerationFactor)
-       self%decelerationFactor=interpolator(x,decelerationFactor)
+       self%decelerationFactor=interpolator2D(x,v,decelerationFactor)
     end select
     return
 
@@ -307,8 +321,8 @@ contains
       integrandDecelerationFactor=+                                   cos(0.5d0*theta)                         &
            &                      *sqrt(1.0d0-x(i)**2+(1.0d0+x(i)**2)*cos(      theta))                        &
            &                      *(                                                                           &
-           &                        +darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(  +theta) &
-           &                        +darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(Pi-theta) &
+           &                        +darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(  +theta,v(j)) &
+           &                        +darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(Pi-theta,v(j)) &
            &                       )
       return
     end function integrandDecelerationFactor

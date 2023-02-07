@@ -24,7 +24,7 @@
 
   use :: Dark_Matter_Particles   , only : darkMatterParticleClass
   use :: Dark_Matter_Profiles_DMO, only : darkMatterProfileDMOClass
-  use :: Numerical_Interpolation , only : interpolator
+  use :: Numerical_Interpolation , only : interpolator2D
   use :: Galactic_Structure      , only : galacticStructureClass
 
   !![
@@ -41,8 +41,8 @@
      class           (darkMatterParticleClass  ), pointer     :: darkMatterParticle_         => null()
      class           (darkMatterProfileDMOClass), pointer     :: darkMatterProfileDMO_       => null()
      class           (galacticStructureClass   ), pointer     :: galacticStructure_          => null()
-     type            (interpolator             ), allocatable :: evaporationFactor
-     double precision                                         :: rateScatteringNormalization          , xMaximum
+     type            (interpolator2D           ), allocatable :: evaporationFactor
+     double precision                                         :: rateScatteringNormalization          , xMaximum, vMaximum, vMinimum
    contains
      !![
      <methods>
@@ -124,6 +124,8 @@ contains
     ! Initialize the maximum tabulated x to an unphysical value. This will force tabulation on the first attempt to evaulate the
     ! evaporation factor.
     self%xMaximum=-1.0d0
+    self%vMinimum=huge(0.0d0)
+    self%vMaximum=-huge(0.0d0)
     return
 
   end function kummer2018ConstructorInternal
@@ -230,37 +232,38 @@ contains
        x            =+      velocityEscape        &
             &        /      speedOrbital
        ! Evaporation occurs for x<1.
-       if (x < 1.0d0) then
-          call self%tabulate(1.0d0)
+       if (x < 1.0d0) then 
+          call self%tabulate(1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
           ! Evaluate the scattering rate and mass loss rate.
           rateScattering               =  +     speedOrbital                     &
                &                          *     densityHost                      &
                &                          *self%rateScatteringNormalization
           kummer2018MassLossRate       =  -     massBoundary                     &
                &                          *     rateScattering                   &
-               &                          *self%evaporationFactor%interpolate(x)
+               &                          *self%evaporationFactor%interpolate(x,speedOrbital)
        end if
     end if
     return
   end function kummer2018MassLossRate
 
-  subroutine kummer2018Tabulate(self,xMaximum)
+  subroutine kummer2018Tabulate(self,xMaximum,vMinimum,vMaximum)
     !!{
     Tabulate the evaporation factor, $\chi_\mathrm{d}$.
     !!}
     use :: Dark_Matter_Particles   , only : darkMatterParticleSelfInteractingDarkMatter
     use :: Numerical_Integration   , only : integrator
-    use :: Numerical_Ranges        , only : Make_Range                                 , rangeTypeLinear
+    use :: Numerical_Ranges        , only : Make_Range                                 , rangeTypeLinear, rangeTypeLogarithmic
     use :: Numerical_Constants_Math, only : Pi
     implicit none
     class           (satelliteEvaporationSIDMKummer2018         ), intent(inout)               :: self
-    double precision                                             , intent(in   )               :: xMaximum
+    double precision                                             , intent(in   )               :: xMaximum, vMinimum, vMaximum
     class           (darkMatterParticleSelfInteractingDarkMatter), pointer                     :: darkMatterParticleSIDM_
-    double precision                                             , allocatable  , dimension(:) :: x                         , evaporationFactor
-    integer                                                      , parameter                   :: countPerUnit           =10
+    double precision                                             , allocatable  , dimension(:,:) :: evaporationFactor
+    double precision                                             , allocatable  , dimension(:) :: x, v
+    integer                                                      , parameter                   :: countPerUnit           =10, countPerDex           =10
     type            (integrator                                 )                              :: integrator_
     double precision                                                                           :: thetaCritical
-    integer                                                                                    :: i                         , countX
+    integer                                                                                    :: i, j                         , countX, countV
 
     select type (darkMatterParticle_ => self%darkMatterParticle_)
     class is (darkMatterParticleSelfInteractingDarkMatter)
@@ -268,8 +271,16 @@ contains
        self%xMaximum=xMaximum
        countX       =int(xMaximum*dble(countPerUnit))+1
        allocate(x                (countX))
-       allocate(evaporationFactor(countX))
-       x                       =  Make_Range(0.0d0,xMaximum,countX,rangeTypeLinear)
+
+       self%vMaximum=vMaximum
+       self%vMinimum=vMinimum
+       countV = int(LOG10(vMaximum/vMinimum) * countPerDex) + 1
+       allocate(v                 (countV))
+
+       allocate(evaporationFactor(countX,countV))
+
+       x                       = Make_Range(0.0d0,xMaximum,countX,rangeTypeLinear)
+       v                       = Make_Range(vMinimum,vMaximum,countV,rangeTypeLogarithmic)
        darkMatterParticleSIDM_ => darkMatterParticle_
        integrator_             =  integrator(integrandEvaporationFactor,toleranceAbsolute=1.0d-6,toleranceRelative=1.0d-3)
        do i=1,countX
@@ -277,12 +288,15 @@ contains
                &                      +(+x(i)**2-1.0d0) &
                &                      /(+x(i)**2+1.0d0) &
                &                     )
-          evaporationFactor(i)=+integrator_        %integrate                  (Pi-thetaCritical,thetaCritical) &
-               &               /darkMatterParticle_%crossSectionSelfInteraction(                              )
+          do j=1,countV
+
+             evaporationFactor(i,j)=+integrator_        %integrate                  (Pi-thetaCritical,thetaCritical) &
+               &               /darkMatterParticle_%crossSectionSelfInteraction(v(j)                              )
+          end do
        end do
        if (allocated(self%evaporationFactor)) deallocate(self%evaporationFactor)
        allocate(self%evaporationFactor)
-       self%evaporationFactor=interpolator(x,evaporationFactor)
+       self%evaporationFactor=interpolator2D(x,v,evaporationFactor)
     end select
     return
 
@@ -295,7 +309,7 @@ contains
       implicit none
       double precision, intent(in   ) :: theta
 
-      integrandEvaporationFactor=+darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(theta)
+      integrandEvaporationFactor=+darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(theta, v(j))
       return
     end function integrandEvaporationFactor
 
