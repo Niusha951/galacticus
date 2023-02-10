@@ -97,9 +97,9 @@ contains
     Internal constructor for the {\normalfont \ttfamily kummer2018} satellite evaporation due to dark matter self-interactions
     class.
     !!}
-    use :: Dark_Matter_Particles           , only : darkMatterParticleSelfInteractingDarkMatter
-    use :: Numerical_Constants_Prefixes    , only : centi                                     , milli   , kilo
-    use :: Numerical_Constants_Astronomical, only : megaParsec                                , gigaYear, massSolar
+    !use :: Dark_Matter_Particles           , only : darkMatterParticleSelfInteractingDarkMatter
+    !use :: Numerical_Constants_Prefixes    , only : centi                                     , milli   , kilo
+    !use :: Numerical_Constants_Astronomical, only : megaParsec                                , gigaYear, massSolar
     implicit none
     type (satelliteEvaporationSIDMKummer2018)                        :: self
     class(darkMatterParticleClass           ), intent(in   ), target :: darkMatterParticle_
@@ -109,18 +109,6 @@ contains
     <constructorAssign variables="*darkMatterParticle_, *darkMatterProfileDMO_, *galacticStructure_"/>
     !!]
 
-    select type (darkMatterParticle_ => self%darkMatterParticle_)
-    class is (darkMatterParticleSelfInteractingDarkMatter)
-       ! Compute the normalization of the scattering rate in units such that when multiplied by a velocity in km s⁻¹, and a
-       ! density in units of M☉ Mpc⁻³, we get a rate in units of Gyr⁻¹.
-       self%rateScatteringNormalization=+darkMatterParticle_%crossSectionSelfInteraction()*centi    **2/milli         & ! Convert cross-section from cm² g⁻¹ to m² kg⁻¹.
-            &                           *                                                  kilo                       & ! Convert velocity from km s⁻¹ to m s⁻¹.
-            &                           *                                                  massSolar   /megaParsec**3 & ! Convert density from M☉ Mpc⁻³ to kg m⁻³.
-            &                           *                                                  gigaYear                     ! Convert rate from s⁻¹ to Gyr⁻¹.
-    class default
-       ! No scattering.
-       self%rateScatteringNormalization=+0.0d0
-    end select
     ! Initialize the maximum tabulated x to an unphysical value. This will force tabulation on the first attempt to evaulate the
     ! evaporation factor.
     self%xMaximum=-1.0d0
@@ -153,6 +141,9 @@ contains
     use :: Galacticus_Nodes                , only : nodeComponentSatellite,nodeComponentBasic
     use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
     use :: Vectors                         , only : Vector_Magnitude
+    use :: Dark_Matter_Particles           , only : darkMatterParticleSelfInteractingDarkMatter
+    use :: Numerical_Constants_Prefixes    , only : centi , milli   , kilo
+    use :: Numerical_Constants_Astronomical, only : megaParsec , gigaYear, massSolar
     implicit none
     class           (satelliteEvaporationSIDMKummer2018), intent(inout) :: self
     type            (treeNode                           ), intent(inout) :: node
@@ -168,11 +159,10 @@ contains
          &                                                                  velocityDispersionHost, velocityDispersionSatellite, &
          &                                                                  x                     , radiusHalfMass             , &
          &                                                                  velocityDispersion    , potentialEscape
-    
+     
+     
     ! Set zero mass loss rate by default.
     kummer2018MassLossRate=0.0d0
-    ! If the scattering cross section is zero, we can return immediately.
-    if (self%rateScatteringNormalization == 0.0d0) return
     ! Evaluate satellite and host properties.
     nodeHost                     =>  node                               %mergesWith(                                           )
     satellite                    =>  node                               %satellite (                                           )
@@ -181,6 +171,26 @@ contains
     radiusOrbital                =   Vector_Magnitude                              (         position                          )
     speedOrbital                 =   Vector_Magnitude                              (         velocity                          )
     densityHost                  =   self            %galacticStructure_%density   (nodeHost,position,coordinateSystemCartesian)
+    
+    ! repositioned select block + if-expersion
+    select type (darkMatterParticle_ => self%darkMatterParticle_)
+    class is (darkMatterParticleSelfInteractingDarkMatter)
+       ! Compute the normalization of the scattering rate in units such that
+       ! when multiplied by a velocity in km s?~A?¹, and a
+       ! density in units of M?~X~I Mpc?~A?³, we get a rate in unitss of Gyr??~A?¹.
+       self%rateScatteringNormalization=+darkMatterParticle_%crossSectionSelfInteraction(speedOrbital)*centi**2/milli         & ! Convert cross-section from cm² g?~A?¹ to m² kg?~A?¹.
+            &                           * kilo                       & ! Convertvelocity from km s?~A?¹ to m s?~A?¹.
+            &                           * massSolar   /megaParsec**3 & ! Convertdensity from M?~X~I Mpc?~A?³ to kg m?~A?³.
+            &                           * gigaYear                     ! Convertrate from s?~A?¹ to Gyr?~A?¹.
+    class default
+       ! No scattering.
+       self%rateScatteringNormalization=+0.0d0
+    end select
+
+    ! If the scattering cross section is zero, we can return immediately.
+    if (self%rateScatteringNormalization == 0.0d0) return
+
+
     ! Find the escape velocity from the half-mass radius of the subhalo. This is equal to the potential difference between the
     ! half-mass radius and outer boundary of the subhalo, plus the potential difference from the outer boundary to infinity (for
     ! which we can treat the subhalo as a point mass).
@@ -233,7 +243,7 @@ contains
             &        /      speedOrbital
        ! Evaporation occurs for x<1.
        if (x < 1.0d0) then 
-          call self%tabulate(1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
+          if (speedOrbital > self%vMaximum .or. speedOrbital < self%vMinimum) call self%tabulate(1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
           ! Evaluate the scattering rate and mass loss rate.
           rateScattering               =  +     speedOrbital                     &
                &                          *     densityHost                      &
