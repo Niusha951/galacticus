@@ -33,6 +33,7 @@ Contains a module which implements a selfInteracting dark matter particle class.
      private
      class           (darkMatterParticleClass), pointer :: darkMatterParticle_          => null()
      double precision                                   :: crossSectionSelfInteraction_
+     double precision                                   :: sigma0, velocityCharacteristic 
    contains
      !![
      <methods>
@@ -66,6 +67,7 @@ contains
     type            (inputParameters                            ), intent(inout) :: parameters
     class           (darkMatterParticleClass                    ), pointer       :: darkMatterParticle_
     double precision                                                             :: crossSectionSelfInteraction
+    double precision                                                             :: sigma0, velocityCharacteristic
 
     !![
     <inputParameter>
@@ -73,9 +75,21 @@ contains
       <source>parameters</source>
       <description>The self-interaction cross section in units of cm$^2$ g$^{-1}$.</description>
     </inputParameter>
+    <inputParameter>
+      <name>velocityCharacteristic</name>
+      <source>parameters</source>
+      <defaultValue>24.33d0</defaultValue>
+      <description>The velocity beyond which the cross section drops as v$^{-4}$.</description>
+    </inputParameter>
+    <inputParameter>
+      <name>sigma0</name>
+      <source>parameters</source>
+      <defaultValue>147.1d0</defaultValue>
+      <description>Below the characteristic velocity the scattering is roughly isotropic with $\sigma$ $\approx$ sigma0.</description>
+    </inputParameter>
     <objectBuilder class="darkMatterParticle"  name="darkMatterParticle_"  source="parameters"/>
     !!]
-    self=darkMatterParticleSIDMVelocityDependent(crossSectionSelfInteraction,darkMatterParticle_)
+    self=darkMatterParticleSIDMVelocityDependent(crossSectionSelfInteraction,velocityCharacteristic,sigma0,darkMatterParticle_)
     !![
     <inputParametersValidate source="parameters"/>
     <objectDestructor name="darkMatterParticle_" />
@@ -83,7 +97,7 @@ contains
     return
   end function sidmVelocityDependentConstructorParameters
 
-  function sidmVelocityDependentConstructorInternal(crossSectionSelfInteraction,darkMatterParticle_) result(self)
+  function sidmVelocityDependentConstructorInternal(crossSectionSelfInteraction,velocityCharacteristic,sigma0,darkMatterParticle_) result(self)
     !!{
     Internal constructor for the ``{\normalfont \ttfamily selfInteractingDarkMatter}'' dark matter particle class.
     !!}
@@ -91,8 +105,9 @@ contains
     type            (darkMatterParticleSIDMVelocityDependent)                        :: self
     class           (darkMatterParticleClass                    ), intent(in   ), target :: darkMatterParticle_
     double precision                                             , intent(in   )         :: crossSectionSelfInteraction
+    double precision                                             , intent(in   )         :: velocityCharacteristic,sigma0
     !![
-    <constructorAssign variables="*darkMatterParticle_"/>
+    <constructorAssign variables="velocityCharacteristic,sigma0,*darkMatterParticle_"/>
     !!]
 
     self%crossSectionSelfInteraction_=crossSectionSelfInteraction
@@ -130,9 +145,9 @@ contains
     implicit none
     class(darkMatterParticleSIDMVelocityDependent), intent(inout) :: self
    
-    double precision, intent(in) :: velocityRelative
+    double precision                              , intent(in   ) :: velocityRelative
 
-    sidmVelocityDependentCrossSectionSelfInteraction=self%crossSectionSelfInteraction_
+    sidmVelocityDependentCrossSectionSelfInteraction=self%sigma0*(self%velocityCharacteristic)**2/((self%velocityCharacteristic)**2 + velocityRelative**2)
     return
   end function sidmVelocityDependentCrossSectionSelfInteraction
 
@@ -147,8 +162,6 @@ contains
     double precision                                             , intent(in   ) :: theta
 
     ! Currently isotropic scattering is assumed.
-    sidmVelocityDependentCrossSectionSelfInteractionDifferential=+self%crossSectionSelfInteraction(velocityRelative) &
-         &                                                   *0.5d0                              &
-         &                                                   *sin(theta)
+    sidmVelocityDependentCrossSectionSelfInteractionDifferential=+(self%velocityCharacteristic)**4 * (self%sigma0) *0.5d0 * sin(theta) / ((self%velocityCharacteristic)**2 + 0.5d0 * velocityRelative**2 * (1 - cos(theta)))**2
     return
   end function sidmVelocityDependentCrossSectionSelfInteractionDifferential

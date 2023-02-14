@@ -1,0 +1,62 @@
+./scripts/build/findExecutables.pl `pwd`
+./scripts/build/codeDirectivesParse.pl `pwd`
+./scripts/build/libraryInterfacesDependencies.pl
+./scripts/build/includeDependencies.pl `pwd`
+g++ -c source/libmatheval_config.cpp -o ./work/build/libmatheval_config.o -fopenmp -DBUILDPATH=\'./work/build\' -I./source/ -I./work/build/ -I/home/abenson/Galacticus/Tools/include -I/home/abenson/Galacticus/Tools/include/libqhullcpp -g -DOFDLOCKS  > /dev/null 2>&1 ; \
+	if [ $? -eq 0 ] ; then \
+	 echo "FCFLAGS  += -DMATHEVALAVAIL"   >  ./work/build/Makefile_Config_MathEval ; \
+	 echo "CPPFLAGS += -DMATHEVALAVAIL"   >> ./work/build/Makefile_Config_MathEval ; \
+	else \
+	 echo "FCFLAGS  += -DMATHEVALUNAVAIL" >  ./work/build/Makefile_Config_MathEval ; \
+	 echo "CPPFLAGS += -DMATHEVALUNAVAIL" >> ./work/build/Makefile_Config_MathEval ; \
+	fi
+g++ -c source/qhull_config.cpp -o ./work/build/qhull_config.o -fopenmp -DBUILDPATH=\'./work/build\' -I./source/ -I./work/build/ -I/home/abenson/Galacticus/Tools/include -I/home/abenson/Galacticus/Tools/include/libqhullcpp -g -DOFDLOCKS  > /dev/null 2>&1 ; \
+	if [ $? -eq 0 ] ; then \
+	 echo "FCFLAGS  += -DQHULLAVAIL"   >  ./work/build/Makefile_Config_QHull ; \
+	 echo "CPPFLAGS += -DQHULLAVAIL"   >> ./work/build/Makefile_Config_QHull ; \
+	else \
+	 echo "FCFLAGS  += -DQHULLUNAVAIL" >  ./work/build/Makefile_Config_QHull ; \
+	 echo "CPPFLAGS += -DQHULLUNAVAIL" >> ./work/build/Makefile_Config_QHull ; \
+	fi
+g++ -c source/ann_config.cpp -o ./work/build/ann_config.o -fopenmp -DBUILDPATH=\'./work/build\' -I./source/ -I./work/build/ -I/home/abenson/Galacticus/Tools/include -I/home/abenson/Galacticus/Tools/include/libqhullcpp -g -DOFDLOCKS  > /dev/null 2>&1 ; \
+	if [ $? -eq 0 ] ; then \
+	 echo "FCFLAGS  += -DANNAVAIL"   >  ./work/build/Makefile_Config_ANN ; \
+	 echo "CPPFLAGS += -DANNAVAIL"   >> ./work/build/Makefile_Config_ANN ; \
+	else \
+	 echo "FCFLAGS  += -DANNUNAVAIL" >  ./work/build/Makefile_Config_ANN ; \
+	 echo "CPPFLAGS += -DANNUNAVAIL" >> ./work/build/Makefile_Config_ANN ; \
+	fi
+gcc -c source/flock_config.c -o ./work/build/flock_config.o -fopenmp -DBUILDPATH=\'./work/build\' -I./source/ -I./work/build/ -I/home/abenson/Galacticus/Tools/include -g -DOFDLOCKS > /dev/null 2>&1 ; \
+	if [ $? -eq 0 ] ; then \
+	 echo "FCFLAGS  += -DOFDAVAIL"   >  ./work/build/Makefile_Config_OFD ; \
+	 echo "CFLAGS   += -DOFDAVAIL"   >> ./work/build/Makefile_Config_OFD ; \
+	 echo "CPPFLAGS += -DOFDAVAIL"   >> ./work/build/Makefile_Config_OFD ; \
+	else \
+	 echo "FCFLAGS  += -DOFDUNAVAIL" >  ./work/build/Makefile_Config_OFD ; \
+	 echo "CFLAGS   += -DOFDUNAVAIL" >> ./work/build/Makefile_Config_OFD ; \
+	 echo "CPPFLAGS += -DOFDUNAVAIL" >> ./work/build/Makefile_Config_OFD ; \
+	fi
+gfortran -c source/fftw3_config.F90 -o ./work/build/fftw3_config.o -ffree-line-length-none -frecursive -DBUILDPATH=\'./work/build\' -J./work/build/moduleBuild/ -I./work/build/ -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64 -pthread -Wall -fbacktrace -ffpe-trap=invalid,zero,overflow -fdump-core -O3 -ffinite-math-only -fno-math-errno -fopenmp -g > /dev/null 2>&1 ; \
+	if [ $? -eq 0 ] ; then \
+	 echo "FCFLAGS += -DFFTW3AVAIL"   > ./work/build/Makefile_Config_FFTW3 ; \
+	else \
+	 echo "FCFLAGS += -DFFTW3UNAVAIL" > ./work/build/Makefile_Config_FFTW3 ; \
+	fi
+gcc source/proc_config.c -o ./work/build/proc_config -fopenmp -DBUILDPATH=\'./work/build\' -I./source/ -I./work/build/ -I/home/abenson/Galacticus/Tools/include -g -DOFDLOCKS > /dev/null 2>&1 ; \
+	if [ $? -eq 0 ] ; then \
+	 ./work/build/proc_config > /dev/null 2>&1 ; \
+	 if [ $? -eq 0 ] ; then \
+	  echo "FCFLAGS  += -DPROCPS"   >  ./work/build/Makefile_Config_Proc ; \
+	  echo "CFLAGS   += -DPROCPS"   >> ./work/build/Makefile_Config_Proc ; \
+	  echo "CPPFLAGS += -DPROCPS"   >> ./work/build/Makefile_Config_Proc ; \
+	 fi \
+	fi
+File does not exist:  at /home/nahvazi/Galacticus_Vel_dependent/SIDM/galacticus/perl/Galacticus/Build/Directives.pm line 38.
+./scripts/build/codeDirectivesParse.pl `pwd`
+File does not exist:  at /home/nahvazi/Galacticus_Vel_dependent/SIDM/galacticus/perl/Galacticus/Build/Directives.pm line 38.
+gcc source/hdf5FCInteropC.c -o ./work/build/hdf5FCInteropC.exe -fopenmp -DBUILDPATH=\'./work/build\' -I./source/ -I./work/build/ -I/home/abenson/Galacticus/Tools/include -g -DOFDLOCKS -DPROCPS -DOFDUNAVAIL
+./scripts/build/enumerateOpenMPCriticalSections.pl `pwd`
+gfortran source/hdf5FCInterop.F90 -o ./work/build/hdf5FCInterop.exe -ffree-line-length-none -frecursive -DBUILDPATH=\'./work/build\' -J./work/build/moduleBuild/ -I./work/build/ -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64 -pthread -Wall -fbacktrace -ffpe-trap=invalid,zero,overflow -fdump-core -O3 -ffinite-math-only -fno-math-errno -fopenmp -g -DPROCPS -DOFDUNAVAIL -DFFTW3AVAIL -DANNAVAIL -DQHULLAVAIL -DMATHEVALAVAIL
+make: *** No rule to make target `work/build/Makefile_Module_Dependencies', needed by `Galacticus.exe'.  Stop.
+make: *** Waiting for unfinished jobs....
+rm work/build/Galacticus.fl work/build/Galacticus.m
