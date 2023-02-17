@@ -34,12 +34,16 @@ Contains a module which implements a selfInteracting dark matter particle class.
    contains
      !![
      <methods>
-       <method description="Return the self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$."                                                     method="crossSectionSelfInteraction"            />
+       <method description="Return the self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteraction" />
        <method description="Return the differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\Omega$, of the dark matter particle in units of cm$^2$ g$^{-1}$ ster$^{-1}$." method="crossSectionSelfInteractionDifferential"/>
+       <method description="Return the momentum transfer self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteractionMomentumTransfer" />
+       <method description="Return the viscosity self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteractionViscosity" />
      </methods>
      !!]
-     procedure(crossSectionSelfInteractionTemplate             ), deferred :: crossSectionSelfInteraction
-     procedure(crossSectionSelfInteractionDifferentialTemplate ), deferred :: crossSectionSelfInteractionDifferential
+     procedure(crossSectionSelfInteractionTemplate                ), deferred :: crossSectionSelfInteraction
+     procedure(crossSectionSelfInteractionDifferentialTemplate    ), deferred :: crossSectionSelfInteractionDifferential
+     procedure(crossSectionSelfInteractionMomentumTransferTemplate), deferred :: crossSectionSelfInteractionMomentumTransfer
+     procedure(crossSectionSelfInteractionViscosityTemplate       ), deferred :: crossSectionSelfInteractionViscosity
   end type darkMatterParticleSelfInteractingDarkMatter
 
   abstract interface
@@ -49,7 +53,7 @@ Contains a module which implements a selfInteracting dark matter particle class.
       !!}
       import darkMatterParticleSelfInteractingDarkMatter
       class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
-      double precision, intent(in) :: velocityRelative
+      double precision                                  , intent(in   ) :: velocityRelative
       !return
     end function crossSectionSelfInteractionTemplate
 
@@ -58,10 +62,28 @@ Contains a module which implements a selfInteracting dark matter particle class.
       Interface for differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\theta$, in units of cm$^2$ g$^{-1}$ ster$^{-1}$, of a self-interacting dark matter particle.
       !!}
       import darkMatterParticleSelfInteractingDarkMatter
-      class           (darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
-      double precision                                             , intent(in)    :: velocityRelative
-      double precision                                             , intent(in   ) :: theta
+      class (darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+      double precision                                   , intent(in)    :: velocityRelative
+      double precision                                   , intent(in   ) :: theta
     end function crossSectionSelfInteractionDifferentialTemplate
+
+    double precision function crossSectionSelfInteractionMomentumTransferTemplate(self,velocityRelative)
+      !!{
+      Interface for momentum transfer self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
+      !!}
+      import darkMatterParticleSelfInteractingDarkMatter
+      class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+      double precision                                  , intent(in   ) :: velocityRelative
+    end function crossSectionSelfInteractionMomentumTransferTemplate
+
+    double precision function crossSectionSelfInteractionViscosityTemplate(self,velocityRelative)
+      !!{
+      Interface for viscosity self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
+      !!}
+      import darkMatterParticleSelfInteractingDarkMatter
+      class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+      double precision                                  , intent(in   ) :: velocityRelative
+    end function crossSectionSelfInteractionViscosityTemplate
 
   end interface
 

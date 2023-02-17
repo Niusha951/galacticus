@@ -36,14 +36,18 @@ Contains a module which implements a selfInteracting dark matter particle class.
    contains
      !![
      <methods>
-       <method description="Return the self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$."                                                     method="crossSectionSelfInteraction"            />
+       <method description="Return the self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteraction" />
        <method description="Return the differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\Omega$, of the dark matter particle in units of cm$^2$ g$^{-1}$ ster$^{-1}$." method="crossSectionSelfInteractionDifferential"/>
+       <method description="Return the momentum transfer self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteractionMomentumTransfer" />
+       <method description="Return the viscosity self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteractionViscosity" />
      </methods>
      !!]
-     final     ::                                            sidmConstantDestructor
-     procedure :: mass                                    => sidmConstantMass
-     procedure :: crossSectionSelfInteraction             => sidmConstantCrossSectionSelfInteraction
-     procedure :: crossSectionSelfInteractionDifferential => sidmConstantCrossSectionSelfInteractionDifferential
+     final     ::                                                sidmConstantDestructor
+     procedure :: mass                                        => sidmConstantMass
+     procedure :: crossSectionSelfInteraction                 => sidmConstantCrossSectionSelfInteraction
+     procedure :: crossSectionSelfInteractionDifferential     => sidmConstantCrossSectionSelfInteractionDifferential
+     procedure :: crossSectionSelfInteractionMomentumTransfer => sidmConstantCrossSectionMomentumTransfer
+     procedure :: crossSectionSelfInteractionViscosity        => sidmConstantCrossSectionViscosity
   end type darkMatterParticleSelfInteractingDarkMatterConstant
 
   interface darkMatterParticleSelfInteractingDarkMatterConstant
@@ -130,7 +134,7 @@ contains
     implicit none
     class(darkMatterParticleSelfInteractingDarkMatterConstant), intent(inout) :: self
    
-    double precision, intent(in) :: velocityRelative
+    double precision                                          , intent(in   ) :: velocityRelative
 
     sidmConstantCrossSectionSelfInteraction=self%crossSectionSelfInteraction_
     return
@@ -143,8 +147,8 @@ contains
     !!}
     implicit none
     class           (darkMatterParticleSelfInteractingDarkMatterConstant), intent(inout) :: self
-    double precision, intent(in):: velocityRelative
-    double precision                                             , intent(in   ) :: theta
+    double precision                                                     , intent(in   ) :: velocityRelative
+    double precision                                                     , intent(in   ) :: theta
 
     ! Currently isotropic scattering is assumed.
     sidmConstantCrossSectionSelfInteractionDifferential=+self%crossSectionSelfInteraction(velocityRelative) &
@@ -152,3 +156,28 @@ contains
          &                                                   *sin(theta)
     return
   end function sidmConstantCrossSectionSelfInteractionDifferential
+
+  double precision function sidmConstantCrossSectionMomentumTransfer(self,velocityRelative)
+    !!{
+    Return the momentum transfer self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
+    !!}
+    implicit none
+    class(darkMatterParticleSelfInteractingDarkMatterConstant), intent(inout) :: self
+
+    double precision                                          , intent(in   ) :: velocityRelative
+
+    sidmConstantCrossSectionMomentumTransfer=self%crossSectionSelfInteraction_
+    return
+  end function sidmConstantCrossSectionMomentumTransfer
+
+  double precision function sidmConstantCrossSectionViscosity(self,velocityRelative)
+    !!{
+    Return the viscosity self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
+    !!}
+    implicit none
+    class(darkMatterParticleSelfInteractingDarkMatterConstant), intent(inout) :: self
+    double precision                                          , intent(in   ) :: velocityRelative
+
+    sidmConstantCrossSectionViscosity=self%crossSectionSelfInteraction_
+    return
+  end function sidmConstantCrossSectionViscosity

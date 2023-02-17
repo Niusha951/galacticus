@@ -352,6 +352,7 @@ contains
     return
   end function collisionlessMatterLogarithmicDerivativeWavenumber
 
+
   logical function collisionlessMatterIsWavenumberDependent(self,component)
     !!{
     Return false indicating that the growth function is not wavenumber-dependent.

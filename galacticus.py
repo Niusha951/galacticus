@@ -88,7 +88,7 @@ c_lib.cosmologyParametersTemperatureCMBL.restype  = c_double
 c_lib.cosmologyParametersTemperatureCMBL.argtypes = [ c_void_p, c_int ]
 c_lib.cosmologyParametersDestructorL.argtypes = [ c_void_p, c_int ]
 c_lib.darkMatterParticleSIDMVelocityDependentL.restype  = c_void_p
-c_lib.darkMatterParticleSIDMVelocityDependentL.argtypes = [ c_double, c_double, c_double, c_void_p, c_int ]
+c_lib.darkMatterParticleSIDMVelocityDependentL.argtypes = [ c_double, c_double, c_void_p, c_int ]
 c_lib.darkMatterParticleCDML.restype  = c_void_p
 c_lib.darkMatterParticleCDML.argtypes = [  ]
 c_lib.darkMatterParticleFuzzyDarkMatterL.restype  = c_void_p
@@ -3181,11 +3181,11 @@ class darkMatterParticleSelfInteractingDarkMatterConstant(darkMatterParticle):
 class darkMatterParticleSIDMVelocityDependent(darkMatterParticle):
 
     # Constructor
-    def __init__(self,crossSectionSelfInteraction,velocityCharacteristic,sigma0,darkMatterParticle_):
+    def __init__(self,velocityCharacteristic,sigma0,darkMatterParticle_):
         # Assign class ID so relevant pointers can be constructed on the Fortran side.
         self._classID = 1
     
-        self._glcObj = c_lib.darkMatterParticleSIDMVelocityDependentL(crossSectionSelfInteraction,velocityCharacteristic,sigma0,darkMatterParticle_._glcObj,darkMatterParticle_._classID)
+        self._glcObj = c_lib.darkMatterParticleSIDMVelocityDependentL(velocityCharacteristic,sigma0,darkMatterParticle_._glcObj,darkMatterParticle_._classID)
 
 class darkMatterParticleFuzzyDarkMatter(darkMatterParticle):
 
