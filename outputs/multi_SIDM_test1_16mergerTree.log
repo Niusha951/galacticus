@@ -1,0 +1,1072 @@
+              ##                                     
+   ####        #                  #                  
+  #   #        #             #                       
+ #       ###   #  ###   ### ###  ##   ### ## ##   ## 
+ #       #  #  #  #  # #  #  #    #  #  #  #  #  #   
+ #   ###  ###  #   ### #     #    #  #     #  #   #  
+  #   #  #  #  #  #  # #     #    #  #     #  #    # 
+   ####  #### ### ####  ###   ## ###  ###   #### ##  
+
+ © 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016,
+   2017, 2018, 2019, 2020, 2021, 2022, 2023
+   - Andrew Benson
+
+MM: -> WARNING: problems found with input parameters:
+MM:     unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+MM: <- 
+MM: -> Begin task: merger tree evolution
+ 8:     -> WARNING: problems found with input parameters:
+ 8:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 8:     <- 
+12:     -> WARNING: problems found with input parameters:
+12:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+12:     <- 
+ 1:     -> WARNING: problems found with input parameters:
+ 1:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 1:     <- 
+13:     -> WARNING: problems found with input parameters:
+13:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+13:     <- 
+ 7:     -> WARNING: problems found with input parameters:
+ 7:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 7:     <- 
+ 9:     -> WARNING: problems found with input parameters:
+ 9:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 9:     <- 
+15:     -> WARNING: problems found with input parameters:
+15:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+15:     <- 
+11:     -> WARNING: problems found with input parameters:
+11:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+11:     <- 
+ 3:     -> WARNING: problems found with input parameters:
+ 6:     -> WARNING: problems found with input parameters:
+ 3:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 6:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 3:     <- 
+ 6:     <- 
+ 4:     -> WARNING: problems found with input parameters:
+ 4:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 4:     <- 
+14:     -> WARNING: problems found with input parameters:
+14:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+14:     <- 
+10:     -> WARNING: problems found with input parameters:
+10:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+10:     <- 
+ 0:     -> WARNING: problems found with input parameters:
+ 0:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 0:     <- 
+ 5:     -> WARNING: problems found with input parameters:
+ 5:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 5:     <- 
+ 2:     -> WARNING: problems found with input parameters:
+ 2:         unrecognized parameter [galacticStructure] (did you mean [darkMatterParticle]?)
+ 2:     <- 
+ 1:     Memory usage: 153.521 Mib / 62.813 Gib
+ 7:     downloading CAMB code....
+--2023-03-02 01:10:49--  https://github.com/cmbant/CAMB/archive/refs/tags/1.4.0.tar.gz
+Resolving github.com... 192.30.255.113
+Connecting to github.com|192.30.255.113|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://codeload.github.com/cmbant/CAMB/tar.gz/refs/tags/1.4.0 [following]
+--2023-03-02 01:10:49--  https://codeload.github.com/cmbant/CAMB/tar.gz/refs/tags/1.4.0
+Resolving codeload.github.com... 192.30.255.120
+Connecting to codeload.github.com|192.30.255.120|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [application/x-gzip]
+Saving to: `/home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB_1.4.0.tar.gz'
+
+     0K .......... .......... .......... .......... ..........  962K
+    50K .......... .......... .......... .......... .......... 1.90M
+   100K .......... .......... .......... .......... .......... 1.87M
+   150K .......... .......... .......... .......... .......... 1.89M
+   200K .......... .......... .......... .......... .......... 1.92M
+   250K .......... .......... .......... .......... .......... 41.1M
+   300K .......... .......... .......... .......... .......... 1.89M
+   350K .......... .......... .......... .......... .......... 43.6M
+   400K .......... .......... .......... .......... .......... 51.8M
+   450K .......... .......... .......... .......... .......... 61.7M
+   500K .......... .......... .......... .......... .......... 2.15M
+   550K .......... .......... .......... .......... .......... 46.2M
+   600K .......... .......... .......... .......... .......... 15.9M
+   650K .......... .......... .......... .......... .......... 49.3M
+   700K .......... .......... .......... .......... .......... 2.46M
+   750K .......... .......... .......... .......... .......... 38.5M
+   800K .......... .......... .......... .......... .......... 55.8M
+   850K .......... .......... .......... .......... ..........  108M
+   900K .......... .......... .......... .......... ..........  106M
+   950K .......... .......... .......... .......... .......... 45.8M
+  1000K .......... .......... .......... .......... .......... 44.5M
+  1050K .......... .......... .......... .......... .......... 2.34M
+  1100K .......... .......... .......... .......... .......... 90.9M
+  1150K .......... .......... .......... .......... .......... 66.0M
+  1200K .......... .......... .......... .......... .......... 45.2M
+  1250K .......... .......... .......... .......... .......... 49.9M
+  1300K .......... .......... .......... .......... .......... 23.6M
+  1350K .......... .......... .......... .......... .......... 10.9M
+  1400K .......... .......... .......... .......... .......... 10.9M
+  1450K .......... .......... .......... .......... .......... 6.86M
+  1500K .......... .......... .......... .......... .......... 9.76M
+  1550K .......... .......... .......... .......... .......... 46.8M
+  1600K .......... .......... .......... .......... .......... 10.9M
+  1650K .......... .......... .......... .......... .......... 15.8M
+  1700K .......... .......... .......... .......... .......... 10.5M
+  1750K .......... .......... .......... .......... .......... 10.2M
+  1800K .......... .......... .......... .......... .......... 18.4M
+  1850K .......... .......... .......... .......... .......... 10.4M
+  1900K .......... .......... .......... .......... .......... 11.0M
+  1950K .......... .......... .......... .......... .......... 11.5M
+  2000K .......... .......... .......... .......... .......... 12.3M
+  2050K .......... .......... .......... .......... .......... 9.64M
+  2100K .......... .......... .......... .......... .......... 17.5M
+  2150K .......... .......... .......... .......... .......... 10.8M
+  2200K .......... .......... .......... .......... .......... 11.4M
+  2250K .......... .......... .......... .......... .......... 10.7M
+  2300K .......... .......... .......... .......... .......... 11.0M
+  2350K .......... .......... .......... .......... .......... 20.1M
+  2400K .......... .......... .......... .......... .......... 8.07M
+  2450K .......... .......... .......... .......... .......... 16.5M
+  2500K .......... .......... .......... .......... .......... 10.7M
+  2550K .......... .......... .......... .......... .......... 10.6M
+  2600K .......... .......... .......... .......... .......... 11.1M
+  2650K .......... .......... .......... .......... .......... 19.9M
+  2700K .......... .......... .......... .......... .......... 10.4M
+  2750K .......... .......... .......... .......... .......... 11.0M
+  2800K .......... .......... .......... .......... .......... 10.4M
+  2850K .......... .......... .......... .......... .......... 11.4M
+  2900K .......... .......... .......... .......... .......... 11.5M
+  2950K .......... .......... .......... .......... .......... 11.4M
+  3000K .......... .......... .......... .......... .......... 17.9M
+  3050K .......... .......... .......... .......... .......... 11.2M
+  3100K .......... .......... .......... .......... .......... 11.6M
+  3150K .......... .......... .......... .......... .......... 10.1M
+  3200K .......... .......... .......... .......... .......... 11.1M
+  3250K .......... .......... .......... .......... .......... 10.4M
+  3300K .......... .......... .......... .......... .......... 9.89M
+  3350K .......... .......... .......... .......... .......... 17.7M
+  3400K .......... .......... .......... .......... .......... 11.7M
+  3450K .......... .......... .......... .......... .......... 10.4M
+  3500K .......... .......... .......... .......... .......... 11.0M
+  3550K .......... .......... .......... .......... .......... 13.2M
+  3600K .......... .......... .......... .......... .......... 8.61M
+  3650K .......... .......... .......... .......... .......... 10.9M
+  3700K .......... .......... .......... .......... .......... 14.6M
+  3750K .......... .......... .......... .......... .......... 1.57M
+  3800K .......... .......... .......... .......... .......... 10.9M
+  3850K .......... .......... .......... .......... .......... 10.7M
+  3900K .......... .......... .......... .......... .......... 19.0M
+  3950K .......... .......... .......... .......... .......... 12.1M
+  4000K .......... .......... .......... .......... .......... 10.7M
+  4050K .......... .......... .......... .......... .......... 10.2M
+  4100K .......... .......... .......... .......... .......... 11.9M
+  4150K .......... .......... .......... .......... .......... 8.77M
+  4200K .......... .......... .......... .......... .......... 15.2M
+  4250K .......... .......... .......... .......... .......... 15.9M
+  4300K .......... .......... .......... .......... .......... 10.8M
+  4350K .......... .......... .......... .......... .......... 10.8M
+  4400K .......... .......... .......... .......... .......... 10.9M
+  4450K .......... .......... .......... .......... .......... 7.24M
+  4500K .......... .......... .......... .......... .......... 24.5M
+  4550K .......... .......... .......... .......... .......... 15.9M
+  4600K .......... .......... .......... .......... .......... 10.8M
+  4650K .......... .......... .......... .......... .......... 11.1M
+  4700K .......... .......... .......... .......... .......... 11.0M
+  4750K .......... .......... .......... .......... .......... 18.0M
+  4800K .......... .......... .......... .......... .......... 7.99M
+  4850K .......... .......... .......... .......... .......... 16.5M
+  4900K .......... .......... .......... .......... .......... 11.4M
+  4950K .......... .......... .......... .......... .......... 11.4M
+  5000K .......... .......... .......... .......... .......... 11.1M
+  5050K .......... .......... .......... .......... .......... 11.9M
+  5100K .......... .......... .......... .......... .......... 18.3M
+  5150K .......... .......... .......... .......... .......... 10.5M
+  5200K .......... .......... .......... .......... .......... 8.23M
+  5250K .......... .......... .......... .......... .......... 17.4M
+  5300K .......... .......... .......... .......... .......... 10.6M
+  5350K .......... .......... .......... .......... .......... 11.5M
+  5400K .......... .......... .......... .......... .......... 11.6M
+  5450K .......... .......... .......... .......... .......... 18.3M
+  5500K .......... .......... .......... .......... .......... 10.8M
+  5550K .......... .......... .......... .......... .......... 12.3M
+  5600K .......... .......... .......... .......... .......... 10.4M
+  5650K .......... .......... .......... .......... .......... 11.7M
+  5700K .......... .......... .......... .......... .......... 8.48M
+  5750K .......... .......... .......... .......... .......... 15.5M
+  5800K .......... .......... .......... .......... .......... 17.7M
+  5850K .......... .......... .......... .......... .......... 10.8M
+  5900K .......... .......... .......... .......... .......... 7.75M
+  5950K .......... .......... .......... .......... .......... 21.0M
+  6000K .......... .......... .......... .......... .......... 10.4M
+  6050K .......... .......... .......... .......... .......... 11.4M
+  6100K .......... .......... .......... .......... .......... 9.87M
+  6150K .......... .......... .......... .......... .......... 17.5M
+  6200K .......... .......... .......... .......... .......... 11.4M
+  6250K .......... .......... .......... .......... .......... 11.8M
+  6300K .......... .......... .......... .......... .......... 11.0M
+  6350K .......... .......... .......... .......... .......... 5.26M
+  6400K .......... .......... .......... .......... .......... 11.9M
+  6450K .......... .......... .......... .......... .......... 10.9M
+  6500K .......... .......... .......... .......... .......... 14.2M
+  6550K .......... .......... .......... .......... .......... 12.5M
+  6600K .......... .......... .......... .......... .......... 10.6M
+  6650K .......... .......... .......... .......... .......... 11.5M
+  6700K .......... .......... .......... .......... .......... 20.4M
+  6750K .......... .......... .......... .......... .......... 11.1M
+  6800K .......... .......... .......... .......... .......... 8.76M
+  6850K .......... .......... .......... .......... .......... 8.24M
+  6900K .......... .......... .......... .......... .......... 11.8M
+  6950K .......... .......... .......... .......... .......... 9.25M
+  7000K .......... .......... .......... .......... .......... 16.5M
+  7050K .......... .......... .......... .......... .......... 11.9M
+  7100K .......... .......... .......... .......... .......... 17.1M
+  7150K .......... .......... .......... .......... .......... 11.6M
+  7200K .......... .......... .......... .......... .......... 8.62M
+  7250K .......... .......... .......... .......... .......... 18.4M
+  7300K .......... .......... .......... .......... .......... 11.1M
+  7350K .......... .......... .......... .......... .......... 11.8M
+  7400K .......... .......... .......... .......... .......... 10.6M
+  7450K .......... .......... .......... .......... .......... 11.2M
+  7500K .......... .......... .......... .......... .......... 16.4M
+  7550K .......... .......... .......... .......... .......... 12.5M
+  7600K .......... .......... .......... .......... .......... 8.43M
+  7650K .......... .......... .......... .......... .......... 18.3M
+  7700K .......... .......... .......... .......... .......... 11.2M
+  7750K .......... .......... .......... .......... .......... 3.57M
+  7800K .......... .......... .......... .......... .......... 4.46M
+  7850K .......... .......... .......... .......... .......... 44.0M
+  7900K .......... .......... .......... .......... .......... 4.62M
+  7950K .......... .......... .......... .......... .......... 4.68M
+  8000K .......... .......... .......... .......... .......... 2.70M
+  8050K .......... .......... .......... .......... .......... 41.6M
+  8100K .......... .......... .......... .......... .......... 5.19M
+  8150K .......... .......... .......... .......... .......... 5.02M
+  8200K .......... .......... .......... .......... .......... 5.66M
+  8250K .......... .......... .......... .......... .......... 5.60M
+  8300K .......... .......... .......... ..                    45.7M=0.9s
+
+2023-03-02 01:10:50 (8.71 MB/s) - `/home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB_1.4.0.tar.gz' saved [8532876]
+
+ 7:     unpacking CAMB code....
+CAMB-1.4.0/
+CAMB-1.4.0/.gitattributes
+CAMB-1.4.0/.gitignore
+CAMB-1.4.0/.gitmodules
+CAMB-1.4.0/.readthedocs.yml
+CAMB-1.4.0/.travis.yml
+CAMB-1.4.0/Dockerfile
+CAMB-1.4.0/LICENCE.txt
+CAMB-1.4.0/MANIFEST.in
+CAMB-1.4.0/README.rst
+CAMB-1.4.0/camb.py
+CAMB-1.4.0/camb/
+CAMB-1.4.0/camb/PArthENoPE_880.2_marcucci.dat
+CAMB-1.4.0/camb/PArthENoPE_880.2_standard.dat
+CAMB-1.4.0/camb/PRIMAT_Yp_DH_Error.dat
+CAMB-1.4.0/camb/PRIMAT_Yp_DH_ErrorMC_2021.dat
+CAMB-1.4.0/camb/__init__.py
+CAMB-1.4.0/camb/_command_line.py
+CAMB-1.4.0/camb/_compilers.py
+CAMB-1.4.0/camb/_config.py
+CAMB-1.4.0/camb/baseconfig.py
+CAMB-1.4.0/camb/bbn.py
+CAMB-1.4.0/camb/bispectrum.py
+CAMB-1.4.0/camb/camb.py
+CAMB-1.4.0/camb/cambdll.dll
+CAMB-1.4.0/camb/constants.py
+CAMB-1.4.0/camb/correlations.py
+CAMB-1.4.0/camb/dark_energy.py
+CAMB-1.4.0/camb/emission_angle.py
+CAMB-1.4.0/camb/initialpower.py
+CAMB-1.4.0/camb/mathutils.py
+CAMB-1.4.0/camb/model.py
+CAMB-1.4.0/camb/nonlinear.py
+CAMB-1.4.0/camb/postborn.py
+CAMB-1.4.0/camb/recombination.py
+CAMB-1.4.0/camb/reionization.py
+CAMB-1.4.0/camb/results.py
+CAMB-1.4.0/camb/sources.py
+CAMB-1.4.0/camb/symbolic.py
+CAMB-1.4.0/camb/tests/
+CAMB-1.4.0/camb/tests/__init__.py
+CAMB-1.4.0/camb/tests/camb_test.py
+CAMB-1.4.0/camb/tests/hmcode_test.py
+CAMB-1.4.0/docs/
+CAMB-1.4.0/docs/CAMBdemo.html
+CAMB-1.4.0/docs/CAMBdemo.ipynb
+CAMB-1.4.0/docs/README_pypi.rst
+CAMB-1.4.0/docs/ScalEqs.html
+CAMB-1.4.0/docs/ScalEqs.ipynb
+CAMB-1.4.0/docs/index.html
+CAMB-1.4.0/docs/requirements.txt
+CAMB-1.4.0/docs/source/
+CAMB-1.4.0/docs/source/bbn.rst
+CAMB-1.4.0/docs/source/camb.rst
+CAMB-1.4.0/docs/source/conf.py
+CAMB-1.4.0/docs/source/correlations.rst
+CAMB-1.4.0/docs/source/dark_energy.rst
+CAMB-1.4.0/docs/source/emission_angle.rst
+CAMB-1.4.0/docs/source/fortran_compilers.rst
+CAMB-1.4.0/docs/source/index.rst
+CAMB-1.4.0/docs/source/initialpower.rst
+CAMB-1.4.0/docs/source/mathutils.rst
+CAMB-1.4.0/docs/source/model.rst
+CAMB-1.4.0/docs/source/nonlinear.rst
+CAMB-1.4.0/docs/source/postborn.rst
+CAMB-1.4.0/docs/source/recombination.rst
+CAMB-1.4.0/docs/source/reionization.rst
+CAMB-1.4.0/docs/source/results.rst
+CAMB-1.4.0/docs/source/sources.rst
+CAMB-1.4.0/docs/source/symbolic.rst
+CAMB-1.4.0/docs/source/transfer_variables.rst
+CAMB-1.4.0/fortran/
+CAMB-1.4.0/fortran/DarkAge21cm.f90
+CAMB-1.4.0/fortran/DarkEnergyFluid.f90
+CAMB-1.4.0/fortran/DarkEnergyInterface.f90
+CAMB-1.4.0/fortran/DarkEnergyPPF.f90
+CAMB-1.4.0/fortran/DarkEnergyQuintessence.f90
+CAMB-1.4.0/fortran/HighLExtrapTemplate_lenspotentialCls.dat
+CAMB-1.4.0/fortran/InitialPower.f90
+CAMB-1.4.0/fortran/Makefile
+CAMB-1.4.0/fortran/Makefile_main
+CAMB-1.4.0/fortran/MathUtils.f90
+CAMB-1.4.0/fortran/PowellMinimize.f90
+CAMB-1.4.0/fortran/SecondOrderPK.f90
+CAMB-1.4.0/fortran/SeparableBispectrum.f90
+CAMB-1.4.0/fortran/SourceWindows.f90
+CAMB-1.4.0/fortran/VisualStudio/
+CAMB-1.4.0/fortran/VisualStudio/CAMB.sln
+CAMB-1.4.0/fortran/VisualStudio/CAMB.vfproj
+CAMB-1.4.0/fortran/VisualStudio/CAMBLib.vfproj
+CAMB-1.4.0/fortran/VisualStudio/CAMBdll.vfproj
+CAMB-1.4.0/fortran/bessels.f90
+CAMB-1.4.0/fortran/camb.cbp
+CAMB-1.4.0/fortran/camb.f90
+CAMB-1.4.0/fortran/camb_python.f90
+CAMB-1.4.0/fortran/classes.f90
+CAMB-1.4.0/fortran/cmbmain.f90
+CAMB-1.4.0/fortran/config.f90
+CAMB-1.4.0/fortran/constants.f90
+CAMB-1.4.0/fortran/cosmorec.f90
+CAMB-1.4.0/fortran/equations.f90
+CAMB-1.4.0/fortran/halofit.f90
+CAMB-1.4.0/fortran/hyrec.f90
+CAMB-1.4.0/fortran/inidriver.f90
+CAMB-1.4.0/fortran/lensing.f90
+CAMB-1.4.0/fortran/massive_neutrinos.f90
+CAMB-1.4.0/fortran/model.f90
+CAMB-1.4.0/fortran/readme.html
+CAMB-1.4.0/fortran/recfast.f90
+CAMB-1.4.0/fortran/reionization.f90
+CAMB-1.4.0/fortran/results.f90
+CAMB-1.4.0/fortran/sigma8.f90
+CAMB-1.4.0/fortran/subroutines.f90
+CAMB-1.4.0/fortran/tester.f90
+CAMB-1.4.0/fortran/tests/
+CAMB-1.4.0/fortran/tests/CAMB_test_files.py
+CAMB-1.4.0/fortran/tests/inifile.py
+CAMB-1.4.0/fortran/tests/run_tests.sh
+CAMB-1.4.0/fortran/tests/upload_tests.sh
+CAMB-1.4.0/fortran/writefits.f90
+CAMB-1.4.0/forutils/
+CAMB-1.4.0/inifiles/
+CAMB-1.4.0/inifiles/params.ini
+CAMB-1.4.0/inifiles/params_21cm.ini
+CAMB-1.4.0/inifiles/params_counts.ini
+CAMB-1.4.0/inifiles/params_lensing.ini
+CAMB-1.4.0/inifiles/planck_2018.ini
+CAMB-1.4.0/inifiles/planck_2018_acc.ini
+CAMB-1.4.0/inifiles/sources_defaults.ini
+CAMB-1.4.0/requirements.txt
+CAMB-1.4.0/setup.py
+ 7:     downloading forutils code....
+--2023-03-02 01:10:53--  https://github.com/cmbant/forutils/archive/refs/tags/1.0.tar.gz
+Resolving github.com... 192.30.255.113
+Connecting to github.com|192.30.255.113|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://codeload.github.com/cmbant/forutils/tar.gz/refs/tags/1.0 [following]
+--2023-03-02 01:10:53--  https://codeload.github.com/cmbant/forutils/tar.gz/refs/tags/1.0
+Resolving codeload.github.com... 192.30.255.120
+Connecting to codeload.github.com|192.30.255.120|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: unspecified [application/x-gzip]
+Saving to: `/home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils_1.0.tar.gz'
+
+     0K .......... .......... .......... .......... ..........  839K
+    50K .......... ...                                         28.4M=0.06s
+
+2023-03-02 01:10:54 (1.03 MB/s) - `/home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils_1.0.tar.gz' saved [64848]
+
+ 7:     unpacking forutils code....
+forutils-1.0/.gitignore
+forutils-1.0/.travis.yml
+forutils-1.0/ArrayUtils.f90
+forutils-1.0/FileUtils.f90
+forutils-1.0/ForUtils.vfproj
+forutils-1.0/IniObjects.f90
+forutils-1.0/Interpolation.f90
+forutils-1.0/LICENSE
+forutils-1.0/Makefile
+forutils-1.0/Makefile_compiler
+forutils-1.0/MatrixUtils.f90
+forutils-1.0/MiscUtils.f90
+forutils-1.0/MpiUtils.f90
+forutils-1.0/ObjectLists.f90
+forutils-1.0/RandUtils.f90
+forutils-1.0/RangeUtils.f90
+forutils-1.0/Readme.rst
+forutils-1.0/StringUtils.f90
+forutils-1.0/tests/
+forutils-1.0/tests/ForUtils.sln
+forutils-1.0/tests/Makefile
+forutils-1.0/tests/ObjectLists_tests.f90
+forutils-1.0/tests/UnitTests.vfproj
+forutils-1.0/tests/array_tests.f90
+forutils-1.0/tests/file_tests.f90
+forutils-1.0/tests/inifile_tests.f90
+forutils-1.0/tests/interpolation_tests.f90
+forutils-1.0/tests/ranges_tests.f90
+forutils-1.0/tests/run_tests.f90
+forutils-1.0/tests/run_tests.sh
+forutils-1.0/tests/string_tests.f90
+ 7:     compiling CAMB code
+make -C Release --no-print-directory -f../Makefile SRC_DIR=.. libforutils.a
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o MiscUtils.o -c ../MiscUtils.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o MpiUtils.o -c ../MpiUtils.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o StringUtils.o -c ../StringUtils.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o ArrayUtils.o -c ../ArrayUtils.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o FileUtils.o -c ../FileUtils.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o IniObjects.o -c ../IniObjects.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o RandUtils.o -c ../RandUtils.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o ObjectLists.o -c ../ObjectLists.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o MatrixUtils.o -c ../MatrixUtils.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o RangeUtils.o -c ../RangeUtils.f90
+gfortran -cpp -ffree-line-length-none -fmax-errors=4 -MMD -fopenmp -fPIC -O3 -ffast-math -o Interpolation.o -c ../Interpolation.f90
+ar -r libforutils.a MiscUtils.o MpiUtils.o StringUtils.o ArrayUtils.o FileUtils.o IniObjects.o RandUtils.o ObjectLists.o MatrixUtils.o RangeUtils.o Interpolation.o
+ar: creating libforutils.a
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../constants.f90 -o constants.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../config.f90 -o config.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../classes.f90 -o classes.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../MathUtils.f90 -o MathUtils.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../subroutines.f90 -o subroutines.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../DarkAge21cm.f90 -o DarkAge21cm.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../DarkEnergyInterface.f90 -o DarkEnergyInterface.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../SourceWindows.f90 -o SourceWindows.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../massive_neutrinos.f90 -o massive_neutrinos.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../model.f90 -o model.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../results.f90 -o results.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../bessels.f90 -o bessels.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../recfast.f90 -o recfast.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../DarkEnergyFluid.f90 -o DarkEnergyFluid.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../DarkEnergyPPF.f90 -o DarkEnergyPPF.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../PowellMinimize.f90 -o PowellMinimize.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../DarkEnergyQuintessence.f90 -o DarkEnergyQuintessence.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../equations.f90 -o equations.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../reionization.f90 -o reionization.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../InitialPower.f90 -o InitialPower.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../halofit.f90 -o halofit.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../SecondOrderPK.f90 -o SecondOrderPK.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../lensing.f90 -o lensing.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../SeparableBispectrum.f90 -o SeparableBispectrum.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../cmbmain.f90 -o cmbmain.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../camb.f90 -o camb.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../camb_python.f90 -o camb_python.o
+ar -r libcamb.a constants.o config.o classes.o MathUtils.o subroutines.o DarkAge21cm.o DarkEnergyInterface.o SourceWindows.o massive_neutrinos.o model.o results.o bessels.o recfast.o DarkEnergyFluid.o DarkEnergyPPF.o PowellMinimize.o DarkEnergyQuintessence.o equations.o reionization.o InitialPower.o halofit.o SecondOrderPK.o lensing.o SeparableBispectrum.o cmbmain.o camb.o camb_python.o
+ar: creating libcamb.a
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -c ../inidriver.f90 -o inidriver.o
+gfortran -cpp -Ofast -fopenmp -fintrinsic-modules-path /home/abenson/Galacticus/Tools/finclude -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include -fintrinsic-modules-path /home/abenson/Galacticus/Tools/include/gfortran -fintrinsic-modules-path /home/abenson/Galacticus/Tools/lib/gfortran/modules -L/home/abenson/Galacticus/Tools/lib -L/home/abenson/Galacticus/Tools/lib64  -JRelease -IRelease/ -I"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" \
+		Release/inidriver.o Release/libcamb.a  -L"/data001/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/CAMB-1.4.0/fortran/../forutils/Release/" -lforutils -o camb
+Om_b h^2             =  0.022369
+Om_c h^2             =  0.120694
+Om_nu h^2            =  0.000000
+Om_darkenergy        =  0.684608
+Om_K                 =  0.000000
+Om_m (inc Om_u)      =  0.315300
+100 theta (CosmoMC)  =  1.040138
+Age of universe/GYr  =  13.795
+zstar                =  1090.11
+r_s(zstar)/Mpc       =  144.25
+100*theta            =  1.040221
+DA(zstar)/Gpc        =  13.86721
+zdrag                =  1060.09
+r_s(zdrag)/Mpc       =  146.91
+k_D(zstar) Mpc       =  0.1409
+100*theta_D          =  0.160760
+z_EQ (if v_nu=1)     =  3418.64
+k_EQ Mpc (if v_nu=1) =  0.010434
+100*theta_EQ         =  0.809715
+100*theta_rs_EQ      =  0.447509
+tau_recomb/Mpc       =  280.35  tau_now/Mpc =  14147.3
+at z =100.000 sigma8 (all matter) =  0.0105
+at z =100.000 sigma8^2_vd/sigma8  =  0.0104
+Om_b h^2             =  0.022369
+Om_c h^2             =  0.120694
+Om_nu h^2            =  0.000000
+Om_darkenergy        =  0.684608
+Om_K                 =  0.000000
+Om_m (inc Om_u)      =  0.315300
+100 theta (CosmoMC)  =  1.040138
+Age of universe/GYr  =  13.795
+zstar                =  1090.11
+r_s(zstar)/Mpc       =  144.25
+100*theta            =  1.040221
+DA(zstar)/Gpc        =  13.86721
+zdrag                =  1060.09
+r_s(zdrag)/Mpc       =  146.91
+k_D(zstar) Mpc       =  0.1409
+100*theta_D          =  0.160760
+z_EQ (if v_nu=1)     =  3418.64
+k_EQ Mpc (if v_nu=1) =  0.010434
+100*theta_EQ         =  0.809715
+100*theta_rs_EQ      =  0.447509
+tau_recomb/Mpc       =  280.29  tau_now/Mpc =  14147.3
+at z =100.000 sigma8 (all matter) =  0.0105
+at z =100.000 sigma8^2_vd/sigma8  =  0.0104
+ 7:     -> retabulating σ(M)
+ 7:         mass range:  0.11E+12    <  0.14E+13    <  0.18E+14    M☉
+ 7:         time range:   13.8005    <   13.8005    <   13.8005    Gyr
+Om_b h^2             =  0.022369
+Om_c h^2             =  0.120694
+Om_nu h^2            =  0.000000
+Om_darkenergy        =  0.684608
+Om_K                 =  0.000000
+Om_m (inc Om_u)      =  0.315300
+100 theta (CosmoMC)  =  1.040138
+Age of universe/GYr  =  13.795
+zstar                =  1090.11
+r_s(zstar)/Mpc       =  144.25
+100*theta            =  1.040221
+DA(zstar)/Gpc        =  13.86721
+zdrag                =  1060.09
+r_s(zdrag)/Mpc       =  146.91
+k_D(zstar) Mpc       =  0.1409
+100*theta_D          =  0.160760
+z_EQ (if v_nu=1)     =  3418.64
+k_EQ Mpc (if v_nu=1) =  0.010434
+100*theta_EQ         =  0.809715
+100*theta_rs_EQ      =  0.447509
+tau_recomb/Mpc       =  280.39  tau_now/Mpc =  14147.3
+at z =100.000 sigma8 (all matter) =  0.0105
+at z =100.000 sigma8^2_vd/sigma8  =  0.0104
+ 7:     <- done
+ 7:     writing σ(M) data to: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 1:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+12:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 8:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 9:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+15:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 4:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+13:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 2:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 5:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+14:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 6:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 3:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+11:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 0:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     -> retabulating σ(M)
+ 7:         mass range:  0.89E+06    <  0.10E+08    <  0.18E+14    M☉
+ 7:         time range:   13.8005    <   13.8005    <   13.8005    Gyr
+Om_b h^2             =  0.022369
+Om_c h^2             =  0.120694
+Om_nu h^2            =  0.000000
+Om_darkenergy        =  0.684608
+Om_K                 =  0.000000
+Om_m (inc Om_u)      =  0.315300
+100 theta (CosmoMC)  =  1.040138
+Age of universe/GYr  =  13.795
+zstar                =  1090.11
+r_s(zstar)/Mpc       =  144.25
+100*theta            =  1.040221
+DA(zstar)/Gpc        =  13.86721
+zdrag                =  1060.09
+r_s(zdrag)/Mpc       =  146.91
+k_D(zstar) Mpc       =  0.1409
+100*theta_D          =  0.160760
+z_EQ (if v_nu=1)     =  3418.64
+k_EQ Mpc (if v_nu=1) =  0.010434
+100*theta_EQ         =  0.809715
+100*theta_rs_EQ      =  0.447509
+tau_recomb/Mpc       =  280.20  tau_now/Mpc =  14147.3
+at z =100.000 sigma8 (all matter) =  0.0105
+at z =100.000 sigma8^2_vd/sigma8  =  0.0104
+ 7:     <- done
+ 7:     writing σ(M) data to: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 1:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+12:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+15:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 4:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 9:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 8:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 5:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 2:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+13:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 6:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     -> retabulating σ(M)
+ 7:         mass range:  0.89E+06    <  0.18E+14    <  0.22E+15    M☉
+ 7:         time range:   13.8005    <   13.8005    <   13.8005    Gyr
+ 7:     <- done
+ 7:     writing σ(M) data to: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+12:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+15:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 4:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 9:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 8:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 5:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 2:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+13:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 6:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 1:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 3:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+11:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+14:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 0:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     -> retabulating σ(M)
+ 7:         mass range:  0.89E+06    <  0.23E+15    <  0.28E+16    M☉
+ 7:         time range:   13.8005    <   13.8005    <   13.8005    Gyr
+ 7:     <- done
+ 7:     writing σ(M) data to: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+15:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 4:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 9:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 8:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 5:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 2:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+13:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 6:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 1:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 3:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+11:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+14:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 0:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+12:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 7:     -> retabulating σ(M)
+ 7:         mass range:  0.89E+06    <  0.29E+16    <  0.35E+17    M☉
+ 7:         time range:   13.8005    <   13.8005    <   13.8005    Gyr
+ 7:     <- done
+ 7:     writing σ(M) data to: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 4:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 9:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 8:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 5:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 2:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+13:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 6:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 1:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 3:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+11:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+14:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 0:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+12:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+15:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     -> retabulating σ(M)
+10:         mass range:  0.56E+05    <  0.67E+06    <  0.35E+17    M☉
+#0  0x828194 in __error_MOD_error_report_char
+	at ./work/build/error.p.F90:167
+#1  0x8282e4 in __error_MOD_error_report_varstr
+	at ./work/build/error.p.F90:129
+#2  0x10dbb8b in __numerical_interpolation_MOD_interpolatorinterpolate
+	at ./work/build/numerical.interpolation.p.F90:1187
+#3  0x730508 in __dark_matter_profiles_dmo_MOD_sidmisothermalcomputesolution
+	at ./work/build/dark_matter_profiles_DMO.SIDM.isothermal.p.F90:701
+#4  0x73004f in __dark_matter_profiles_dmo_MOD_sidmisothermalenclosedmass
+	at ./work/build/dark_matter_profiles_DMO.SIDM.isothermal.p.F90:797
+#5  0x6330d8 in integrandenergypotential
+	at ./work/build/dark_matter_profiles.generic.p.F90:1096
+#6  0x10c9f46 in integrandwrapper
+	at ./work/build/numerical.integration.p.F90:716
+#7  0x7f516a3a7814 in gsl_integration_qk
+	at /data001/abenson/Galacticus/Tools/gsl-2.6/integration/qk.c:38
+#8  0x7f516a3a7778 in gsl_integration_qk61
+	at /data001/abenson/Galacticus/Tools/gsl-2.6/integration/qk61.c:125
+#9  0x7f516a3a8744 in qag
+	at /data001/abenson/Galacticus/Tools/gsl-2.6/integration/qag.c:130
+#10  0x7f516a3a8744 in gsl_integration_qag
+	at /data001/abenson/Galacticus/Tools/gsl-2.6/integration/qag.c:85
+#11  0x10ca0ac in __numerical_integration_MOD_integratorintegrate
+	at ./work/build/numerical.integration.p.F90:691
+#12  0x6352f0 in __dark_matter_profiles_generic_MOD_genericenergynumerical
+	at ./work/build/dark_matter_profiles.generic.p.F90:1057
+#13  0x72fb18 in __dark_matter_profiles_dmo_MOD_sidmisothermalenergy
+	at ./work/build/dark_matter_profiles_DMO.SIDM.isothermal.p.F90:999
+#14  0x74d55e in __dark_matter_profiles_dmo_MOD_heatedmonotonicenergy
+	at ./work/build/dark_matter_profiles_DMO.heated.monotonic.p.F90:913
+#15  0x6d7f22 in __dark_matter_profile_scales.darkmatterprofilescaleradiusjohnson2021__MOD_radiusscaleroot
+	at ./work/build/dark_matter_profiles.structure.scale.Johnson2021.p.F90:800
+#16  0x10ed320 in __root_finder_MOD_rootfinderfind
+	at ./work/build/numerical.root_finder.p.F90:870
+#17  0x6d8e73 in __dark_matter_profile_scales_MOD_darkmatterprofilescalejohnson2021radius
+	at ./work/build/dark_matter_profiles.structure.scale.Johnson2021.p.F90:776
+#18  0x6e63da in __dark_matter_profile_scales_MOD_concentrationlimiterradius
+	at ./work/build/dark_matter_profiles.structure.scale.concentration_limiter.p.F90:335
+#19  0xf8777d in __nodes_operators_MOD_darkmatterprofilescalesetnodetreeinitialize
+	at ./work/build/nodes.operators.physics.dark_matter_profile_scale.set.p.F90:217
+#20  0xefc50f in __nodes_operators_MOD_multinodetreeinitialize
+	at ./work/build/nodes.operators.multi.p.F90:216
+#21  0x2030d7e in __tasks_MOD_evolveforestsperform._omp_fn.0
+	at ./work/build/tasks.evolve_forests.p.F90:1373
+#22  0x7f5168db92fd in gomp_thread_start
+	at ../../../gcc-git/libgomp/team.c:129
+#23  0x7f5168b13c39 in ???
+#24  0x7f516887361c in ???
+#25  0xffffffffffffffff in ???
+10:         time range:   13.8005    <    0.1430    <   13.8005    Gyr
+10:     <- done
+10:     writing σ(M) data to: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     -> retabulating σ(M)
+10:         mass range:  0.18E+04    <  0.20E+05    <  0.35E+17    M☉
+10:         time range:   13.8005    <    0.1618    <   13.8005    Gyr
+10:     <- done
+10:     writing σ(M) data to: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+10:     -> retabulating σ(M)
+10:         mass range:  0.14E+03    <  0.17E+04    <  0.35E+17    M☉
+10:         time range:   13.8005    <    0.3095    <   13.8005    Gyr
+10:     <- done
+10:     writing σ(M) data to: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 0:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 3:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+14:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+ 6:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+15:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+Fatal error:
+requested point [0.105499E+02 ⟶ 0.105499E+02] is outside of allowed range [0.110000E+01:0.100000E+02]
+ Occurred at:
+     function:interpolatorInterpolate
+       module:Numerical_Interpolation
+         file:numerical.interpolation.F90   [line 588]
+  => Error occurred in thread           15
+ 2:     reading σ(M) data from: /home/nahvazi/Galacticus_Vel_dependent/datasets/dynamic/largeScaleStructure/cosmologicalMassVarianceFilteredPower_cmHSRMk8IB8hHXix@bPVc..hdf5
+  => The following warnings were issued:
+ Using default value for parameter '[errorWaitTime]'
+ Using default value for parameter '[componentBlackHole/tripleInteraction]'
+ Using default value for parameter '[componentDisk/toleranceAbsoluteMass]'
+ Using default value for parameter '[componentHotHalo/starveSatellites]'
+ Using default value for parameter '[componentSatellite/initializationTypeMassBound]'
+ Using default value for parameter '[componentSpheroid/efficiencyEnergeticOutflow]'
+ Using default value for parameter '[stellarPopulationSpectraPostprocessorBuilder/names]'
+ Using default class for parameter '[stellarPopulationSpectraPostprocessor]'
+ Using default class for parameter '[stellarPopulationSpectraPostprocessorBuilder]'
+ Using default value for parameter '[stellarPopulationSpectra/forceZeroMetallicity]'
+ Using default value for parameter '[initialMassFunction/massUpper]'
+ Using default value for parameter '[task/walltimeMaximum]'
+ Using default value for parameter '[mergerTreeConstructor/timeSnapTolerance]'
+ Using default value for parameter '[mergerTreeBuilder/toleranceTimeEarliest]'
+ Using default value for parameter '[mergerTreeBranchingProbability/precisionHypergeometric]'
+ Using default value for parameter '[powerSpectrumPrimordial/runningRunning]'
+ Using default value for parameter '[transferFunction/cambCountPerDecade]'
+ Using default class for parameter '[powerSpectrumWindowFunction]'
+ Using default value for parameter '[cosmologicalMassVariance/toleranceTopHat]'
+ Using default value for parameter '[criticalOverdensity/normalization]'
+ Using default class for parameter '[mergerTreeBuildController]'
+ Using default value for parameter '[randomNumberGenerator/seed]'
+ Using default class for parameter '[randomNumberGenerator]'
+ Using default class for parameter '[mergerTreeOperator]'
+ Using default value for parameter '[virialDensityContrast/tableStore]'
+ Using default class for parameter '[darkMatterHaloScale]'
+ Using default value for parameter '[darkMatterProfileScaleRadius/darkMatterProfileScaleRadius/darkMatterProfileScaleRadius/correctForConcentrationDefinition]'
+ Using default value for parameter '[darkMatterProfileDMO/toleranceRelativeVelocityDispersion]'
+ Using default value for parameter '[darkMatterProfileDMO/darkMatterProfileDMO/darkMatterProfileDMO/velocityDispersionUseSeriesExpansion]'
+ Using default value for parameter '[darkMatterProfileHeating/coefficientSecondOrder2]'
+ Using default value for parameter '[darkMatterProfileConcentration/kappa]'
+ Using default value for parameter '[nodeOperator/nodeOperator/angularMomentumVarianceSpecific]'
+ Using default value for parameter '[darkMatterProfile/darkMatterProfile/radiusFractionalPivot]'
+ Using default class for parameter '[galacticStructure]'
+ Using default class for parameter '[satelliteTidalStrippingRadius]'
+ Using default class for parameter '[atomicIonizationRateCollisional]'
+ Using default class for parameter '[atomicRecombinationRateRadiative]'
+ Using default class for parameter '[atomicCrossSectionIonizationPhoto]'
+ Using default value for parameter '[hotHaloMassDistribution/beta]'
+ Using default value for parameter '[starFormationRateDisks/tolerance]'
+ Using default value for parameter '[starFormationRateSurfaceDensityDisks/velocityDispersionDiskGas]'
+ Using default value for parameter '[stellarPopulation/instantaneousRecyclingApproximation]'
+ Using default value for parameter '[stellarAstrophysics/fileName]'
+ Using default class for parameter '[stellarAstrophysics]'
+ Using default value for parameter '[stellarFeedback/initialMassForSupernovaeTypeII]'
+ Using default class for parameter '[supernovaeTypeIa]'
+ Using default class for parameter '[supernovaePopulationIII]'
+ Using default value for parameter '[stellarTracks/fileName]'
+ Using default class for parameter '[stellarTracks]'
+ Using default class for parameter '[stellarWinds]'
+ Using default class for parameter '[stellarFeedback]'
+ Using default value for parameter '[stellarPopulationBroadBandLuminosities/integrationToleranceRelative]'
+ Using default class for parameter '[stellarPopulationBroadBandLuminosities]'
+ Using default value for parameter '[starFormationHistory/metallicityMinimum]'
+ Using default class for parameter '[starFormationActiveMass]'
+ Using default value for parameter '[galacticDynamicsBarInstability/nodeOperator/nodeOperator/timescaleMinimum]'
+ Using default value for parameter '[darkMatterHaloMassAccretionHistory/formationRedshiftCompute]'
+ Using default class for parameter '[darkMatterHaloMassAccretionHistory]'
+ Using default class for parameter '[evolveForestsWorkShare]'
+ Using default class for parameter '[universeOperator]'
+ Using default value for parameter '[mergerTreeEvolver/allTreesExistAtFinalTime]'
+ Using default value for parameter '[mergerTreeEvolveTimestep/mergerTreeEvolveTimestep/fractionTimestepMinimum]'
+ Using default value for parameter '[galacticStructureSolver/convergenceFailureIsFatal]'
+ Using default value for parameter '[mergerTreeNodeEvolver/odeJacobianStepSizeRelative]'
+ Using default class for parameter '[mergerTreeEvolveProfiler]'
+ Using default class for parameter '[mergerTreeInitializor]'
+ Using default value for parameter '[mergerTreeOutputter/outputsGroupName]'
+ Using default class for parameter '[galacticFilter]'
+ Using default value for parameter '[nodePropertyExtractor/nodePropertyExtractor/includeRadii]'
+ Using default value for parameter '[darkMatterProfileDMO/darkMatterProfileDMO/nodePropertyExtractor/nodePropertyExtractor/velocityDispersionUseSeriesExpansion]'
+ Using default class for parameter '[mergerTreeOutputter]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default class for parameter '[blackHoleBinaryRecoil]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default class for parameter '[blackHoleBinaryInitialSeparation]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default class for parameter '[blackHoleBinaryMerger]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default class for parameter '[blackHoleBinarySeparationGrowthRate]'
+ Using default class for parameter '[chemicalState]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisks/accretionRateTransitionWidth]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[accretionDisksADAF/accretionDisks/fieldEnhancementOption]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[blackHoleBinaryInitialSeparation/spheroidRadiusFraction]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default class for parameter '[coolingInfallRadius]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default class for parameter '[accretionHaloTotal]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[mergerMassMovements/destinationStarsMinorMerger]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[massDistributionDisk/scaleHeight]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[coolingSpecificAngularMomentum/useInteriorMean]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[accretionHalo/redshiftReionization]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[intergalacticMediumFilteringMass/timeTooEarlyIsFatal]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default class for parameter '[mergerProgenitorProperties]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[hotHaloRamPressureStripping/formFactor]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+ Using default value for parameter '[massDistributionSpheroid/densityNormalization]'
+
+Program aborted. Backtrace:
+#0  0x8281e5 in __error_MOD_error_report_char
+	at ./work/build/error.p.F90:178
+#1  0x8282e4 in __error_MOD_error_report_varstr
+	at ./work/build/error.p.F90:129
+#2  0x10dbb8b in __numerical_interpolation_MOD_interpolatorinterpolate
+	at ./work/build/numerical.interpolation.p.F90:1187
+#3  0x730508 in __dark_matter_profiles_dmo_MOD_sidmisothermalcomputesolution
+	at ./work/build/dark_matter_profiles_DMO.SIDM.isothermal.p.F90:701
+#4  0x73004f in __dark_matter_profiles_dmo_MOD_sidmisothermalenclosedmass
+	at ./work/build/dark_matter_profiles_DMO.SIDM.isothermal.p.F90:797
+#5  0x6330d8 in integrandenergypotential
+	at ./work/build/dark_matter_profiles.generic.p.F90:1096
+#6  0x10c9f46 in integrandwrapper
+	at ./work/build/numerical.integration.p.F90:716
+#7  0x7f516a3a7814 in gsl_integration_qk
+	at /data001/abenson/Galacticus/Tools/gsl-2.6/integration/qk.c:38
+#8  0x7f516a3a7778 in gsl_integration_qk61
+	at /data001/abenson/Galacticus/Tools/gsl-2.6/integration/qk61.c:125
+#9  0x7f516a3a8744 in qag
+	at /data001/abenson/Galacticus/Tools/gsl-2.6/integration/qag.c:130
+#10  0x7f516a3a8744 in gsl_integration_qag
+	at /data001/abenson/Galacticus/Tools/gsl-2.6/integration/qag.c:85
+#11  0x10ca0ac in __numerical_integration_MOD_integratorintegrate
+	at ./work/build/numerical.integration.p.F90:691
+#12  0x6352f0 in __dark_matter_profiles_generic_MOD_genericenergynumerical
+	at ./work/build/dark_matter_profiles.generic.p.F90:1057
+#13  0x72fb18 in __dark_matter_profiles_dmo_MOD_sidmisothermalenergy
+	at ./work/build/dark_matter_profiles_DMO.SIDM.isothermal.p.F90:999
+#14  0x74d55e in __dark_matter_profiles_dmo_MOD_heatedmonotonicenergy
+	at ./work/build/dark_matter_profiles_DMO.heated.monotonic.p.F90:913
+#15  0x6d7f22 in __dark_matter_profile_scales.darkmatterprofilescaleradiusjohnson2021__MOD_radiusscaleroot
+	at ./work/build/dark_matter_profiles.structure.scale.Johnson2021.p.F90:800
+#16  0x10ed320 in __root_finder_MOD_rootfinderfind
+	at ./work/build/numerical.root_finder.p.F90:870
+#17  0x6d8e73 in __dark_matter_profile_scales_MOD_darkmatterprofilescalejohnson2021radius
+	at ./work/build/dark_matter_profiles.structure.scale.Johnson2021.p.F90:776
+#18  0x6e63da in __dark_matter_profile_scales_MOD_concentrationlimiterradius
+	at ./work/build/dark_matter_profiles.structure.scale.concentration_limiter.p.F90:335
+#19  0xf8777d in __nodes_operators_MOD_darkmatterprofilescalesetnodetreeinitialize
+	at ./work/build/nodes.operators.physics.dark_matter_profile_scale.set.p.F90:217
+#20  0xefc50f in __nodes_operators_MOD_multinodetreeinitialize
+	at ./work/build/nodes.operators.multi.p.F90:216
+#21  0x2030d7e in __tasks_MOD_evolveforestsperform._omp_fn.0
+	at ./work/build/tasks.evolve_forests.p.F90:1373
+#22  0x7f5168db92fd in gomp_thread_start
+	at ../../../gcc-git/libgomp/team.c:129
+#23  0x7f5168b13c39 in ???
+#24  0x7f516887361c in ???
+#25  0xffffffffffffffff in ???
+Command terminated by signal 6
+	Command being timed: "Galacticus.exe parameters/myParams/multi_SIDM_test_16mergerTree.xml"
+	User time (seconds): 1144.01
+	System time (seconds): 46.09
+	Percent of CPU this job got: 180%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 11:00.41
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 45005424
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 38
+	Minor (reclaiming a frame) page faults: 4852961
+	Voluntary context switches: 2775121
+	Involuntary context switches: 155199
+	Swaps: 0
+	File system inputs: 431920
+	File system outputs: 128424
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
