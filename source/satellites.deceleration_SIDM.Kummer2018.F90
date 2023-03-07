@@ -203,24 +203,28 @@ contains
          &             basic    %     mass()  &
          &            )
     if (massBoundary > 0.0d0) then
-       radiusBoundary      =self%galacticStructure_%radiusEnclosingMass(node,mass  =      massBoundary  )
-       radiusHalfMass      =self%galacticStructure_%radiusEnclosingMass(node,mass  =0.5d0*massBoundary  )
-       if (radiusBoundary < 0.5d0*radiusLarge) then
-          potentialBoundary=self%galacticStructure_%potential          (node,radius=      radiusBoundary)
-          potentialHalfMass=self%galacticStructure_%potential          (node,radius=      radiusHalfMass)
-          potentialEscape  =+potentialBoundary               &
-               &            -potentialHalfMass               &
-               &            +gravitationalConstantGalacticus &
-               &            *massBoundary                    &
-               &            /radiusBoundary
-          if (potentialEscape > 0.0d0) then
-             velocityEscape=sqrt(2.0d0*potentialEscape)
+       if (self%galacticStructure_%massEnclosed(node,radius=0.5d0*radiusLarge) > massBoundary) then
+          radiusBoundary      =self%galacticStructure_%radiusEnclosingMass(node,mass  =      massBoundary  )
+          radiusHalfMass      =self%galacticStructure_%radiusEnclosingMass(node,mass  =0.5d0*massBoundary  )
+          if (radiusBoundary < 0.5d0*radiusLarge) then
+             potentialBoundary=self%galacticStructure_%potential          (node,radius=      radiusBoundary)
+             potentialHalfMass=self%galacticStructure_%potential          (node,radius=      radiusHalfMass)
+             potentialEscape  =+potentialBoundary               &
+                  &            -potentialHalfMass               &
+                  &            +gravitationalConstantGalacticus &
+                  &            *massBoundary                    &
+                  &            /radiusBoundary
+             if (potentialEscape > 0.0d0) then
+                velocityEscape=sqrt(2.0d0*potentialEscape)
+             else
+                velocityEscape=0.0d0
+             end if
           else
              velocityEscape=0.0d0
           end if
        else
           velocityEscape=0.0d0
-       end if
+       end if   
        ! Get the speed of a host particle at the half-mass radius of the subhalo - this is the sum of the kinetic energy or host
        ! particles in the rest-frame of the subhalo, plus the energy they gain by falling in to the half-mass radius of the
        ! subhalo.
@@ -233,7 +237,11 @@ contains
        ! Find the combined velocity dispersion of satellite and host, and evaluate the correction factor given in Appendix A of
        ! Kummer et al. (2018).
        velocityDispersionHost     =+self%darkMatterProfileDMO_%radialVelocityDispersion(nodeHost,radiusOrbital )
-       velocityDispersionSatellite=+self%darkMatterProfileDMO_%radialVelocityDispersion(node    ,radiusHalfMass)
+       if (radiusHalfMass > 0.0d0) then
+          velocityDispersionSatellite=+self%darkMatterProfileDMO_%radialVelocityDispersion(node    ,radiusHalfMass)
+       else
+          velocityDispersionSatellite=0.0d0
+       end if 
        velocityDispersion         =+sqrt(                                &
             &                            +velocityDispersionHost     **2 &
             &                            +velocityDispersionSatellite**2 &

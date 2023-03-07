@@ -268,6 +268,7 @@ contains
     locationMinimum          =minimizer_%x()
     densityCentral           =exp(locationMinimum(1))*densityInteraction
     velocityDispersionCentral=    locationMinimum(2) *velocityDispersionInteraction
+    if (velocityDispersionCentral <= 0.0d0) write (0,*) "NONPOSITIVE VDISP:",velocityDispersionCentral,velocityDispersionInteraction,locationMinimum
     ! Tabulate solutions for density and mass.
     radiusTable=Make_Range(rangeMinimum=0.0d0,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLinear)
     densityTable(1)=densityCentral
@@ -287,7 +288,7 @@ contains
     allocate(self%   massProfile)
     self%           densityProfile=interpolator(radiusTable,             densityTable)
     self%              massProfile=interpolator(radiusTable,                massTable)
-    self%velocityDispersionCentral=                         velocityDispersionCentral
+    self%velocityDispersionCentral=                     abs(velocityDispersionCentral)
     return
     
   contains

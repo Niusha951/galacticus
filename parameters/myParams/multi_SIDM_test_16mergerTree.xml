@@ -32,7 +32,7 @@
 
   <!-- Intergalactic background radiation -->
   <radiationFieldIntergalacticBackground value="intergalacticBackgroundFile">
-    <fileName value="%DATASTATICPATH%/radiation/Cosmic_Background_Radiation_FG20.xml"/>
+    <fileName value="%DATASTATICPATH%/radiation/Cosmic_Background_Radiation_FG20.hdf5"/>
   </radiationFieldIntergalacticBackground>
 
   <!-- Dark matter particle type -->
@@ -296,7 +296,9 @@
   <hotHaloTrackStrippedGas value="true"/>
 
   <!-- Galactic structure solver options -->
-  <galacticStructureSolver value="equilibrium"/>
+  <galacticStructureSolver value="equilibrium">
+    <convergenceFailureIsFatal value="false"/>
+  </galacticStructureSolver>
   <darkMatterProfile value="SIDMIsothermal">
     <darkMatterProfile value="adiabaticGnedin2004">
       <A     value="0.73"/>
@@ -494,7 +496,7 @@
   </outputTimes>
 
   <!-- Output file -->
-  <outputFileName value="outputs/multi_SIDM_res7_test1_16mergerTree.hdf5"/>
+  <outputFileName value="outputs/multi_SIDM_res7_test2_16mergerTree.hdf5"/>
 
   <!-- Output properties -->
   <nodePropertyExtractor value="multi">
