@@ -46,6 +46,9 @@
       \end{equation}
       where $M(r)$ is the mass contained within radius $r$, and primes indicate the profile prior to SIDM thermalization.
     </description>
+    <stateStore>
+      <stateStore variables="galacticStructure_" store="galacticStructureStateStore_" restore="galacticStructureStateRestore_" module="Functions_Global"/>
+    </stateStore>
   </darkMatterProfile>
   !!]
   type, extends(darkMatterProfileSIDM) :: darkMatterProfileSIDMIsothermal
@@ -55,7 +58,6 @@
      private
      integer         (kind=kind_int8)              :: uniqueIDPrevious
      double precision                              :: velocityDispersionCentral
-     logical                                       :: solutionsTabulated
      class           (*             ), pointer     :: galacticStructure_        => null()
      type            (interpolator  ), allocatable :: densityProfile                     , massProfile
    contains
@@ -85,6 +87,9 @@
      procedure :: freefallRadius                    => sidmIsothermalFreefallRadius
      procedure :: freefallRadiusIncreaseRate        => sidmIsothermalFreefallRadiusIncreaseRate
      procedure :: computeSolution                   => sidmIsothermalComputeSolution
+     procedure :: deepCopy                          => sidmIsothermalDeepCopy
+     procedure :: deepCopyReset                     => sidmIsothermalDeepCopyReset
+     procedure :: deepCopyFinalize                  => sidmIsothermalDeepCopyFinalize
   end type darkMatterProfileSIDMIsothermal
 
   interface darkMatterProfileSIDMIsothermal
@@ -615,3 +620,137 @@ contains
     sidmIsothermalFreefallRadiusIncreaseRate=self%freefallRadiusIncreaseRateNumerical(node,time)
     return
   end function sidmIsothermalFreefallRadiusIncreaseRate
+
+  subroutine sidmIsothermalDeepCopyReset(self)
+    !!{
+    Perform a deep copy reset of the object.
+    !!}
+    use :: Functions_Global, only : galacticStructureDeepCopyReset_
+    implicit none
+    class(darkMatterProfileSIDMIsothermal), intent(inout) :: self
+    
+    self%copiedSelf => null()
+    if (associated(self%darkMatterProfile_  )) call self%darkMatterProfile_  %deepCopyReset()
+    if (associated(self%darkMatterParticle_ )) call self%darkMatterParticle_ %deepCopyReset()
+    if (associated(self%darkMatterHaloScale_)) call self%darkMatterHaloScale_%deepCopyReset()
+    if (associated(self%galacticStructure_  )) call galacticStructureDeepCopyReset_(self%galacticStructure_)
+    return
+  end subroutine sidmIsothermalDeepCopyReset
+  
+  subroutine sidmIsothermalDeepCopyFinalize(self)
+    !!{
+    Finalize a deep reset of the object.
+    !!}
+    use :: Functions_Global, only : galacticStructureDeepCopyFinalize_
+    implicit none
+    class(darkMatterProfileSIDMIsothermal), intent(inout) :: self
+
+    if (associated(self%darkMatterProfile_  )) call self%darkMatterProfile_  %deepCopyFinalize()
+    if (associated(self%darkMatterParticle_ )) call self%darkMatterParticle_ %deepCopyFinalize()
+    if (associated(self%darkMatterHaloScale_)) call self%darkMatterHaloScale_%deepCopyFinalize()
+    if (associated(self%galacticStructure_  )) call galacticStructureDeepCopyFinalize_(self%galacticStructure_)
+    return
+  end subroutine sidmIsothermalDeepCopyFinalize
+  
+  subroutine sidmIsothermalDeepCopy(self,destination)
+    !!{
+    Perform a deep copy of the object.
+    !!}
+    use :: Error             , only : Error_Report
+    use :: Functions_Global  , only : galacticStructureDeepCopy_
+#ifdef OBJECTDEBUG
+    use :: Display           , only : displayMessage            , verbosityLevelSilent
+    use :: MPI_Utilities     , only : mpiSelf
+    use :: Function_Classes  , only : debugReporting
+    use :: ISO_Varying_String, only : operator(//)              , var_str
+    use :: String_Handling   , only : operator(//)
+#endif
+    implicit none
+    class(darkMatterProfileSIDMIsothermal), intent(inout) :: self
+    class(darkMatterProfileClass         ), intent(inout) :: destination
+
+    select type (self)
+    type is (darkMatterProfileSIDMIsothermal)
+       select type (destination)
+       type is (darkMatterProfileSIDMIsothermal)
+          destination=self
+          if (allocated(self%densityProfile)) then
+             call destination%densityProfile%deepCopyActions()
+          end if
+          if (allocated(self%massProfile)) then
+             call destination%massProfile%deepCopyActions()
+          end if
+          nullify(destination%darkmatterprofile_)
+          if (associated(self%darkmatterprofile_)) then
+             if (associated(self%darkmatterprofile_%copiedSelf)) then
+                select type(s => self%darkmatterprofile_%copiedSelf)
+                class is (darkMatterProfileClass)
+                   destination%darkmatterprofile_ => s
+                class default
+                   call Error_Report('copiedSelf has incorrect type'//{introspection:location})
+                end select
+                call self%darkmatterprofile_%copiedSelf%referenceCountIncrement()
+             else
+                allocate(destination%darkmatterprofile_,mold=self%darkmatterprofile_)
+                call self%darkmatterprofile_%deepCopy(destination%darkmatterprofile_)
+                self%darkmatterprofile_%copiedSelf => destination%darkmatterprofile_
+                call destination%darkmatterprofile_%autoHook()
+             end if
+#ifdef OBJECTDEBUG
+          if (debugReporting.and.mpiSelf%isMaster()) call displayMessage(var_str('functionClass[own] (class : ownerName : ownerLoc : objectLoc : sourceLoc): darkmatterprofiledmo_ : [destination] : ')//loc(destination)//' : '//loc(destination%darkMatterProfileDMO_)//' : '//{introspection:location:compact},verbosityLevelSilent)
+#endif
+          end if
+          nullify(destination%darkmatterparticle_)
+          if (associated(self%darkmatterparticle_)) then
+             if (associated(self%darkmatterparticle_%copiedSelf)) then
+                select type(s => self%darkmatterparticle_%copiedSelf)
+                class is (darkMatterParticleClass)
+                   destination%darkmatterparticle_ => s
+                class default
+                   call Error_Report('copiedSelf has incorrect type'//{introspection:location})
+                end select
+                call self%darkmatterparticle_%copiedSelf%referenceCountIncrement()
+             else
+                allocate(destination%darkmatterparticle_,mold=self%darkmatterparticle_)
+                call self%darkmatterparticle_%deepCopy(destination%darkmatterparticle_)
+                self%darkmatterparticle_%copiedSelf => destination%darkmatterparticle_
+                call destination%darkmatterparticle_%autoHook()
+             end if
+#ifdef OBJECTDEBUG
+          if (debugReporting.and.mpiSelf%isMaster()) call displayMessage(var_str('functionClass[own] (class : ownerName : ownerLoc : objectLoc : sourceLoc): darkmatterprofiledmo_ : [destination] : ')//loc(destination)//' : '//loc(destination%darkMatterProfileDMO_)//' : '//{introspection:location:compact},verbosityLevelSilent)
+#endif
+          end if
+          nullify(destination%darkmatterhaloscale_)
+          if (associated(self%darkmatterhaloscale_)) then
+             if (associated(self%darkmatterhaloscale_%copiedSelf)) then
+                select type(s => self%darkmatterhaloscale_%copiedSelf)
+                class is (darkMatterHaloScaleClass)
+                   destination%darkmatterhaloscale_ => s
+                class default
+                   call Error_Report('copiedSelf has incorrect type'//{introspection:location})
+                end select
+                call self%darkmatterhaloscale_%copiedSelf%referenceCountIncrement()
+             else
+                allocate(destination%darkmatterhaloscale_,mold=self%darkmatterhaloscale_)
+                call self%darkmatterhaloscale_%deepCopy(destination%darkmatterhaloscale_)
+                self%darkmatterhaloscale_%copiedSelf => destination%darkmatterhaloscale_
+                call destination%darkmatterhaloscale_%autoHook()
+             end if
+#ifdef OBJECTDEBUG
+          if (debugReporting.and.mpiSelf%isMaster()) call displayMessage(var_str('functionClass[own] (class : ownerName : ownerLoc : objectLoc : sourceLoc): darkmatterprofiledmo_ : [destination] : ')//loc(destination)//' : '//loc(destination%darkMatterProfileDMO_)//' : '//{introspection:location:compact},verbosityLevelSilent)
+#endif
+          end if
+          nullify(destination%galacticStructure_)
+          if (associated(self%galacticStructure_)) then
+             allocate(destination%galacticStructure_,mold=self%galacticStructure_)
+             call galacticStructureDeepCopy_(self%galacticStructure_,destination%galacticStructure_)
+#ifdef OBJECTDEBUG
+             if (debugReporting.and.mpiSelf%isMaster()) call displayMessage(var_str('functionClass[own] (class : ownerName : ownerLoc : objectLoc : sourceLoc): galacticstructure : [destination] : ')//loc(destination)//' : '//loc(destination%galacticStructure_)//' : '//{introspection:location:compact},verbosityLevelSilent)
+#endif
+       end if
+        class default
+          call Error_Report('destination and source types do not match'//{introspection:location})
+       end select
+    end select
+    return
+  end subroutine sidmIsothermalDeepCopy
