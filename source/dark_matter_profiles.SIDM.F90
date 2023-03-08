@@ -91,13 +91,13 @@ contains
           timeAge_   =   basic%time   ()
        end if
        select type (darkMatterParticle_ => self%darkMatterParticle_)
-          class is (darkMatterParticleSelfInteractingDarkMatter)
+       class is (darkMatterParticleSelfInteractingDarkMatter)
           crossSection_=+darkMatterParticle_%crossSectionSelfInteraction(self%darkMatterHaloScale_%velocityVirial(node)) &
                &        *centi     **2                                     &
                &        /megaParsec**2                                     &
                &        *kilo                                              &
                &        *massSolar
-          class default
+       class default
           call Error_Report('expected self-interacting dark matter particle'//{introspection:location})
        end select
        finder=rootFinder(                                             &
