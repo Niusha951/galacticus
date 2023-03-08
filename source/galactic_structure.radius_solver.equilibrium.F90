@@ -243,8 +243,9 @@ contains
     type            (treeNode                          ), intent(inout), target :: node
     logical                                             , parameter             :: specificAngularMomentumRequired=.true.
     integer                                             , parameter             :: iterationMaximum               =  100
-    procedure       (solverGet                         ), pointer               :: radiusGet                             , velocityGet
-    procedure       (solverSet                         ), pointer               :: radiusSet                             , velocitySet
+    procedure       (solverGet                         ), pointer               :: radiusGet                              , velocityGet
+    procedure       (solverSet                         ), pointer               :: radiusSet                              , velocitySet
+    logical                                             , save                  :: warned                         =.false.
     logical                                                                     :: componentActive
     double precision                                                            :: specificAngularMomentum
 
@@ -285,7 +286,14 @@ contains
              call node%serializeASCII()
              call Error_Report('failed to find converged solution'//{introspection:location})
           else
-             call Warn('failed to find converged solution for galactic structure radii')
+             if (.not.warned) then
+                !$omp critical (equilibriumSolveWarn)
+                if (.not.warned) then
+                   call Warn('failed to find converged solution for galactic structure radii - warning will not be repeated')
+                   warned=.true.
+                end if
+                !$omp end critical (equilibriumSolveWarn)
+             end if
           end if
        end if
     end if
