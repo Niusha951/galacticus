@@ -99,7 +99,17 @@
      module procedure sidmIsothermalConstructorParameters
      module procedure sidmIsothermalConstructorInternal
   end interface darkMatterProfileSIDMIsothermal
-
+  
+  ! Sub-module-scope objects used in solving for the SIDM density profile.
+  class           (darkMatterProfileSIDMIsothermal), pointer   :: self_
+  type            (treeNode                       ), pointer   :: node_
+  type            (odeSolver                      )            :: odeSolver_
+  double precision                                             :: densityInteraction          , velocityDispersionInteraction                , radiusInteraction, massInteraction, &
+       &                                                          densityCentral              , velocityDispersionCentral
+  integer         (c_size_t                       ), parameter :: propertyCount        =2
+  double precision                                 , parameter :: fractionRadiusInitial=1.0d-6, velocityDispersionDimensionlessMinimum=1.0d-3
+  !$omp threadprivate(self_,node_,odeSolver_,densityInteraction,velocityDispersionInteraction,radiusInteraction,massInteraction,densityCentral,velocityDispersionCentral)
+  
 contains
 
   function sidmIsothermalConstructorParameters(parameters) result(self)
@@ -222,31 +232,23 @@ contains
     !!{
     Compute a solution for the isothermal core of an SIDM halo.
     !!}
-    use :: Numerical_ODE_Solvers           , only : odeSolver
     use :: Numerical_Ranges                , only : Make_Range                     , rangeTypeLinear
     use :: Numerical_Constants_Math        , only : Pi
     use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
     use :: Multidimensional_Minimizer      , only : multiDMinimizer
     implicit none
-    class           (darkMatterProfileSIDMIsothermal), intent(inout)              :: self
-    type            (treeNode                       ), intent(inout)              :: node
-    integer         (c_size_t                       ), parameter                  :: propertyCount                =2
-    integer                                          , parameter                  :: countTable                   =1000
-    double precision                                 , parameter                  :: odeToleranceAbsolute         =1.0d-3, odeToleranceRelative     =1.0d-3
-    double precision                                 , parameter                  :: fractionRadiusInitial        =1.0d-6
-    double precision                                 , dimension(propertyCount+1) :: properties                          , propertyScales
-    double precision                                 , dimension(countTable     ) :: radiusTable                         , densityTable                    , &
-         &                                                                           massTable
-    double precision                                 , dimension(propertyCount  ) :: locationMinimum
-    type            (odeSolver                      )                             :: odeSolver_
-    type            (multiDMinimizer                )                             :: minimizer_
-    integer                                                                       :: i                                   , iteration
-    logical                                                                       :: converged
-    double precision                                                              :: densityCentral                      , velocityDispersionCentral       , &
-         &                                                                           densityInteraction                  , massInteraction                 , &
-         &                                                                           radiusInteraction                   , radius                          , &
-         &                                                                           velocityDispersionInteraction       , mass                            , &
-         &                                                                           density
+    class           (darkMatterProfileSIDMIsothermal), intent(inout)             , target :: self
+    type            (treeNode                       ), intent(inout)             , target :: node
+    integer                                          , parameter                          :: countTable          =1000
+    double precision                                 , parameter                          :: odeToleranceAbsolute=1.0d-3, odeToleranceRelative=1.0d-3
+    double precision                                 , dimension(propertyCount+1)         :: properties                 , propertyScales
+    double precision                                 , dimension(countTable     )         :: radiusTable                , densityTable               , &
+         &                                                                                   massTable
+    double precision                                 , dimension(propertyCount  )         :: locationMinimum
+    type            (multiDMinimizer                )                                     :: minimizer_
+    integer                                                                               :: i                          , iteration
+    logical                                                                               :: converged
+    double precision                                                                      :: radius
 
     ! Find the interaction radius.
     radiusInteraction            =self%radiusInteraction                          (node                  )
@@ -261,6 +263,9 @@ contains
     odeSolver_                   =odeSolver      (propertyCount+1,sidmIsothermalODEs     ,toleranceAbsolute=odeToleranceAbsolute,toleranceRelative=odeToleranceRelative,scale=propertyScales)
     ! Construct a minimizer.
     minimizer_                   =multiDMinimizer(propertyCount  ,sidmIsothermalFitMetric                                                                                                   )
+    ! Set a pointer to self and node.
+    self_ => self
+    node_ => node
     ! Seek the solution.
     call minimizer_%set(x=[0.0d0,1.0d0],stepSize=[1.0d0,1.0d0])
     iteration=0
@@ -271,9 +276,8 @@ contains
        converged=minimizer_%testSize(toleranceAbsolute=1.0d-3)
     end do
     locationMinimum          =minimizer_%x()
-    densityCentral           =exp(locationMinimum(1))*densityInteraction
-    velocityDispersionCentral=    locationMinimum(2) *velocityDispersionInteraction
-    if (velocityDispersionCentral <= 0.0d0) write (0,*) "NONPOSITIVE VDISP:",velocityDispersionCentral,velocityDispersionInteraction,locationMinimum
+    densityCentral           =exp(locationMinimum(1)                                       )           *densityInteraction
+    velocityDispersionCentral=max(locationMinimum(2),velocityDispersionDimensionlessMinimum)*velocityDispersionInteraction
     ! Tabulate solutions for density and mass.
     radiusTable=Make_Range(rangeMinimum=0.0d0,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLinear)
     densityTable(1)=densityCentral
@@ -293,84 +297,89 @@ contains
     allocate(self%   massProfile)
     self%           densityProfile=interpolator(radiusTable,             densityTable)
     self%              massProfile=interpolator(radiusTable,                massTable)
-    self%velocityDispersionCentral=                     abs(velocityDispersionCentral)
+    self%velocityDispersionCentral=         abs(            velocityDispersionCentral)
     return
-    
-  contains
-    
-    double precision function sidmIsothermalFitMetric(propertiesCentral)
-      !!{
-      Evaluate the fit metric.
-      !!}
-      implicit none
-      double precision, intent(in   ), dimension(:)               :: propertiesCentral
-      double precision               , dimension(propertyCount+1) :: properties
-      double precision                                            :: radius
-      
-      ! Extract current parameters.
-      densityCentral           =exp(propertiesCentral(1))*densityInteraction
-      velocityDispersionCentral=    propertiesCentral(2) *velocityDispersionInteraction
-      ! Solve the ODE to r₁.
-      radius    =fractionRadiusInitial*radiusInteraction
-      properties=0.0d0
-      call odeSolver_%solve(radius,radiusInteraction,properties)
-      ! Extract density and mass at r₁.
-      density=+densityCentral                    &
-           &  *exp(                              &
-           &       -properties(1)                &
-           &       /velocityDispersionCentral**2 &
-           &      )
-      mass     =+   properties(3)
-      ! Evaluate the fit metric.
-      sidmIsothermalFitMetric=+(density/densityInteraction-1.0d0)**2 &
-           &                  +(   mass/   massInteraction-1.0d0)**2
-      return
-    end function sidmIsothermalFitMetric
-  
-    integer function sidmIsothermalODEs(radius,properties,propertiesRateOfChange)
-      !!{
-      Define the ODE system to solve for isothermal self-interacting dark matter cores.
-      !!}
-      use :: Functions_Global                , only : galacticStructureDensity_
-      use :: Galactic_Structure_Options      , only : massTypeBaryonic
-      use :: Interface_GSL                   , only : GSL_Success
-      use :: Numerical_Constants_Math        , only : Pi
-      use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
-      implicit none
-      double precision, intent(in   )               :: radius
-      double precision, intent(in   ), dimension(:) :: properties
-      double precision, intent(  out), dimension(:) :: propertiesRateOfChange
-      double precision                              :: densityDarkMatter     , densityBaryons
-      
-      densityDarkMatter               =+densityCentral                    &
-           &                           *exp(                              &
-           &                                -max(properties(1),0.0d0)     &
-           &                                /velocityDispersionCentral**2 &
-           &                               )
-      densityBaryons                  =+galacticStructureDensity_(self%galacticStructure_,node,position=[radius,0.0d0,0.0d0],massType=massTypeBaryonic)
-      propertiesRateOfChange       (1)=+properties(2)
-      propertiesRateOfChange       (2)=+4.0d0                             &
-           &                           *Pi                                &
-           &                           *gravitationalConstantGalacticus   &
-           &                           *(                                 &
-           &                             +densityDarkMatter               &
-           &                             +densityBaryons                  &
-           &                            )
-      if (radius > 0.0d0)                                                 &
-           & propertiesRateOfChange(2)=+propertiesRateOfChange(2)         &
-           &                           -2.0d0                             &
-           &                           *properties            (2)         &
-           &                           /radius
-      propertiesRateOfChange       (3)=+4.0d0                             &
-           &                           *Pi                                &
-           &                           *radius**2                         &
-           &                           *densityDarkMatter
-      sidmIsothermalODEs              = GSL_Success
-      return
-    end function sidmIsothermalODEs
-    
   end subroutine sidmIsothermalComputeSolution
+      
+  double precision function sidmIsothermalFitMetric(propertiesCentral)
+    !!{
+    Evaluate the fit metric.
+    !!}
+    use :: Interface_GSL, only : GSL_Success
+    implicit none
+    double precision, intent(in   ), dimension(:)               :: propertiesCentral
+    double precision               , dimension(propertyCount+1) :: properties
+    double precision                                            :: radius           , density, &
+         &                                                         mass
+    integer                                                     :: status
+
+    ! Extract current parameters.
+    densityCentral           =exp(propertiesCentral(1)                                       )           *densityInteraction
+    velocityDispersionCentral=max(propertiesCentral(2),velocityDispersionDimensionlessMinimum)*velocityDispersionInteraction
+    ! Solve the ODE to r₁.
+    radius    =fractionRadiusInitial*radiusInteraction
+    properties=0.0d0
+    call odeSolver_%solve(radius,radiusInteraction,properties,status=status)
+    if (status == GSL_Success) then
+       ! Extract density and mass at r₁.
+       density=+densityCentral                    &
+            &  *exp(                              &
+            &       -properties(1)                &
+            &       /velocityDispersionCentral**2 &
+            &      )
+       mass     =+   properties(3)
+       ! Evaluate the fit metric.
+       sidmIsothermalFitMetric=+(density/densityInteraction-1.0d0)**2 &
+            &                  +(   mass/   massInteraction-1.0d0)**2
+    else
+       ! ODE integration failed - return a very bad fit metric.
+       sidmIsothermalFitMetric=+    1.0d2
+    end if
+    return
+  end function sidmIsothermalFitMetric
   
+  integer function sidmIsothermalODEs(radius,properties,propertiesRateOfChange)
+    !!{
+    Define the ODE system to solve for isothermal self-interacting dark matter cores.
+    !!}
+    use :: Functions_Global                , only : galacticStructureDensity_
+    use :: Galactic_Structure_Options      , only : massTypeBaryonic
+    use :: Interface_GSL                   , only : GSL_Success
+    use :: Numerical_Constants_Math        , only : Pi
+    use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
+    implicit none
+    double precision, intent(in   )               :: radius
+    double precision, intent(in   ), dimension(:) :: properties
+    double precision, intent(  out), dimension(:) :: propertiesRateOfChange
+    double precision                              :: densityDarkMatter     , densityBaryons
+
+    densityDarkMatter               =+densityCentral                    &
+         &                           *exp(                              &
+         &                                -max(properties(1),0.0d0)     &
+         &                                /velocityDispersionCentral**2 &
+         &                               )
+    densityBaryons                  =+galacticStructureDensity_(self_%galacticStructure_,node_,position=[radius,0.0d0,0.0d0],massType=massTypeBaryonic)
+    propertiesRateOfChange       (1)=+properties(2)
+    propertiesRateOfChange       (2)=+4.0d0                             &
+         &                           *Pi                                &
+         &                           *gravitationalConstantGalacticus   &
+         &                           *(                                 &
+         &                             +densityDarkMatter               &
+         &                             +densityBaryons                  &
+         &                            )
+    if (radius > 0.0d0)                                                 &
+         & propertiesRateOfChange(2)=+propertiesRateOfChange(2)         &
+         &                           -2.0d0                             &
+         &                           *properties            (2)         &
+         &                           /radius
+    propertiesRateOfChange       (3)=+4.0d0                             &
+         &                           *Pi                                &
+         &                           *radius**2                         &
+         &                           *densityDarkMatter
+    sidmIsothermalODEs              = GSL_Success
+    return
+  end function sidmIsothermalODEs
+    
   double precision function sidmIsothermalDensity(self,node,radius)
     !!{
     Returns the density (in $M_\odot$ Mpc$^{-3}$) in the dark matter profile of {\normalfont \ttfamily node} at the given

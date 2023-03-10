@@ -277,7 +277,8 @@ contains
          &                                                                                             z0
     double precision                                                                                :: x
     type            (multiDMinimizer                   )                              , allocatable :: minimizer_
-    integer                                                                                         :: countXi                    , count
+    integer                                                                                         :: countXi                    , count                      , &
+         &                                                                                             status
     integer         (c_size_t                          )                                            :: i                          , j                          , &
          &                                                                                             iteration
     logical                                                                                         :: converged                  , retabulate
@@ -385,7 +386,7 @@ contains
           do j=1,countRadii
              x         =0.0d0
              properties=0.0d0
-             call odeSolver_%solve(x,self%radiiDimensionless(j),properties)
+             call odeSolver_%solve(x,self%radiiDimensionless(j),properties,status=status)
              self%densityProfileDimensionless(j,i)=+y0(i)                 &
                   &                                *exp(                  &
                   &                                     -properties(1)    &
@@ -433,12 +434,14 @@ contains
     !!{
     Evaluate the fit metric.
     !!}
+    use :: Interface_GSL, only : GSL_Success
     implicit none
     double precision, intent(in   ), dimension(:)               :: propertiesCentral
     double precision, parameter                                 :: x1               =1.0d0
     double precision               , dimension(propertyCount+1) :: properties
     double precision                                            :: x                      , y1, &
          &                                                         m1
+    integer                                                     :: status
 
     ! Extract current parameters to submodule-scope.
     y0_=exp(propertiesCentral(1))
@@ -446,17 +449,21 @@ contains
     ! Solve the ODE to x₁.
     x         =0.0d0
     properties=0.0d0
-    call odeSolver_%solve(x,x1,properties)
-    ! Extract density and mass at x₁.
-    y1     =+y0_                   &
-         &  *exp(                  &
-         &       -properties(1)    &
-         &       /z0_          **2 &
-         &      )
-    m1     =+     properties(3)
-    ! Evaluate the fit metric.
-    sidmIsothermalDimensionlessFitMetric=+(y1-1.0d0)**2 &
-         &                               +(m1-1.0d0)**2
+    call odeSolver_%solve(x,x1,properties,status=status)
+    if (status == GSL_Success) then
+       ! Extract density and mass at x₁.
+       y1     =+y0_                   &
+            &  *exp(                  &
+            &       -properties(1)    &
+            &       /z0_          **2 &
+            &      )
+       m1     =+     properties(3)
+       ! Evaluate the fit metric.
+       sidmIsothermalDimensionlessFitMetric=+(y1-1.0d0)**2 &
+            &                               +(m1-1.0d0)**2
+    else
+       sidmIsothermalDimensionlessFitMetric=+    1.0d2
+    end if
     return
   end function sidmIsothermalDimensionlessFitMetric
   
