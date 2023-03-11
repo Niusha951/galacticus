@@ -795,7 +795,7 @@ contains
        ! No exact match exists, look for approximate matches.
        do i=1,self%radiusPreviousIndexMaximum
           iMod=modulo(self%radiusPreviousIndex-i,adiabaticGnedin2004StoreCount)+1
-          if (abs(radius-self%radiusPrevious(iMod))/self%radiusPrevious(iMod) < self%toleranceRelative) then
+          if (abs(radius-self%radiusPrevious(iMod)) < self%toleranceRelative*self%radiusPrevious(iMod)) then
              j=iMod
              exit
           end if

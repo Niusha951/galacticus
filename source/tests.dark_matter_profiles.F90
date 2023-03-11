@@ -28,23 +28,23 @@ program Test_Dark_Matter_Profiles
   use :: Calculations_Resets         , only : Calculations_Reset
   use :: Cosmology_Parameters        , only : cosmologyParametersSimple
   use :: Cosmology_Functions         , only : cosmologyFunctionsMatterLambda
-  use :: Dark_Matter_Particles       , only : darkMatterParticleSelfInteractingDarkMatterConstant          , darkMatterParticleCDM
+  use :: Dark_Matter_Particles       , only : darkMatterParticleSelfInteractingDarkMatterConstant           , darkMatterParticleSIDMVelocityDependent, darkMatterParticleCDM
   use :: Dark_Matter_Halo_Scales     , only : darkMatterHaloScaleVirialDensityContrastDefinition
-  use :: Dark_Matter_Profiles_DMO    , only : darkMatterProfileDMOBurkert                                   , darkMatterProfileDMONFW             , darkMatterProfileDMOFiniteResolution, darkMatterProfileDMOSIDMCoreNFW, &
+  use :: Dark_Matter_Profiles_DMO    , only : darkMatterProfileDMOBurkert                                   , darkMatterProfileDMONFW                , darkMatterProfileDMOFiniteResolution, darkMatterProfileDMOSIDMCoreNFW, &
        &                                      darkMatterProfileDMOSIDMIsothermal
   use :: Dark_Matter_Profiles        , only : darkMatterProfileSIDMIsothermal                               , darkMatterProfileAdiabaticGnedin2004
   use :: Dark_Matter_Profiles_Generic, only : nonAnalyticSolversNumerical
   use :: Galactic_Structure          , only : galacticStructureStandard
-  use :: Virial_Density_Contrast     , only : virialDensityContrastSphericalCollapseClsnlssMttrCsmlgclCnstnt, virialDensityContrastFixed          , fixedDensityTypeCritical
+  use :: Virial_Density_Contrast     , only : virialDensityContrastSphericalCollapseClsnlssMttrCsmlgclCnstnt, virialDensityContrastFixed             , fixedDensityTypeCritical
   use :: Events_Hooks                , only : eventsHooksInitialize
   use :: Functions_Global_Utilities  , only : Functions_Global_Set
   use :: Display                     , only : displayVerbositySet                                           , verbosityLevelStandard
-  use :: Galacticus_Nodes            , only : nodeClassHierarchyFinalize                                    , nodeClassHierarchyInitialize        , nodeComponentBasic                   , nodeComponentDarkMatterProfile, &
+  use :: Galacticus_Nodes            , only : nodeClassHierarchyFinalize                                    , nodeClassHierarchyInitialize           , nodeComponentBasic                   , nodeComponentDarkMatterProfile, &
           &                                   treeNode                                                      , nodeComponentSpheroid
   use :: Input_Parameters            , only : inputParameters
-  use :: ISO_Varying_String          , only : varying_string                                                , assignment(=)                       , var_str
-  use :: Node_Components             , only : Node_Components_Initialize                                    , Node_Components_Thread_Initialize   , Node_Components_Thread_Uninitialize  , Node_Components_Uninitialize
-  use :: Unit_Tests                  , only : Assert                                                        , Unit_Tests_Begin_Group              , Unit_Tests_End_Group                 , Unit_Tests_Finish
+  use :: ISO_Varying_String          , only : varying_string                                                , assignment(=)                          , var_str
+  use :: Node_Components             , only : Node_Components_Initialize                                    , Node_Components_Thread_Initialize      , Node_Components_Thread_Uninitialize  , Node_Components_Uninitialize
+  use :: Unit_Tests                  , only : Assert                                                        , Unit_Tests_Begin_Group                 , Unit_Tests_End_Group                 , Unit_Tests_Finish
   implicit none
   type            (treeNode                                                      ), pointer      :: node                                                                                                , &
        &                                                                                            nodePippin                                                                                          , &
@@ -73,6 +73,7 @@ program Test_Dark_Matter_Profiles
   type            (darkMatterParticleCDM                                         ), pointer      :: darkMatterParticleCDM_
   type            (darkMatterParticleSelfInteractingDarkMatterConstant           ), pointer      :: darkMatterParticleSelfInteractingDarkMatter_                                                        , &
        &                                                                                            darkMatterParticleSelfInteractingDarkMatterJiang_
+  type            (darkMatterParticleSIDMVelocityDependent                       ), pointer      :: darkMatterParticleSelfInteractingDarkMatterVelocityDependent_
   type            (darkMatterProfileDMOBurkert                                   ), pointer      :: darkMatterProfileDMOBurkert_
   type            (darkMatterProfileDMONFW                                       ), pointer      :: darkMatterProfileDMONFW_                                                                            , &
        &                                                                                            darkMatterProfileDMONFWPippin_
@@ -81,7 +82,8 @@ program Test_Dark_Matter_Profiles
   type            (darkMatterProfileDMOSIDMCoreNFW                               ), pointer      :: darkMatterProfileDMOSIDMCoreNFW_
   type            (darkMatterProfileDMOSIDMIsothermal                            ), pointer      :: darkMatterProfileDMOSIDMIsothermal_
   type            (darkMatterProfileAdiabaticGnedin2004                          ), pointer      :: darkMatterProfileAdiabaticPippin_
-  type            (darkMatterProfileSIDMIsothermal                               ), pointer      :: darkMatterProfileSIDMIsothermal_
+  type            (darkMatterProfileSIDMIsothermal                               ), pointer      :: darkMatterProfileSIDMIsothermal_                                                                    , &
+       &                                                                                            darkMatterProfileSIMIsothermalVelocityDependent_
   type            (galacticStructureStandard                                     ), pointer      :: galacticStructureStandard_
   type            (cosmologyParametersSimple                                     ), pointer      :: cosmologyParameters_                                                                                , &
        &                                                                                            cosmologyParametersPippin_
@@ -106,27 +108,29 @@ program Test_Dark_Matter_Profiles
   call Node_Components_Initialize       (parameters)
   call Node_Components_Thread_Initialize(parameters)
   ! Build required objects.
-  allocate(cosmologyParameters_                             )
-  allocate(cosmologyFunctions_                              )
-  allocate(virialDensityContrast_                           )
-  allocate(darkMatterHaloScale_                             )
-  allocate(darkMatterProfileDMOBurkert_                     )
-  allocate(darkMatterProfileDMONFW_                         )
-  allocate(darkMatterProfileDMONFWPippin_                   )
-  allocate(darkMatterProfileDMONFWSeriesExpansion_          )
-  allocate(darkMatterProfileDMOFiniteResolution_            )
-  allocate(darkMatterProfileDMOSIDMCoreNFW_                 )
-  allocate(darkMatterProfileDMOSIDMIsothermal_              )
-  allocate(darkMatterProfileSIDMIsothermal_                 )
-  allocate(darkMatterProfileAdiabaticPippin_                )
-  allocate(galacticStructureStandard_                       )
-  allocate(darkMatterParticleSelfInteractingDarkMatter_     )
-  allocate(darkMatterParticleSelfInteractingDarkMatterJiang_)
-  allocate(darkMatterParticleCDM_                           )
-  allocate(cosmologyParametersPippin_                       )
-  allocate(cosmologyFunctionsPippin_                        )
-  allocate(virialDensityContrastPippin_                     )
-  allocate(darkMatterHaloScalePippin_                       )
+  allocate(cosmologyParameters_                                         )
+  allocate(cosmologyFunctions_                                          )
+  allocate(virialDensityContrast_                                       )
+  allocate(darkMatterHaloScale_                                         )
+  allocate(darkMatterProfileDMOBurkert_                                 )
+  allocate(darkMatterProfileDMONFW_                                     )
+  allocate(darkMatterProfileDMONFWPippin_                               )
+  allocate(darkMatterProfileDMONFWSeriesExpansion_                      )
+  allocate(darkMatterProfileDMOFiniteResolution_                        )
+  allocate(darkMatterProfileDMOSIDMCoreNFW_                             )
+  allocate(darkMatterProfileDMOSIDMIsothermal_                          )
+  allocate(darkMatterProfileSIDMIsothermal_                             )
+  allocate(darkMatterProfileSIMIsothermalVelocityDependent_             )
+  allocate(darkMatterProfileAdiabaticPippin_                            )
+  allocate(galacticStructureStandard_                                   )
+  allocate(darkMatterParticleSelfInteractingDarkMatter_                 )
+  allocate(darkMatterParticleSelfInteractingDarkMatterJiang_            )
+  allocate(darkMatterParticleSelfInteractingDarkMatterVelocityDependent_)
+  allocate(darkMatterParticleCDM_                                       )
+  allocate(cosmologyParametersPippin_                                   )
+  allocate(cosmologyFunctionsPippin_                                    )
+  allocate(virialDensityContrastPippin_                                 )
+  allocate(darkMatterHaloScalePippin_                                   )
   !![
   <referenceConstruct object="cosmologyParameters_"        >
    <constructor>
@@ -436,6 +440,15 @@ program Test_Dark_Matter_Profiles
      &amp;                                             )
    </constructor>
   </referenceConstruct>
+  <referenceConstruct object="darkMatterParticleSelfInteractingDarkMatterVelocityDependent_">
+   <constructor>
+    darkMatterParticleSIDMVelocityDependent            (                                                                                       &amp;
+     &amp;                                              sigma0                              =147.10d0                                        , &amp;
+     &amp;                                              velocityCharacteristic              = 24.33d0                                        , &amp;
+     &amp;                                              darkMatterParticle_                 =darkMatterParticleCDM_                            &amp;
+     &amp;                                             )
+   </constructor>
+  </referenceConstruct>
   <referenceConstruct object="galacticStructureStandard_"                        >
    <constructor>
     galacticStructureStandard                          (                                                                                       &amp;
@@ -504,6 +517,16 @@ program Test_Dark_Matter_Profiles
      &amp;                                              darkMatterProfile_                  =darkMatterProfileAdiabaticPippin_                , &amp;
      &amp;                                              darkMatterHaloScale_                =darkMatterHaloScalePippin_                       , &amp;
      &amp;                                              darkMatterParticle_                 =darkMatterParticleSelfInteractingDarkMatterJiang_, &amp;
+     &amp;                                              galacticStructure_                  =galacticStructureStandard_                         &amp;
+     &amp;                                             )
+   </constructor>
+  </referenceConstruct>
+  <referenceConstruct object="darkMatterProfileSIMIsothermalVelocityDependent_"                  >
+   <constructor>
+    darkMatterProfileSIDMIsothermal                    (                                                                                        &amp;
+     &amp;                                              darkMatterProfile_                  =darkMatterProfileAdiabaticPippin_                , &amp;
+     &amp;                                              darkMatterHaloScale_                =darkMatterHaloScalePippin_                                   , &amp;
+     &amp;                                              darkMatterParticle_                 =darkMatterParticleSelfInteractingDarkMatterVelocityDependent_, &amp;
      &amp;                                              galacticStructure_                  =galacticStructureStandard_                         &amp;
      &amp;                                             )
    </constructor>
@@ -649,6 +672,24 @@ program Test_Dark_Matter_Profiles
        &      relTol=5.0d-2                                                                      &
        &     )
   call Unit_Tests_End_Group()
+  !! Extreme velocity-dependent case. This case has a tiny, massive spheroid, and we fail to find a solution to the isothermal
+  !! model. In this case the solution should revert to the CDM solution.
+  call Unit_Tests_Begin_Group('Velocity dependent case - failed solution')
+  basic    => nodeJiang%basic   ()
+  spheroid => nodeJiang%spheroid()
+  call basic   %            massSet(6.971d+7)
+  call basic   %            timeSet(0.160d+0)
+  call basic   %timeLastIsolatedSet(0.160d+0)
+  call spheroid%     massStellarSet(0.000d+0)
+  call spheroid%         massGasSet(1.000d+7)
+  call spheroid%          radiusSet(1.590d-7)
+  call Calculations_Reset(nodeJiang)
+  call Assert(                                                                                   &
+       &      'central density'                                                                , &
+       &      darkMatterProfileSIMIsothermalVelocityDependent_%density(nodeJiang,radius=1.0d-3), &
+       &      darkMatterProfileAdiabaticPippin_               %density(nodeJiang,radius=1.0d-3), &
+       &      relTol=2.0d-1                                                                      &
+       &     )  
   call Unit_Tests_End_Group()
   ! End unit tests.
   call Unit_Tests_End_Group()

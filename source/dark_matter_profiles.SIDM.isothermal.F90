@@ -60,6 +60,7 @@
      double precision                              :: velocityDispersionCentral
      class           (*             ), pointer     :: galacticStructure_        => null()
      type            (interpolator  ), allocatable :: densityProfile                     , massProfile
+     logical                                       :: modelSuccess
    contains
      !![
      <methods>
@@ -236,11 +237,14 @@ contains
     use :: Numerical_Constants_Math        , only : Pi
     use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
     use :: Multidimensional_Minimizer      , only : multiDMinimizer
+    use :: Error                           , only : Error_Report
+    use :: Display                         , only : displayMessage                 , displayIndent  , displayUnindent, verbosityLevelSilent
     implicit none
     class           (darkMatterProfileSIDMIsothermal), intent(inout)             , target :: self
     type            (treeNode                       ), intent(inout)             , target :: node
     integer                                          , parameter                          :: countTable          =1000
     double precision                                 , parameter                          :: odeToleranceAbsolute=1.0d-3, odeToleranceRelative=1.0d-3
+    double precision                                 , parameter                          :: fitMetricMaximum    =1.0d-2
     double precision                                 , dimension(propertyCount+1)         :: properties                 , propertyScales
     double precision                                 , dimension(countTable     )         :: radiusTable                , densityTable               , &
          &                                                                                   massTable
@@ -248,7 +252,9 @@ contains
     type            (multiDMinimizer                )                                     :: minimizer_
     integer                                                                               :: i                          , iteration
     logical                                                                               :: converged
-    double precision                                                                      :: radius
+    double precision                                                                      :: radius                     , fitMetric
+    character       (len=16                         )                                     :: label                      , labelRadius                , &
+         &                                                                                   labelDensity               , labelMass
 
     ! Find the interaction radius.
     radiusInteraction            =self%radiusInteraction                          (node                  )
@@ -278,26 +284,56 @@ contains
     locationMinimum          =minimizer_%x()
     densityCentral           =exp(locationMinimum(1)                                       )           *densityInteraction
     velocityDispersionCentral=max(locationMinimum(2),velocityDispersionDimensionlessMinimum)*velocityDispersionInteraction
-    ! Tabulate solutions for density and mass.
-    radiusTable=Make_Range(rangeMinimum=0.0d0,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLinear)
-    densityTable(1)=densityCentral
-    massTable   (1)=0.0d0
-    do i=2,countTable
-       radius    =fractionRadiusInitial*radiusInteraction
-       properties=0.0d0
-       call odeSolver_%solve(radius,radiusTable(i),properties)
-       densityTable(i)=+densityCentral                    &
-            &          *exp(                              &
-            &               -properties(1)                &
-            &               /velocityDispersionCentral**2 &
-            &              )
-       massTable   (i)=+     properties(3)
-    end do
-    allocate(self%densityProfile)
-    allocate(self%   massProfile)
-    self%           densityProfile=interpolator(radiusTable,             densityTable)
-    self%              massProfile=interpolator(radiusTable,                massTable)
-    self%velocityDispersionCentral=         abs(            velocityDispersionCentral)
+    fitMetric                =sidmIsothermalFitMetric(locationMinimum)
+    self%modelSuccess        =fitMetric < fitMetricMaximum
+    ! Tabulate solutions for density and mass if the model was successful.
+    if (self%modelSuccess) then
+       radiusTable    =Make_Range(rangeMinimum=0.0d0,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLinear)
+       densityTable(1)=densityCentral
+       massTable   (1)=0.0d0
+       do i=2,countTable
+          radius    =fractionRadiusInitial*radiusInteraction
+          properties=0.0d0
+          call odeSolver_%solve(radius,radiusTable(i),properties)
+          densityTable(i)=+densityCentral                    &
+               &          *exp(                              &
+               &               -properties(1)                &
+               &               /velocityDispersionCentral**2 &
+               &              )
+          massTable   (i)=+     properties(3)
+       end do
+       ! Report unphysical solutions.
+       if (any(massTable < 0.0d0 .or. densityTable <= 0.0d0)) then
+          call node%serializeASCII()
+          write (label,'(e12.6)') radiusInteraction
+          call displayMessage('rᵢ = '//trim(label),verbosityLevelSilent)
+          write (label,'(e12.6)') densityInteraction
+          call displayMessage('ρᵢ = '//trim(label),verbosityLevelSilent)
+          write (label,'(e12.6)') densityCentral
+          call displayMessage('ρ₀ = '//trim(label),verbosityLevelSilent)
+          write (label,'(e12.6)') massInteraction
+          call displayMessage('mᵢ = '//trim(label),verbosityLevelSilent)
+          write (label,'(e12.6)') velocityDispersionInteraction
+          call displayMessage('σᵢ = '//trim(label),verbosityLevelSilent)
+          write (label,'(e12.6)') velocityDispersionCentral
+          call displayMessage('σ₀ = '//trim(label),verbosityLevelSilent)
+          call displayIndent('Computed profile',verbosityLevelSilent)
+          do i=1,countTable
+             write (labelRadius ,'(e12.6)') radiusTable (i)
+             write (labelMass   ,'(e12.6)') massTable   (i)
+             write (labelDensity,'(e12.6)') densityTable(i)
+             call displayMessage('r, m(r), ρ(r) = '//trim(labelRadius)//', '//trim(labelMass)//', '//trim(labelDensity),verbosityLevelSilent)
+          end do
+          call displayUnindent('done',verbosityLevelSilent)
+          call Error_Report('unphysical solution - see preceeding report'//{introspection:location})
+       end if
+       ! Construct interpolators.
+       allocate(self%densityProfile)
+       allocate(self%   massProfile)
+       self%           densityProfile=interpolator(radiusTable,             densityTable)
+       self%              massProfile=interpolator(radiusTable,                massTable)
+       self%velocityDispersionCentral=         abs(            velocityDispersionCentral)
+    end if
     return
   end subroutine sidmIsothermalComputeSolution
       
@@ -395,7 +431,11 @@ contains
     else
        if (node%uniqueID()                /= self%uniqueIDPrevious) call self%calculationReset(node)
        if (self%velocityDispersionCentral <= 0.0d0                ) call self%computeSolution(node)
-       sidmIsothermalDensity=self%densityProfile%interpolate(radius)
+       if (self%modelSuccess) then
+          sidmIsothermalDensity=self%densityProfile%interpolate(radius)
+       else
+          sidmIsothermalDensity=self%darkMatterProfile_%density(node,radius)
+       end if
     end if
     return
   end function sidmIsothermalDensity
@@ -415,7 +455,11 @@ contains
     else
        if (node%uniqueID()                /= self%uniqueIDPrevious) call self%calculationReset(node)
        if (self%velocityDispersionCentral <= 0.0d0                ) call self%computeSolution(node)
-       sidmIsothermalDensityLogSlope=self%densityProfile%derivative(radius)*radius/self%densityProfile%interpolate(radius)
+       if (self%modelSuccess) then
+          sidmIsothermalDensityLogSlope=self%densityProfile%derivative(radius)*radius/self%densityProfile%interpolate(radius)
+       else
+          sidmIsothermalDensityLogSlope=self%darkMatterProfile_%densityLogSlope(node,radius)
+       end if
     end if
     return
   end function sidmIsothermalDensityLogSlope
@@ -435,7 +479,11 @@ contains
     else
        if (node%uniqueID()                /= self%uniqueIDPrevious) call self%calculationReset(node)
        if (self%velocityDispersionCentral <= 0.0d0                ) call self%computeSolution(node)
-       sidmIsothermalEnclosedMass=self%massProfile%interpolate(radius)
+       if (self%modelSuccess) then
+          sidmIsothermalEnclosedMass=self%massProfile%interpolate(radius)
+       else
+          sidmIsothermalEnclosedMass=self%darkMatterProfile_%enclosedMass(node,radius)
+       end if
     end if
     return
   end function sidmIsothermalEnclosedMass
@@ -488,18 +536,65 @@ contains
     Returns the potential (in (km/s)$^2$) in the dark matter profile of {\normalfont \ttfamily node} at the given {\normalfont
     \ttfamily radius} (given in units of Mpc).
     !!}
+    use :: Error, only : Error_Report
     implicit none
     class           (darkMatterProfileSIDMIsothermal  ), intent(inout), target   :: self
     type            (treeNode                         ), intent(inout), target   :: node
     double precision                                   , intent(in   )           :: radius
     type            (enumerationStructureErrorCodeType), intent(  out), optional :: status
-
+    double precision                                                             :: density     , densityInteraction
+    character       (len=18                           )                          :: labelDensity, labelDensityInteraction, &
+         &                                                                          labelRadius , labelRadiusInteraction , &
+         &                                                                          label       , joiner
+    
     if (radius > self%radiusInteraction(node)) then
        sidmIsothermalPotential=self%darkMatterProfile_%potential(node,radius)
     else
        if (node%uniqueID()                /= self%uniqueIDPrevious) call self%calculationReset(node)
        if (self%velocityDispersionCentral <= 0.0d0                ) call self%computeSolution(node)
-       sidmIsothermalPotential=self%darkMatterProfile_%potential(node,self%radiusInteraction(node))-self%velocityDispersionCentral**2*log(self%densityProfile%interpolate(radius)/self%densityProfile%interpolate(self%radiusInteraction(node)))
+       if (self%modelSuccess) then
+          density           =self%densityProfile%interpolate(     radius                 )
+          densityInteraction=self%densityProfile%interpolate(self%radiusInteraction(node))
+          if     (                                        &
+               &        density                  <= 0.0d0 &
+               &  .or.                                    &
+               &        densityInteraction       <= 0.0d0 &
+               &  .or.                                    &
+               &   self% radiusInteraction(node) <= 0.0d0 &
+               & ) then
+             call node%serializeASCII()
+             joiner=""
+             write (labelDensity           ,'(e14.6)') density
+             write (labelDensityInteraction,'(e14.6)') densityInteraction
+             write (labelRadius            ,'(e14.6)') radius
+             write (labelRadiusInteraction ,'(e14.6)') self%radiusInteraction(node)
+             if     (                                        &
+                  &        density                  <= 0.0d0 &
+                  &  .or.                                    &
+                  &        densityInteraction       <= 0.0d0 &
+                  & ) then
+                label="density"
+                joiner=","
+             end if
+             if (self%radiusInteraction(node) <= 0.0d0) label=trim(label)//trim(joiner)//"radius"
+             call Error_Report(                                                          &
+                  &            'non-physical '//trim(label                 )//char(10)// &
+                  &            '   r  = '     //trim(labelRadius           )//char(10)// &
+                  &            '   rᵢ = '     //trim(labelRadiusInteraction)//char(10)//  &
+                  &            '   ρ  = '     //trim(labelDensity          )//char(10)// &
+                  &            '   ρᵢ = '     //trim(labelDensityInteraction)          // &
+                  &            {introspection:location}                                  &
+                  &           )
+          end if
+          sidmIsothermalPotential=+self%darkMatterProfile_%potential                (node,self%radiusInteraction(node))    &
+               &                  -self                   %velocityDispersionCentral                                   **2 &
+               &                  *log(                                                                                    &
+               &                       +density                                                                            &
+               &                       /densityInteraction                                                                 &
+               &                      )
+       else
+          sidmIsothermalPotential=self%darkMatterProfile_%potential(node,radius)
+       end if
     end if
     return
   end function sidmIsothermalPotential
