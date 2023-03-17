@@ -341,9 +341,20 @@ contains
     class           (satelliteEvaporationSIDMKummer2018         ), intent(inout) :: self
     double precision                                             , intent(in   ) :: x
     double precision                                             , intent(in   ) :: speedOrbital
+    double precision                                                             :: q, velocityCharacteristic = 24.33d0, xCritical = 1.0d0
 
-    if (speedOrbital > self%vMaximum .or. speedOrbital < self%vMinimum) call self%tabulate(1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
-    kummer2018EvaporationFactor=self%evaporationFactor_%interpolate(x,speedOrbital)
+    if (x > self%xMaximum .or. speedOrbital > self%vMaximum .or. speedOrbital < self%vMinimum) then 
+       if (x < xCritical) call self%tabulate(x+1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
+    end if 
+    if (x < xCritical) then
+       kummer2018EvaporationFactor=self%evaporationFactor_%interpolate(x,speedOrbital)
+    else
+       kummer2018EvaporationFactor=0.0d0
+    !!{
+    If we change xCritical to 100 then this evaaporation factor should be -1.
+    !!}
+    end if 
+
     return
   end function kummer2018EvaporationFactor
 

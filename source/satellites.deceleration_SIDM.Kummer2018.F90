@@ -347,9 +347,18 @@ contains
     class           (satelliteDecelerationSIDMKummer2018         ), intent(inout) :: self
     double precision                                              , intent(in   ) :: x
     double precision                                              , intent(in   ) :: speedOrbital
+    double precision                                                              :: q, velocityCharacteristic = 24.33d0, xCritical = 100.0d0
 
-    if (x > self%xMaximum .or. speedOrbital > self%vMaximum .or. speedOrbital < self%vMinimum) call self%tabulate(x+1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
-    kummer2018DecelerationFactor=self%decelerationFactor_%interpolate(x,speedOrbital)
+    if (x > self%xMaximum .or. speedOrbital > self%vMaximum .or. speedOrbital < self%vMinimum) then 
+       if (x < xCritical) call self%tabulate(x+1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
+    end if
+    if (x < xCritical) then
+       kummer2018DecelerationFactor=self%decelerationFactor_%interpolate(x,speedOrbital)
+    else
+       q = speedOrbital/velocityCharacteristic
+       kummer2018DecelerationFactor = 1.0d0 - sqrt(2.0d0)* (1.0d0+q**2)*((2.0d0*sqrt(2.0d0)/(3.0d0*x**2))-((12.0d0*sqrt(2.0d0) - (8.0d0*sqrt(2.0d0)*q**2))/(15.0d0*x**4)))   
+    end if 
+
     return
   end function kummer2018DecelerationFactor
 

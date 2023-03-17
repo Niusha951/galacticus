@@ -1,8 +1,8 @@
 #!/bin/bash
-#PBS -N SIDM_test2
+#PBS -N SIDM_test1
 #PBS -l nodes=1:ppn=16
 #PBS -j oe
-#PBS -o outputs/multi_SIDM_test2_16mergerTree.log
+#PBS -o outputs/multi_SIDM_test1_16mergerTree.log
 #PBS -V
 #PBS -m abe
 #PBS -M nahvazi@carnegiescience.edu

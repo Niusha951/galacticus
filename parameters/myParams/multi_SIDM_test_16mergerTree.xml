@@ -496,7 +496,7 @@
   </outputTimes>
 
   <!-- Output file -->
-  <outputFileName value="outputs/multi_SIDM_res7_test2_16mergerTree.hdf5"/>
+  <outputFileName value="outputs/multi_SIDM_res7_test1_16mergerTree.hdf5"/>
 
   <!-- Output properties -->
   <nodePropertyExtractor value="multi">

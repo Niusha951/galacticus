@@ -35,10 +35,10 @@ program Tests_SIDM_evaporation_deceleration_factors
   use :: Display                     , only : displayVerbositySet           , verbosityLevelStandard
   use :: Unit_Tests                  , only : Assert                        , Unit_Tests_Begin_Group         , Unit_Tests_End_Group, Unit_Tests_Finish
   implicit none
-  double precision                                 , dimension(3), parameter    :: velocity               =[14.0d0, 100.0d0, 24.33d0]
-  double precision                                 , dimension(3), parameter    :: x                      =[0.5d0, 0.5d0, 0.5d0]
-  double precision                                 , dimension(3), parameter    :: evaporationFactorCheck =[0.592163d0, 0.168609d0, 0.555556d0]
-  double precision                                 , dimension(3), parameter    :: decelerationFactorCheck =[0.131778d0, 0.0766487d0, 0.129266d0]
+  double precision                                 , dimension(6), parameter    :: velocity               =[14.0d0, 100.0d0, 24.33d0, 24.33d0, 24.33d0, 100.0d0]
+  double precision                                 , dimension(6), parameter    :: x                      =[0.5d0, 0.5d0, 0.5d0, 1.5d0, 100.0d0, 100.0d0]
+  double precision                                 , dimension(6), parameter    :: evaporationFactorCheck =[0.592163d0, 0.168609d0, 0.555556d0, -0.345794d0, -0.99975d0, -0.998805d0]
+  double precision                                 , dimension(6), parameter    :: decelerationFactorCheck =[0.131778d0, 0.0766487d0, 0.129266d0, 0.580017d0, 0.999833d0, 0.998805d0]
   type            (darkMatterProfileDMOIsothermal ), pointer                    :: darkMatterProfileIsothermal_
   type            (galacticStructureStandard      ), pointer                    :: galacticStructureStandard_
   type            (darkMatterParticleSIDMVelocityDependent)                     :: darkMatterParticleSIDM_
