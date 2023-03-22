@@ -56,11 +56,12 @@
      A dark matter halo profile class implementing profiles for self-interacting dark matter following the ``isothermal'' model of Jiang et al. (2022).
      !!}
      private
-     integer         (kind=kind_int8)              :: uniqueIDPrevious
-     double precision                              :: velocityDispersionCentral
-     class           (*             ), pointer     :: galacticStructure_        => null()
-     type            (interpolator  ), allocatable :: densityProfile                     , massProfile
-     logical                                       :: modelSuccess
+     integer         (kind=kind_int8)               :: uniqueIDPrevious                   , uniqueIDLast
+     double precision                               :: velocityDispersionCentral
+     double precision                , dimension(2) :: locationMinimumLast
+     class           (*             ), pointer      :: galacticStructure_        => null()
+     type            (interpolator  ), allocatable  :: densityProfile                     , massProfile
+     logical                                        :: modelSuccess
    contains
      !![
      <methods>
@@ -167,6 +168,7 @@ contains
        call Error_Report('SIDM isothermal dark matter profile expects a self-interacting dark matter particle'//{introspection:location})
     end select
     self%uniqueIDPrevious    =-1_kind_int8
+    self%uniqueIDLast        =-1_kind_int8
     self%genericLastUniqueID =-1_kind_int8
     self%uniqueIDPreviousSIDM=-1_kind_int8
     return
@@ -249,6 +251,7 @@ contains
     double precision                                 , dimension(countTable     )         :: radiusTable                , densityTable               , &
          &                                                                                   massTable
     double precision                                 , dimension(propertyCount  )         :: locationMinimum
+    double precision                                 , dimension(2              )         :: xStart                     , stepSize
     type            (multiDMinimizer                )                                     :: minimizer_
     integer                                                                               :: i                          , iteration
     logical                                                                               :: converged
@@ -273,7 +276,20 @@ contains
     self_ => self
     node_ => node
     ! Seek the solution.
-    call minimizer_%set(x=[0.0d0,1.0d0],stepSize=[1.0d0,1.0d0])
+    if (node%uniqueID() == self%uniqueIDLast) then
+       ! This is the same node as we last solved for. It may have changed since the last time, but likely those changes are
+       ! small. Therefore, use the previous solution as a starting point, along with a small step size as we expect to be close to
+       ! the correct solution.
+       xStart           =self%locationMinimumLast
+       stepSize         =[1.0d-2,1.0d-2]
+    else
+       ! This is a different node as we last solved for. Start from a generic point and use a large step size to allow us to find
+       ! the solution.
+       xStart           =[0.0d0,1.0d0]
+       stepSize         =[1.0d0,1.0d0]
+       self%uniqueIDLast=node%uniqueID()
+    end if
+    call minimizer_%set(x=xStart,stepSize=stepSize)
     iteration=0
     converged=.false.
     do while (.not.converged .and. iteration < 100)
@@ -282,6 +298,7 @@ contains
        converged=minimizer_%testSize(toleranceAbsolute=1.0d-3)
     end do
     locationMinimum          =minimizer_%x()
+    self%locationMinimumLast =locationMinimum
     densityCentral           =exp(locationMinimum(1)                                       )           *densityInteraction
     velocityDispersionCentral=max(locationMinimum(2),velocityDispersionDimensionlessMinimum)*velocityDispersionInteraction
     fitMetric                =sidmIsothermalFitMetric(locationMinimum)
@@ -291,9 +308,14 @@ contains
        radiusTable    =Make_Range(rangeMinimum=0.0d0,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLinear)
        densityTable(1)=densityCentral
        massTable   (1)=0.0d0
+       properties     =0.0d0
        do i=2,countTable
-          radius    =fractionRadiusInitial*radiusInteraction
-          properties=0.0d0
+          if (i == 2) then
+             ! Start from a small, but finite radius.
+             radius=fractionRadiusInitial*radiusInteraction
+          else
+             radius=radiusTable(i-1)             
+          end if
           call odeSolver_%solve(radius,radiusTable(i),properties)
           densityTable(i)=+densityCentral                    &
                &          *exp(                              &
