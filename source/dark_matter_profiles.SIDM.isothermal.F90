@@ -235,6 +235,7 @@ contains
     !!{
     Compute a solution for the isothermal core of an SIDM halo.
     !!}
+    use :: Table_Labels                    , only : extrapolationTypeFix
     use :: Numerical_Ranges                , only : Make_Range                     , rangeTypeLinear
     use :: Numerical_Constants_Math        , only : Pi
     use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
@@ -352,8 +353,8 @@ contains
        ! Construct interpolators.
        allocate(self%densityProfile)
        allocate(self%   massProfile)
-       self%           densityProfile=interpolator(radiusTable,             densityTable)
-       self%              massProfile=interpolator(radiusTable,                massTable)
+       self%           densityProfile=interpolator(radiusTable,             densityTable,extrapolationType=extrapolationTypeFix)
+       self%              massProfile=interpolator(radiusTable,                massTable,extrapolationType=extrapolationTypeFix)
        self%velocityDispersionCentral=         abs(            velocityDispersionCentral)
     end if
     return
