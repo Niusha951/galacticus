@@ -695,6 +695,12 @@ program Test_Dark_Matter_Profiles
   call Unit_Tests_End_Group()
   call Unit_Tests_Finish   ()
   ! Uninitialize node components.
+  call node      %destroy()
+  call nodeJiang %destroy()
+  call nodePippin%destroy()
+  deallocate(node      )
+  deallocate(nodeJiang ) 
+  deallocate(nodePippin)
   call Node_Components_Thread_Uninitialize()
   call Node_Components_Uninitialize       ()
   call nodeClassHierarchyFinalize         ()
