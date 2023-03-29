@@ -326,7 +326,6 @@ contains
                &              )
           massTable   (i)=+     properties(3)
        end do
-       deallocate(odeSolver_)
        ! Report unphysical solutions.
        if (any(massTable < 0.0d0 .or. densityTable <= 0.0d0)) then
           call node%serializeASCII()
@@ -359,6 +358,7 @@ contains
        self%              massProfile=interpolator(radiusTable,                massTable,extrapolationType=extrapolationTypeFix)
        self%velocityDispersionCentral=         abs(            velocityDispersionCentral)
     end if
+    deallocate(odeSolver_)
     return
   end subroutine sidmIsothermalComputeSolution
       
