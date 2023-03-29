@@ -103,13 +103,13 @@
   end interface darkMatterProfileSIDMIsothermal
   
   ! Sub-module-scope objects used in solving for the SIDM density profile.
-  class           (darkMatterProfileSIDMIsothermal), pointer   :: self_
-  type            (treeNode                       ), pointer   :: node_
-  type            (odeSolver                      )            :: odeSolver_
-  double precision                                             :: densityInteraction          , velocityDispersionInteraction                , radiusInteraction, massInteraction, &
+  class           (darkMatterProfileSIDMIsothermal), pointer     :: self_
+  type            (treeNode                       ), pointer     :: node_
+  type            (odeSolver                      ), allocatable :: odeSolver_
+  double precision                                               :: densityInteraction          , velocityDispersionInteraction                , radiusInteraction, massInteraction, &
        &                                                          densityCentral              , velocityDispersionCentral
-  integer         (c_size_t                       ), parameter :: propertyCount        =2
-  double precision                                 , parameter :: fractionRadiusInitial=1.0d-6, velocityDispersionDimensionlessMinimum=1.0d-3
+  integer         (c_size_t                       ), parameter   :: propertyCount        =2
+  double precision                                 , parameter   :: fractionRadiusInitial=1.0d-6, velocityDispersionDimensionlessMinimum=1.0d-3
   !$omp threadprivate(self_,node_,odeSolver_,densityInteraction,velocityDispersionInteraction,radiusInteraction,massInteraction,densityCentral,velocityDispersionCentral)
   
 contains
@@ -270,6 +270,7 @@ contains
     ! Set ODE solver  scales.
     propertyScales               =[velocityDispersionInteraction**2,velocityDispersionInteraction**2/radiusInteraction,massInteraction]
     ! Construct an ODE solver.
+    allocate(odeSolver_)
     odeSolver_                   =odeSolver      (propertyCount+1,sidmIsothermalODEs     ,toleranceAbsolute=odeToleranceAbsolute,toleranceRelative=odeToleranceRelative,scale=propertyScales)
     ! Construct a minimizer.
     minimizer_                   =multiDMinimizer(propertyCount  ,sidmIsothermalFitMetric                                                                                                   )
@@ -325,6 +326,7 @@ contains
                &              )
           massTable   (i)=+     properties(3)
        end do
+       deallocate(odeSolver_)
        ! Report unphysical solutions.
        if (any(massTable < 0.0d0 .or. densityTable <= 0.0d0)) then
           call node%serializeASCII()
