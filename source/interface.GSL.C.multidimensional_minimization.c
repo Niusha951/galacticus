@@ -52,9 +52,12 @@ const gsl_multimin_fminimizer_type *gsl_multimin_fminimizer_type_get(int i) {
   const gsl_multimin_fminimizer_type *minimizer;
   switch(i) {
   case 6:
-    minimizer = gsl_multimin_fminimizer_nmsimplex2;
+    minimizer = gsl_multimin_fminimizer_nmsimplex;
     break;
   case 7:
+    minimizer = gsl_multimin_fminimizer_nmsimplex2;
+    break;
+  case 8:
     minimizer = gsl_multimin_fminimizer_nmsimplex2rand;
     break;
   default:

@@ -325,8 +325,9 @@ module Multidimensional_Minimizer
   integer, public, parameter :: gsl_multimin_fdfminimizer_vector_bfgs2    =3
   integer, public, parameter :: gsl_multimin_fdfminimizer_vector_bfgs     =4
   integer, public, parameter :: gsl_multimin_fdfminimizer_steepest_descent=5
-  integer, public, parameter :: gsl_multimin_fminimizer_nmsimplex2        =6
-  integer, public, parameter :: gsl_multimin_fminimizer_nmsimplex2rand    =7
+  integer, public, parameter :: gsl_multimin_fminimizer_nmsimplex         =6
+  integer, public, parameter :: gsl_multimin_fminimizer_nmsimplex2        =7
+  integer, public, parameter :: gsl_multimin_fminimizer_nmsimplex2rand    =8
 
   ! Sub-module scope pointer to self for use in wrapper functions.
   class(multiDMinimizer), pointer :: self_
@@ -373,7 +374,7 @@ contains
        ! Get the interpolator type.
        minimizerType_=gsl_multimin_fminimizer_nmsimplex2
        if (present(minimizerType)) minimizerType_=minimizerType
-       if (minimizerType_ <  gsl_multimin_fminimizer_nmsimplex2) call Error_Report('this minimizer type is intended for cases where a gradient function is available'//{introspection:location})
+       if (minimizerType_ <  gsl_multimin_fminimizer_nmsimplex) call Error_Report('this minimizer type is intended for cases where a gradient function is available'//{introspection:location})
        self%minimizerType   =                                         minimizerType_
        self%gslMinimizerType=gsl_multimin_fminimizer_type_get(        minimizerType_                )
        ! Allocate the minimizer object.
