@@ -57,7 +57,8 @@
      !!}
      private
      integer         (kind=kind_int8)               :: uniqueIDPrevious                   , uniqueIDLast
-     double precision                               :: velocityDispersionCentral
+     double precision                               :: velocityDispersionCentral          , radiusTableMinimum, &
+          &                                            massTableMinimum
      double precision                , dimension(2) :: locationMinimumLast
      class           (*             ), pointer      :: galacticStructure_        => null()
      type            (interpolator  ), allocatable  :: densityProfile                     , massProfile
@@ -107,7 +108,7 @@
   type            (treeNode                       ), pointer     :: node_
   type            (odeSolver                      ), allocatable :: odeSolver_
   double precision                                               :: densityInteraction          , velocityDispersionInteraction                , radiusInteraction, massInteraction, &
-       &                                                          densityCentral              , velocityDispersionCentral
+       &                                                            densityCentral              , velocityDispersionCentral
   integer         (c_size_t                       ), parameter   :: propertyCount        =2
   double precision                                 , parameter   :: fractionRadiusInitial=1.0d-6, velocityDispersionDimensionlessMinimum=1.0d-3
   !$omp threadprivate(self_,node_,odeSolver_,densityInteraction,velocityDispersionInteraction,radiusInteraction,massInteraction,densityCentral,velocityDispersionCentral)
@@ -236,29 +237,32 @@ contains
     Compute a solution for the isothermal core of an SIDM halo.
     !!}
     use :: Table_Labels                    , only : extrapolationTypeFix
-    use :: Numerical_Ranges                , only : Make_Range                     , rangeTypeLinear
+    use :: Numerical_Ranges                , only : Make_Range                               , rangeTypeLogarithmic
     use :: Numerical_Constants_Math        , only : Pi
     use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
-    use :: Multidimensional_Minimizer      , only : multiDMinimizer
+    use :: Multidimensional_Minimizer      , only : multiDMinimizer                          , gsl_multimin_fminimizer_nmsimplex2
+    use :: Functions_Global                , only : galacticStructureDensitySphericalAverage_
+    use :: Galactic_Structure_Options      , only : massTypeBaryonic
     use :: Error                           , only : Error_Report
-    use :: Display                         , only : displayMessage                 , displayIndent  , displayUnindent, verbosityLevelSilent
+    use :: Display                         , only : displayMessage                           , displayIndent                    , displayUnindent, verbosityLevelSilent
     implicit none
-    class           (darkMatterProfileSIDMIsothermal), intent(inout)             , target :: self
-    type            (treeNode                       ), intent(inout)             , target :: node
-    integer                                          , parameter                          :: countTable          =1000
-    double precision                                 , parameter                          :: odeToleranceAbsolute=1.0d-3, odeToleranceRelative=1.0d-3
-    double precision                                 , parameter                          :: fitMetricMaximum    =1.0d-2
-    double precision                                 , dimension(propertyCount+1)         :: properties                 , propertyScales
-    double precision                                 , dimension(countTable     )         :: radiusTable                , densityTable               , &
-         &                                                                                   massTable
-    double precision                                 , dimension(propertyCount  )         :: locationMinimum
-    double precision                                 , dimension(2              )         :: xStart                     , stepSize
-    type            (multiDMinimizer                )                                     :: minimizer_
-    integer                                                                               :: i                          , iteration
-    logical                                                                               :: converged
-    double precision                                                                      :: radius                     , fitMetric
-    character       (len=16                         )                                     :: label                      , labelRadius                , &
-         &                                                                                   labelDensity               , labelMass
+    class           (darkMatterProfileSIDMIsothermal), intent(inout)             , target      :: self
+    type            (treeNode                       ), intent(inout)             , target      :: node
+    integer                                          , parameter                               :: countPerDecade      =3
+    double precision                                 , parameter                               :: odeToleranceAbsolute=1.0d-3, odeToleranceRelative=1.0d-3
+    double precision                                 , parameter                               :: fitMetricMaximum    =1.0d-2
+    double precision                                 , dimension(propertyCount+1)              :: properties                 , propertyScales
+    double precision                                 , dimension(:              ), allocatable :: radiusTable                , densityTable               , &
+         &                                                                                        massTable
+    double precision                                 , dimension(propertyCount  )              :: locationMinimum
+    double precision                                 , dimension(2              )              :: xStart                     , stepSize
+    type            (multiDMinimizer                )                                          :: minimizer_
+    integer                                                                                    :: i                          , iteration                  , &
+         &                                                                                        countTable
+    logical                                                                                    :: converged
+    double precision                                                                           :: radius                     , fitMetric
+    character       (len=16                         )                                          :: label                      , labelRadius                , &
+         &                                                                                        labelDensity               , labelMass
 
     ! Find the interaction radius.
     radiusInteraction            =self%radiusInteraction                          (node                  )
@@ -283,7 +287,7 @@ contains
        ! small. Therefore, use the previous solution as a starting point, along with a small step size as we expect to be close to
        ! the correct solution.
        xStart           =self%locationMinimumLast
-       stepSize         =[1.0d-2,1.0d-2]
+       stepSize         =[2.0d-3,2.0d-3]
     else
        ! This is a different node as we last solved for. Start from a generic point and use a large step size to allow us to find
        ! the solution.
@@ -307,14 +311,30 @@ contains
     self%modelSuccess        =fitMetric < fitMetricMaximum
     ! Tabulate solutions for density and mass if the model was successful.
     if (self%modelSuccess) then
-       radiusTable    =Make_Range(rangeMinimum=0.0d0,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLinear)
-       densityTable(1)=densityCentral
-       massTable   (1)=0.0d0
+       self%radiusTableMinimum=max(                                                                                                                                                      &
+            &                      +fractionRadiusInitial                                                                                                                                &
+            &                      *radiusInteraction                                                                                                                                  , &
+            &                      +sqrt(                                                                                                                                                &
+            &                            +velocityDispersionCentral**2                                                                                                                   &
+            &                            /4.0d0                                                                                                                                          &
+            &                            /Pi                                                                                                                                             &
+            &                            /gravitationalConstantGalacticus                                                                                                                &
+            &                            /(                                                                                                                                              &
+            &                              +galacticStructureDensitySphericalAverage_(self_%galacticStructure_,node_,fractionRadiusInitial*radiusInteraction,massType=massTypeBaryonic)  &
+            &                              +densityCentral                                                                                                                               &
+            &                             )                                                                                                                                              &
+            &                           )                                                                                                                                                &
+            &                     )
+       countTable    =int(log10(radiusInteraction/self%radiusTableMinimum)*dble(countPerDecade))+1
+       allocate(radiusTable (countTable))
+       allocate(densityTable(countTable))
+       allocate(massTable   (countTable))
+       radiusTable    =Make_Range(rangeMinimum=self%radiusTableMinimum,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLogarithmic)
        properties     =0.0d0
-       do i=2,countTable
-          if (i == 2) then
+       do i=1,countTable
+          if (i == 1) then
              ! Start from a small, but finite radius.
-             radius=fractionRadiusInitial*radiusInteraction
+             radius=0.5d0*fractionRadiusInitial*radiusInteraction
           else
              radius=radiusTable(i-1)             
           end if
@@ -323,9 +343,10 @@ contains
                &          *exp(                              &
                &               -properties(1)                &
                &               /velocityDispersionCentral**2 &
-               &              )
-          massTable   (i)=+     properties(3)
+               &              )         
+          massTable   (i)=+     properties(3) 
        end do
+       self%massTableMinimum=massTable(1)
        ! Report unphysical solutions.
        if (any(massTable < 0.0d0 .or. densityTable <= 0.0d0)) then
           call node%serializeASCII()
@@ -354,9 +375,9 @@ contains
        ! Construct interpolators.
        allocate(self%densityProfile)
        allocate(self%   massProfile)
-       self%           densityProfile=interpolator(radiusTable,             densityTable,extrapolationType=extrapolationTypeFix)
-       self%              massProfile=interpolator(radiusTable,                massTable,extrapolationType=extrapolationTypeFix)
-       self%velocityDispersionCentral=         abs(            velocityDispersionCentral)
+       self%           densityProfile=interpolator(log(radiusTable),log(densityTable),extrapolationType=extrapolationTypeFix)
+       self%              massProfile=interpolator(log(radiusTable),log(   massTable),extrapolationType=extrapolationTypeFix)
+       self%velocityDispersionCentral=abs(velocityDispersionCentral)
     end if
     deallocate(odeSolver_)
     return
@@ -457,7 +478,7 @@ contains
        if (node%uniqueID()                /= self%uniqueIDPrevious) call self%calculationReset(node)
        if (self%velocityDispersionCentral <= 0.0d0                ) call self%computeSolution(node)
        if (self%modelSuccess) then
-          sidmIsothermalDensity=self%densityProfile%interpolate(radius)
+          sidmIsothermalDensity=exp(self%densityProfile%interpolate(log(max(radius,self%radiusTableMinimum))))
        else
           sidmIsothermalDensity=self%darkMatterProfile_%density(node,radius)
        end if
@@ -481,7 +502,7 @@ contains
        if (node%uniqueID()                /= self%uniqueIDPrevious) call self%calculationReset(node)
        if (self%velocityDispersionCentral <= 0.0d0                ) call self%computeSolution(node)
        if (self%modelSuccess) then
-          sidmIsothermalDensityLogSlope=self%densityProfile%derivative(radius)*radius/self%densityProfile%interpolate(radius)
+          sidmIsothermalDensityLogSlope=self%densityProfile%derivative(log(max(radius,self%radiusTableMinimum)))
        else
           sidmIsothermalDensityLogSlope=self%darkMatterProfile_%densityLogSlope(node,radius)
        end if
@@ -505,7 +526,11 @@ contains
        if (node%uniqueID()                /= self%uniqueIDPrevious) call self%calculationReset(node)
        if (self%velocityDispersionCentral <= 0.0d0                ) call self%computeSolution(node)
        if (self%modelSuccess) then
-          sidmIsothermalEnclosedMass=self%massProfile%interpolate(radius)
+          if (radius < self%radiusTableMinimum) then
+             sidmIsothermalEnclosedMass=self%massTableMinimum*(radius/self%radiusTableMinimum)**3
+          else
+             sidmIsothermalEnclosedMass=exp(self%massProfile%interpolate(log(radius)))
+          end if
        else
           sidmIsothermalEnclosedMass=self%darkMatterProfile_%enclosedMass(node,radius)
        end if
