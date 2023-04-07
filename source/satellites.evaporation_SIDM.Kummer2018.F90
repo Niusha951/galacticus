@@ -42,7 +42,9 @@
      class           (darkMatterProfileDMOClass), pointer     :: darkMatterProfileDMO_       => null()
      class           (galacticStructureClass   ), pointer     :: galacticStructure_          => null()
      type            (interpolator2D           ), allocatable :: evaporationFactor_
-     double precision                                         :: rateScatteringNormalization          , xMaximum, vMaximum, vMinimum
+     double precision                                         :: rateScatteringNormalization          , fractionVelocitySmall, &
+          &                                                      vMinimum                             , vMaximum             , &
+          &                                                      xMaximum
    contains
      !![
      <methods>
@@ -72,18 +74,34 @@ contains
     !!}
     use :: Input_Parameters, only : inputParameter, inputParameters
     implicit none
-    type (satelliteEvaporationSIDMKummer2018)                :: self
-    type (inputParameters                   ), intent(inout) :: parameters
-    class(darkMatterParticleClass           ), pointer       :: darkMatterParticle_
-    class(darkMatterProfileDMOClass         ), pointer       :: darkMatterProfileDMO_
-    class(galacticStructureClass            ), pointer       :: galacticStructure_
-  
+    type            (satelliteEvaporationSIDMKummer2018)                :: self
+    type            (inputParameters                   ), intent(inout) :: parameters
+    class           (darkMatterParticleClass           ), pointer       :: darkMatterParticle_
+    class           (darkMatterProfileDMOClass         ), pointer       :: darkMatterProfileDMO_
+    class           (galacticStructureClass            ), pointer       :: galacticStructure_
+    double precision                                                    :: fractionVelocitySmall
+
     !![
+    <inputParameter>
+      <name>fractionVelocitySmall</name>
+      <defaultValue>1.0d-1</defaultValue>
+      <source>parameters</source>
+      <description>
+	Determines whether subhalo velocity dispersion will be evaluated in assessing the evaporation coefficient. If
+	$V^\mathrm{(subhalo)}_\mathrm{c}(r_{1/2}) > \epsilon \sigma^\mathrm{(host)}(r_\mathrm{orbit})$ where
+	$\epsilon=${\normalfont \ttfamily [fractionVelocitySmall]}, $V^\mathrm{(subhalo)}_\mathrm{c}(r_{1/2})$ is the circular
+	velocity in the subhalo at its half-mass radius, and $\sigma^\mathrm{(host)}(r_\mathrm{orbit})$ is the velocity dispersion
+	of the host at the orbital radius of the subhalo, then the velocity dispersion of the subhalo \emph{will} be evaluated and
+	included in computing the evaporation coefficient. Otherwise, the subhalo velocity dispersion is ignored (as it is
+	considered to be negligible). This is an optimization approximation as evaluating subhalo velocity dispersions is often
+	slow.
+      </description>
+    </inputParameter>
     <objectBuilder class="darkMatterParticle"   name="darkMatterParticle_"   source="parameters"/>
     <objectBuilder class="darkMatterProfileDMO" name="darkMatterProfileDMO_" source="parameters"/>
     <objectBuilder class="galacticStructure"    name="galacticStructure_"    source="parameters"/>
     !!]
-    self=satelliteEvaporationSIDMKummer2018(darkMatterParticle_,darkMatterProfileDMO_,galacticStructure_)
+    self=satelliteEvaporationSIDMKummer2018(fractionVelocitySmall,darkMatterParticle_,darkMatterProfileDMO_,galacticStructure_)
     !![
     <inputParametersValidate source="parameters"/>
     <objectDestructor name="darkMatterParticle_"  />
@@ -93,7 +111,7 @@ contains
     return
   end function kummer2018ConstructorParameters
 
-  function kummer2018ConstructorInternal(darkMatterParticle_,darkMatterProfileDMO_,galacticStructure_) result(self)
+  function kummer2018ConstructorInternal(fractionVelocitySmall,darkMatterParticle_,darkMatterProfileDMO_,galacticStructure_) result(self)
     !!{
     Internal constructor for the {\normalfont \ttfamily kummer2018} satellite evaporation due to dark matter self-interactions
     class.
@@ -102,12 +120,13 @@ contains
     !use :: Numerical_Constants_Prefixes    , only : centi                                     , milli   , kilo
     !use :: Numerical_Constants_Astronomical, only : megaParsec                                , gigaYear, massSolar
     implicit none
-    type (satelliteEvaporationSIDMKummer2018)                        :: self
-    class(darkMatterParticleClass           ), intent(in   ), target :: darkMatterParticle_
-    class(darkMatterProfileDMOClass         ), intent(in   ), target :: darkMatterProfileDMO_
-    class(galacticStructureClass            ), intent(in   ), target :: galacticStructure_
+    type            (satelliteEvaporationSIDMKummer2018)                        :: self
+    class           (darkMatterParticleClass           ), intent(in   ), target :: darkMatterParticle_
+    class           (darkMatterProfileDMOClass         ), intent(in   ), target :: darkMatterProfileDMO_
+    class           (galacticStructureClass            ), intent(in   ), target :: galacticStructure_
+    double precision                                    , intent(in   )         :: fractionVelocitySmall
     !![
-    <constructorAssign variables="*darkMatterParticle_, *darkMatterProfileDMO_, *galacticStructure_"/>
+    <constructorAssign variables="fractionVelocitySmall, *darkMatterParticle_, *darkMatterProfileDMO_, *galacticStructure_"/>
     !!]
 
     ! Initialize the maximum tabulated x to an unphysical value. This will force tabulation on the first attempt to evaluate the
@@ -151,15 +170,16 @@ contains
     class           (nodeComponentSatellite             ), pointer       :: satellite
     class           (nodeComponentBasic                 ), pointer       :: basic
     type            (treeNode                           ), pointer       :: nodeHost
-    double precision                                     , dimension(3)  :: position              , velocity
-    double precision                                                     :: radiusOrbital         , speedOrbital               , &
-         &                                                                  densityHost           , rateScattering             , &
-         &                                                                  potentialHalfMass     , potentialBoundary          , &
-         &                                                                  massBoundary          , radiusBoundary             , &
-         &                                                                  velocityEscape        , speedHalfMass              , &
-         &                                                                  velocityDispersionHost, velocityDispersionSatellite, &
-         &                                                                  x                     , radiusHalfMass             , &
-         &                                                                  velocityDispersion    , potentialEscape
+    double precision                                     , dimension(3)  :: position                 , velocity
+    double precision                                                     :: radiusOrbital            , speedOrbital               , &
+         &                                                                  densityHost              , rateScattering             , &
+         &                                                                  potentialHalfMass        , potentialBoundary          , &
+         &                                                                  massBoundary             , radiusBoundary             , &
+         &                                                                  velocityEscape           , speedHalfMass              , &
+         &                                                                  velocityDispersionHost   , velocityDispersionSatellite, &
+         &                                                                  x                        , radiusHalfMass             , &
+         &                                                                  velocityDispersion       , potentialEscape            , &
+         &                                                                  velocityCircularSatellite
      
      
     ! Set zero mass loss rate by default.
@@ -172,26 +192,22 @@ contains
     radiusOrbital                =   Vector_Magnitude                              (         position                          )
     speedOrbital                 =   Vector_Magnitude                              (         velocity                          )
     densityHost                  =   self            %galacticStructure_%density   (nodeHost,position,coordinateSystemCartesian)
-    
-    ! repositioned select block + if-expersion
+        ! Determine the scattering rate normalization.
     select type (darkMatterParticle_ => self%darkMatterParticle_)
     class is (darkMatterParticleSelfInteractingDarkMatter)
        ! Compute the normalization of the scattering rate in units such that
        ! when multiplied by a velocity in km s?~A?¹, and a
        ! density in units of M?~X~I Mpc?~A?³, we get a rate in unitss of Gyr??~A?¹.
-       self%rateScatteringNormalization=+darkMatterParticle_%crossSectionSelfInteraction(speedOrbital)*centi**2/milli         & ! Convert cross-section from cm² g?~A?¹ to m² kg?~A?¹.
-            &                           * kilo                       & ! Convertvelocity from km s?~A?¹ to m s?~A?¹.
-            &                           * massSolar   /megaParsec**3 & ! Convertdensity from M?~X~I Mpc?~A?³ to kg m?~A?³.
-            &                           * gigaYear                     ! Convertrate from s?~A?¹ to Gyr?~A?¹.
+       self%rateScatteringNormalization=+darkMatterParticle_%crossSectionSelfInteraction(speedOrbital)*centi**2/milli & ! Convert cross-section from cm² g?~A?¹ to m² kg?~A?¹.
+            &                           * kilo                                                                        & ! Convert velocity from km s?~A?¹ to m s?~A?¹.
+            &                           * massSolar   /megaParsec**3                                                  & ! Convert density from M?~X~I Mpc?~A?³ to kg m?~A?³.
+            &                           * gigaYear                                                                      ! Convert rate from s?~A?¹ to Gyr?~A?¹.
     class default
        ! No scattering.
        self%rateScatteringNormalization=+0.0d0
     end select
-
     ! If the scattering cross section is zero, we can return immediately.
     if (self%rateScatteringNormalization == 0.0d0) return
-
-
     ! Find the escape velocity from the half-mass radius of the subhalo. This is equal to the potential difference between the
     ! half-mass radius and outer boundary of the subhalo, plus the potential difference from the outer boundary to infinity (for
     ! which we can treat the subhalo as a point mass).
@@ -226,12 +242,18 @@ contains
              velocityEscape=0.0d0
           end if
        else
+          radiusHalfMass=0.0d0
           velocityEscape=0.0d0
        end if   
        ! Find the combined velocity dispersion of satellite and host.
-       velocityDispersionHost     =+self%darkMatterProfileDMO_%radialVelocityDispersion(nodeHost,radiusOrbital )
+       velocityDispersionHost           =+self%darkMatterProfileDMO_%radialVelocityDispersion(nodeHost,radiusOrbital )
        if (radiusHalfMass > 0.0d0) then
-          velocityDispersionSatellite=+self%darkMatterProfileDMO_%radialVelocityDispersion(node    ,radiusHalfMass)
+          velocityCircularSatellite     =+self%darkMatterProfileDMO_%circularVelocity        (node    ,radiusHalfMass)
+          if (velocityCircularSatellite > self%fractionVelocitySmall*velocityDispersionHost) then
+             velocityDispersionSatellite=+self%darkMatterProfileDMO_%radialVelocityDispersion(node    ,radiusHalfMass)
+          else
+             velocityDispersionSatellite=+0.0d0
+          end if
        else
           velocityDispersionSatellite=0.0d0
        end if 
@@ -239,7 +261,7 @@ contains
             &                            +velocityDispersionHost     **2 &
             &                            +velocityDispersionSatellite**2 &
             &                           )
-       ! Get the speed of a host particle at the half-mass radius of the subhalo - this is the sum of the kinetic energy or host
+       ! Get the speed of a host particle at the half-mass radius of the subhalo - this is the sum of the kinetic energy of host
        ! particles in the rest-frame of the subhalo, plus the energy they gain by falling in to the half-mass radius of the
        ! subhalo. We include the correction factor of the velocity dispersion as suggested in equation (A4) of Kummer et
        ! al. (2018).
@@ -249,7 +271,7 @@ contains
             &              +velocityEscape    **2 &
             &             )
        x            =+      velocityEscape        &
-            &        /      speedOrbital
+            &        /      speedHalfMass
        ! Evaporation occurs for x<1.
        if (x < 1.0d0) then 
           ! Evaluate the scattering rate and mass loss rate.
@@ -258,7 +280,7 @@ contains
                &                          *self%rateScatteringNormalization
           kummer2018MassLossRate       =  -     massBoundary                     &
                &                          *     rateScattering                   &
-               &                          *self%evaporationFactor(x,speedOrbital)
+               &                          *self%evaporationFactor(x,speedOrbital)       
        end if
     end if
     return
