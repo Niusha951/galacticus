@@ -517,7 +517,8 @@ contains
     double precision                                  , parameter                   :: rangeTolerance   =1.0d-6
     type            (enumerationExtrapolationTypeType)                              :: extrapolationType
     integer         (c_size_t                        )                              :: basePoint
-    type            (varying_string                  )                              :: message
+    type            (varying_string                  ), save                        :: message
+    !$omp threadprivate(message)
     integer         (c_int                           )                              :: statusGSL
     double precision                                                                :: gradient                , x_
     character       (len=12                          )                              :: labelX                  , labelX_      , &
