@@ -403,7 +403,7 @@ contains
     !!{
     Define the ODE system to solve for isothermal self-interacting dark matter cores.
     !!}
-    use :: Functions_Global                , only : galacticStructureDensity_
+    use :: Functions_Global                , only : galacticStructureDensitySphericalAverage_
     use :: Galactic_Structure_Options      , only : massTypeBaryonic
     use :: Interface_GSL                   , only : GSL_Success
     use :: Numerical_Constants_Math        , only : Pi
@@ -419,7 +419,7 @@ contains
          &                                -max(properties(1),0.0d0)     &
          &                                /velocityDispersionCentral**2 &
          &                               )
-    densityBaryons                  =+galacticStructureDensity_(self_%galacticStructure_,node_,position=[radius,0.0d0,0.0d0],massType=massTypeBaryonic)
+    densityBaryons                  =+galacticStructureDensitySphericalAverage_(self_%galacticStructure_,node_,radius,massType=massTypeBaryonic)
     propertiesRateOfChange       (1)=+properties(2)
     propertiesRateOfChange       (2)=+4.0d0                             &
          &                           *Pi                                &
