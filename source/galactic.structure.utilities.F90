@@ -26,9 +26,9 @@ module Galactic_Structure_Utilities
   Provides globally-accessible functions supporting the galactic structure class.
   !!}
   private
-  public :: galacticStructureConstruct       , galacticStructureMassEnclosed            , galacticStructureDestruct  , galacticStructureDeepCopy    , &
-       &    galacticStructureDeepCopyReset   , galacticStructureDeepCopyFinalize        , galacticStructureStateStore, galacticStructureStateRestore, &
-       &    galacticStructureVelocityRotation, galacticStructureVelocityRotationGradient, galacticStructureDensity
+  public :: galacticStructureConstruct       , galacticStructureMassEnclosed            , galacticStructureDestruct  , galacticStructureDeepCopy               , &
+       &    galacticStructureDeepCopyReset   , galacticStructureDeepCopyFinalize        , galacticStructureStateStore, galacticStructureStateRestore           , &
+       &    galacticStructureVelocityRotation, galacticStructureVelocityRotationGradient, galacticStructureDensity   , galacticStructureDensitySphericalAverage
 
   ! Module-scope pointer to our task object. This is used for reference counting so that debugging information is consistent
   ! between the increments and decrements.
@@ -163,6 +163,48 @@ contains
     end select
     return
   end function galacticStructureDensity
+  
+  !![
+  <functionGlobal>
+    <unitName>galacticStructureDensitySphericalAverage</unitName>
+    <type>double precision</type>
+    <module>Galacticus_Nodes          , only : treeNode</module>
+    <module>Galactic_Structure_Options, only : enumerationComponentTypeType, enumerationMassTypeType, enumerationWeightByType, enumerationCoordinateSystemType</module>
+    <arguments>class           (*                              ), intent(inout)           :: galacticStructure_</arguments>
+    <arguments>type            (treeNode                       ), intent(inout)           :: node</arguments>
+    <arguments>double precision                                 , intent(in   )           :: radius</arguments>
+    <arguments>type            (enumerationComponentTypeType   ), intent(in   ), optional :: componentType</arguments>
+    <arguments>type            (enumerationMassTypeType        ), intent(in   ), optional :: massType</arguments>
+    <arguments>type            (enumerationWeightByType        ), intent(in   ), optional :: weightBy</arguments>
+    <arguments>integer                                          , intent(in   ), optional :: weightIndex</arguments>
+  </functionGlobal>
+  !!]
+  double precision function galacticStructureDensitySphericalAverage(galacticStructure_,node,radius,componentType,massType,weightBy,weightIndex)
+    !!{
+    Compute the density for a {\normalfont \ttfamily galacticStructure} object passed to us as an unlimited polymorphic object.
+    !!}
+    use :: Error                     , only : Error_Report
+    use :: Galactic_Structure        , only : galacticStructureClass
+    use :: Galactic_Structure_Options, only : enumerationComponentTypeType, enumerationMassTypeType, enumerationWeightByType, enumerationCoordinateSystemType
+    use :: Galacticus_Nodes          , only : treeNode
+    implicit none
+    class           (*                              ), intent(inout)           :: galacticStructure_
+    type            (treeNode                       ), intent(inout)           :: node
+    type            (enumerationComponentTypeType   ), intent(in   ), optional :: componentType
+    type            (enumerationMassTypeType        ), intent(in   ), optional :: massType
+    type            (enumerationWeightByType        ), intent(in   ), optional :: weightBy
+    integer                                          , intent(in   ), optional :: weightIndex
+    double precision                                 , intent(in   )           :: radius
+ 
+    select type (galacticStructure_)
+    class is (galacticStructureClass)
+       galacticStructureDensitySphericalAverage=galacticStructure_%densitySphericalAverage(node,radius,componentType,massType,weightBy,weightIndex)
+    class default
+       galacticStructureDensitySphericalAverage=0.0d0
+       call Error_Report('unexpected class'//{introspection:location})
+    end select
+    return
+  end function galacticStructureDensitySphericalAverage
   
   !![
   <functionGlobal>
