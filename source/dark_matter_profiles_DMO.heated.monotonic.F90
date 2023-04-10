@@ -62,9 +62,9 @@
      class           (darkMatterProfileHeatingClass    ), pointer     :: darkMatterProfileHeating_ => null()
      integer         (kind=kind_int8                   )              :: lastUniqueID
      type            (enumerationNonAnalyticSolversType)              :: nonAnalyticSolver
-     double precision                                                 :: radiusInitialMinimum               , radiusInitialMaximum, &
+     double precision                                                 :: radiusInitialMinimum               , radiusInitialMaximum     , &
           &                                                              radiusFinalMinimum                 , radiusFinalMaximum
-     type            (interpolator                     ), allocatable :: massProfile
+     type            (interpolator                     ), allocatable :: massProfile                        , velocityDispersionProfile
      logical                                                          :: isBound
    contains
      !![
@@ -242,6 +242,7 @@ contains
     self%genericVelocityDispersionRadialRadiusMinimum=+huge(0.0d0)
     self%genericVelocityDispersionRadialRadiusMaximum=-huge(0.0d0)
     if (allocated(self%massProfile                            )) deallocate(self%massProfile                            )
+    if (allocated(self%velocityDispersionProfile              )) deallocate(self%velocityDispersionProfile              )
     if (allocated(self%genericVelocityDispersionRadialVelocity)) deallocate(self%genericVelocityDispersionRadialVelocity)
     if (allocated(self%genericVelocityDispersionRadialRadius  )) deallocate(self%genericVelocityDispersionRadialRadius  )
     if (allocated(self%genericEnclosedMassMass                )) deallocate(self%genericEnclosedMassMass                )
@@ -264,9 +265,13 @@ contains
     integer                                              , parameter                 :: countPerDecadeRadius =100
     double precision                                     , allocatable, dimension(:) :: massEnclosed                , massShell                   , &
          &                                                                              radiusInitial               , radiusFinal                 , &
-         &                                                                              energyFinal                 , perturbation
+         &                                                                              energyFinal                 , perturbation                , &
+         &                                                                              velocityDispersion
     logical                                              , allocatable, dimension(:) :: isBound
     integer                                                                          :: i                           , countRadii
+    double precision                                                                 :: alpha                       , density                     , &
+         &                                                                              jeansIntegral               , jeansIntegralPrevious       , &
+         &                                                                              massEnclosedPrevious        , radiusPrevious
 
     ! Determine if we need to retabulate.
     if (node%uniqueID() /= self%lastUniqueID) call self%calculationReset(node)
@@ -278,19 +283,21 @@ contains
     ! Build grid of radii.
     countRadii=int(log10(self%radiusInitialMaximum/self%radiusInitialMinimum)*dble(countPerDecadeRadius)+1.0d0)
     if (allocated(radiusInitial)) then
-       deallocate(radiusInitial)
-       deallocate(radiusFinal  )
-       deallocate(massEnclosed )
-       deallocate(massShell    )
-       deallocate(energyFinal  )
-       deallocate(perturbation )
+       deallocate(radiusInitial     )
+       deallocate(radiusFinal       )
+       deallocate(massEnclosed      )
+       deallocate(massShell         )
+       deallocate(energyFinal       )
+       deallocate(perturbation      )
+       deallocate(velocityDispersion)
     end if
-    allocate(radiusInitial(countRadii))
-    allocate(radiusFinal  (countRadii))
-    allocate(massEnclosed (countRadii))
-    allocate(massShell    (countRadii))
-    allocate(energyFinal  (countRadii))
-    allocate(perturbation (countRadii))
+    allocate(radiusInitial     (countRadii))
+    allocate(radiusFinal       (countRadii))
+    allocate(massEnclosed      (countRadii))
+    allocate(massShell         (countRadii))
+    allocate(energyFinal       (countRadii))
+    allocate(perturbation      (countRadii))
+    allocate(velocityDispersion(countRadii))
     radiusInitial=Make_Range(self%radiusInitialMinimum,self%radiusInitialMaximum,countRadii,rangeTypeLogarithmic)
     ! Evaluate masses and energies of shells.
     do i=countRadii,1,-1
@@ -341,19 +348,71 @@ contains
     elsewhere
        radiusFinal=+huge(0.0d0)
     end where
+    ! Compute velocity dispersion.
+    radiusPrevious       =-huge(0.0d0)
+    jeansIntegralPrevious=+     0.0d0
+    massEnclosedPrevious =+     0.0d0
+    do i=countRadii,1,-1
+       if (.not.isBound(i)) cycle
+       if (radiusPrevious < 0.0d0) then
+          jeansIntegral        =0.0d0
+          velocityDispersion(i)=0.0d0
+       else
+          alpha                =+log(massEnclosedPrevious/massEnclosed(i)) &
+               &                /log(      radiusPrevious/radiusFinal (i))
+          jeansIntegral        =+jeansIntegralPrevious                     &
+               &                +alpha                                     &
+               &                /4.0d0                                     &
+               &                /Pi                                        &
+               &                /(                                         &
+               &                  +2.0d0                                   &
+               &                  *alpha                                   &
+               &                  -4.0d0                                   &
+               &                 )                                         &
+               &                *gravitationalConstantGalacticus           &
+               &                *massEnclosed(i)**2                        &
+               &                /radiusFinal (i)**4                        &
+               &                *(                                         &
+               &                  +(                                       &
+               &                    +radiusPrevious                        &
+               &                    /radiusFinal   (i)                     &
+               &                   )**(2.0d0*alpha-4.0d0)                  &
+               &                  -1.0d0                                   &
+               &                 )
+          density              =+alpha                                     &
+               &                *massEnclosed(i)                           &
+               &                /4.0d0                                     &
+               &                /Pi                                        &
+               &                /radiusFinal (i)**3
+          velocityDispersion(i)=+sqrt(                                     &
+               &                      +jeansIntegral                       &
+               &                      /density                             &
+               &                )
+       end if
+       jeansIntegralPrevious=jeansIntegral
+       radiusPrevious       =radiusFinal  (i)
+       massEnclosedPrevious =massEnclosed (i)
+    end do
     ! Build the final profile interpolator.
     self%isBound=count(isBound) > 2
     if (self%isBound) then
-       self%radiusFinalMinimum =minval(radiusFinal ,mask=isBound)
-       self%radiusFinalMaximum =maxval(radiusFinal ,mask=isBound)
+       self%radiusFinalMinimum =minval(radiusFinal,mask=isBound)
+       self%radiusFinalMaximum =maxval(radiusFinal,mask=isBound)
        ! Construct the interpolator.
-       if (allocated(self%massProfile)) deallocate(self%massProfile)
-       allocate(self%massProfile)
-       self%massProfile=interpolator(                                                        &
-            &                        x                =log(pack(radiusFinal ,mask=isBound)), &
-            &                        y                =log(pack(massEnclosed,mask=isBound)), &
-            &                        extrapolationType=extrapolationTypeFix                  &
-            &                       )
+       if (allocated(self%              massProfile)) deallocate(self%              massProfile)
+       if (allocated(self%velocityDispersionProfile)) deallocate(self%velocityDispersionProfile)
+       allocate(self%              massProfile)
+       allocate(self%velocityDispersionProfile)
+       self%              massProfile=interpolator(                                                              &
+            &                                      x                =log(pack(radiusFinal       ,mask=isBound)), &
+            &                                      y                =log(pack(massEnclosed      ,mask=isBound)), &
+            &                                      extrapolationType=extrapolationTypeFix                        &
+            &                                     )
+       self%velocityDispersionProfile=interpolator(                                                              &
+            &                                      x                =log(pack(radiusFinal       ,mask=isBound)), &
+            &                                      y                =    pack(velocityDispersion,mask=isBound) , &
+            &                                      extrapolationType=extrapolationTypeFix                        &
+            &                                     )
     end if
     return
   end subroutine heatedMonotonicComputeSolution
@@ -586,9 +645,16 @@ contains
     double precision                                     , intent(in   ) :: radius
 
     if (self%darkMatterProfileHeating_%specificEnergyIsEverywhereZero(node,self%darkMatterProfileDMO_) .or. self%nonAnalyticSolver == nonAnalyticSolversFallThrough) then
-       heatedMonotonicRadialVelocityDispersion=self%darkMatterProfileDMO_%radialVelocityDispersion         (node,radius)
+       heatedMonotonicRadialVelocityDispersion=self%darkMatterProfileDMO_%radialVelocityDispersion(node,radius)
     else
-       heatedMonotonicRadialVelocityDispersion=self                      %radialVelocityDispersionNumerical(node,radius)
+       ! Compute the solution (as needed).
+       call self%computeSolution(node,radius)
+       ! For bound halos, interpolate to find the enclosed mass. For unbound halos the enclosed mass is zero.
+       if (self%isBound) then
+          heatedMonotonicRadialVelocityDispersion=+self%velocityDispersionProfile%interpolate(log(radius))
+       else
+          heatedMonotonicRadialVelocityDispersion=+0.0d0
+       end if
     end if
     return
   end function heatedMonotonicRadialVelocityDispersion
