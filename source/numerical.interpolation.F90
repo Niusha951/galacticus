@@ -638,7 +638,7 @@ contains
     end if
     x_=x
     select case (extrapolationType%ID)
-    case (extrapolationTypeExtrapolate%ID,extrapolationTypeFix%ID)
+    case (extrapolationTypeExtrapolate%ID)
        if (x < self%x(1              )) x_=self%x(1              )
        if (x > self%x(self%countArray)) x_=self%x(self%countArray)
     end select
@@ -647,7 +647,7 @@ contains
     if (statusGSL /= 0) then
        select case (statusGSL)
        case (GSL_EDom)
-          if (extrapolationType == extrapolationTypeZero) then
+          if (extrapolationType == extrapolationTypeZero .or. extrapolationType == extrapolationTypeFix) then
              ! Return zero outside of the tabulated range.
              interpolatorDerivative=0.0d0
              return
