@@ -225,7 +225,7 @@ contains
        if (self%galacticStructure_%massEnclosed(node,radius=0.5d0*radiusLarge) > massBoundary) then
           radiusBoundary      =self%galacticStructure_%radiusEnclosingMass(node,mass  =      massBoundary  )
           radiusHalfMass      =self%galacticStructure_%radiusEnclosingMass(node,mass  =0.5d0*massBoundary  )
-          if (radiusBoundary < 0.5d0*radiusLarge) then
+          if (radiusBoundary < 0.5d0*radiusLarge .and. radiusBoundary > 0.0d0) then
              potentialBoundary=self%galacticStructure_%potential          (node,radius=      radiusBoundary)
              potentialHalfMass=self%galacticStructure_%potential          (node,radius=      radiusHalfMass)
              potentialEscape  =+potentialBoundary               &
