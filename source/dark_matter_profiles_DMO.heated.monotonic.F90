@@ -256,7 +256,7 @@ contains
     !!}
     use :: Numerical_Ranges                , only : Make_Range                     , rangeTypeLogarithmic
     use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
-    use :: Table_Labels                    , only : extrapolationTypeFix           , extrapolationTypeZero
+    use :: Table_Labels                    , only : extrapolationTypeFix
     implicit none
     class           (darkMatterProfileDMOHeatedMonotonic), intent(inout)             :: self
     type            (treeNode                           ), intent(inout)             :: node
