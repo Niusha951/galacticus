@@ -268,11 +268,15 @@ contains
     character       (len=16                         )                                          :: label                      , labelRadius                , &
          &                                                                                        labelDensity               , labelMass
 
+    ! Assume that the model fails by default.
+    self%modelSuccess=.false.
     ! Find the interaction radius.
     radiusInteraction            =self%radiusInteraction                          (node                  )
     ! Properties of the original density profile at the interaction radius.
     densityInteraction           =self%darkMatterProfile_%density                 (node,radiusInteraction)
     massInteraction              =self%darkMatterProfile_%enclosedMass            (node,radiusInteraction)
+    ! Check for non-zero density.
+    if (densityInteraction <= 0.0d0) return
     ! Find the velocity dispersion scale.
     velocityDispersionInteraction=sqrt(gravitationalConstantGalacticus*massInteraction/radiusInteraction)
     ! Set ODE solver  scales.
@@ -318,7 +322,7 @@ contains
           seekSolution   =.false.
        end if
     else
-       ! This is a different node as we last solved for. Start from a generic point and use a large step size to allow us to find
+       ! This is a different node than we last solved for. Start from a generic point and use a large step size to allow us to find
        ! the solution.
        xStart           =[0.0d0,1.0d0]
        stepSize         =[1.0d0,1.0d0]
@@ -340,81 +344,88 @@ contains
     densityCentral           =exp(locationMinimum(1)                                       )           *densityInteraction
     velocityDispersionCentral=max(locationMinimum(2),velocityDispersionDimensionlessMinimum)*velocityDispersionInteraction
     self%modelSuccess        =fitMetric < fitMetricMaximum
-    ! Tabulate solutions for density and mass if the model was successful.
-    if (self%modelSuccess) then
-       if (hasBaryons) then
-          densityBaryons=exp(densityBaryons_%interpolate(log(fractionRadiusInitial*radiusInteraction)))
-       else
-          densityBaryons=0.0d0
-       end if
-       self%radiusTableMinimum=max(                                        &
-            &                      +fractionRadiusInitial                  &
-            &                      *radiusInteraction                    , &
-            &                      +sqrt(                                  &
-            &                            +velocityDispersionCentral**2     &
-            &                            /4.0d0                            &
-            &                            /Pi                               &
-            &                            /gravitationalConstantGalacticus  &
-            &                            /(                                &
-            &                              densityBaryons                  &
-            &                              +densityCentral                 &
-            &                             )                                &
-            &                           )                                  &
-            &                     )
-       countTable    =max(3,int(log10(radiusInteraction/self%radiusTableMinimum)*dble(countPerDecade))+1)
-       allocate(radiusTable (countTable))
-       allocate(densityTable(countTable))
-       allocate(massTable   (countTable))
-       radiusTable=Make_Range(rangeMinimum=self%radiusTableMinimum,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLogarithmic)
-       properties =0.0d0
-       do i=1,countTable
-          if (i == 1) then
-             ! Start from a small, but finite radius.
-             radius=0.5d0*fractionRadiusInitial*radiusInteraction
-          else
-             radius=radiusTable(i-1)             
-          end if
-          call odeSolver_%solve(radius,radiusTable(i),properties)
-          densityTable(i)=+densityCentral                    &
-               &          *exp(                              &
-               &               -properties(1)                &
-               &               /velocityDispersionCentral**2 &
-               &              )         
-          massTable   (i)=+     properties(3) 
-       end do
-       self%massTableMinimum=massTable(1)
-       ! Report unphysical solutions.
-       if (any(massTable < 0.0d0 .or. densityTable <= 0.0d0)) then
-          call node%serializeASCII()
-          write (label,'(e12.6)') radiusInteraction
-          call displayMessage('rᵢ = '//trim(label),verbosityLevelSilent)
-          write (label,'(e12.6)') densityInteraction
-          call displayMessage('ρᵢ = '//trim(label),verbosityLevelSilent)
-          write (label,'(e12.6)') densityCentral
-          call displayMessage('ρ₀ = '//trim(label),verbosityLevelSilent)
-          write (label,'(e12.6)') massInteraction
-          call displayMessage('mᵢ = '//trim(label),verbosityLevelSilent)
-          write (label,'(e12.6)') velocityDispersionInteraction
-          call displayMessage('σᵢ = '//trim(label),verbosityLevelSilent)
-          write (label,'(e12.6)') velocityDispersionCentral
-          call displayMessage('σ₀ = '//trim(label),verbosityLevelSilent)
-          call displayIndent('Computed profile',verbosityLevelSilent)
-          do i=1,countTable
-             write (labelRadius ,'(e12.6)') radiusTable (i)
-             write (labelMass   ,'(e12.6)') massTable   (i)
-             write (labelDensity,'(e12.6)') densityTable(i)
-             call displayMessage('r, m(r), ρ(r) = '//trim(labelRadius)//', '//trim(labelMass)//', '//trim(labelDensity),verbosityLevelSilent)
-          end do
-          call displayUnindent('done',verbosityLevelSilent)
-          call Error_Report('unphysical solution - see preceeding report'//{introspection:location})
-       end if
-       ! Construct interpolators.
-       allocate(self%densityProfile)
-       allocate(self%   massProfile)
-       self%           densityProfile=interpolator(log(radiusTable),log(densityTable),extrapolationType=extrapolationTypeFix)
-       self%              massProfile=interpolator(log(radiusTable),log(   massTable),extrapolationType=extrapolationTypeFix)
-       self%velocityDispersionCentral=abs(velocityDispersionCentral)
+    if (.not.self%modelSuccess) then
+       deallocate(odeSolver_    )
+       deallocate(densityBaryons_)
+       return
     end if
+    ! Tabulate solutions for density and mass if the model was successful.
+    if (hasBaryons) then
+       densityBaryons=exp(densityBaryons_%interpolate(log(fractionRadiusInitial*radiusInteraction)))
+    else
+       densityBaryons=0.0d0
+    end if
+    self%radiusTableMinimum=max(                                            &
+         &                          +fractionRadiusInitial                  &
+         &                          *radiusInteraction                    , &
+         &                      min(                                        &
+         &                          +radiusInteraction                      &
+         &                          /2.0d0                    , &
+         &                          +sqrt(                                  &
+         &                                +velocityDispersionCentral**2     &
+         &                                /4.0d0                            &
+         &                                /Pi                               &
+         &                                /gravitationalConstantGalacticus  &
+         &                                /(                                &
+         &                                  +densityBaryons                 &
+         &                                  +densityCentral                 &
+         &                                 )                                &
+         &                               )                                  &
+         &                         )                                        &
+         &                     )
+    countTable    =max(3,int(log10(radiusInteraction/self%radiusTableMinimum)*dble(countPerDecade))+1)
+    allocate(radiusTable (countTable))
+    allocate(densityTable(countTable))
+    allocate(massTable   (countTable))
+    radiusTable=Make_Range(rangeMinimum=self%radiusTableMinimum,rangeMaximum=radiusInteraction,rangeNumber=countTable,rangeType=rangeTypeLogarithmic)
+    properties =0.0d0
+    do i=1,countTable
+       if (i == 1) then
+          ! Start from a small, but finite radius.
+          radius=0.5d0*fractionRadiusInitial*radiusInteraction
+       else
+          radius=radiusTable(i-1)             
+       end if
+       call odeSolver_%solve(radius,radiusTable(i),properties)
+       densityTable(i)=+densityCentral                    &
+            &          *exp(                              &
+            &               -properties(1)                &
+            &               /velocityDispersionCentral**2 &
+            &              )         
+       massTable   (i)=+     properties(3) 
+    end do
+    self%massTableMinimum=massTable(1)
+    ! Report unphysical solutions.
+    if (any(massTable < 0.0d0 .or. densityTable <= 0.0d0)) then
+       call node%serializeASCII()
+       write (label,'(e12.6)') radiusInteraction
+       call displayMessage('rᵢ = '//trim(label),verbosityLevelSilent)
+       write (label,'(e12.6)') densityInteraction
+       call displayMessage('ρᵢ = '//trim(label),verbosityLevelSilent)
+       write (label,'(e12.6)') densityCentral
+       call displayMessage('ρ₀ = '//trim(label),verbosityLevelSilent)
+       write (label,'(e12.6)') massInteraction
+       call displayMessage('mᵢ = '//trim(label),verbosityLevelSilent)
+       write (label,'(e12.6)') velocityDispersionInteraction
+       call displayMessage('σᵢ = '//trim(label),verbosityLevelSilent)
+       write (label,'(e12.6)') velocityDispersionCentral
+       call displayMessage('σ₀ = '//trim(label),verbosityLevelSilent)
+       call displayIndent('Computed profile',verbosityLevelSilent)
+       do i=1,countTable
+          write (labelRadius ,'(e12.6)') radiusTable (i)
+          write (labelMass   ,'(e12.6)') massTable   (i)
+          write (labelDensity,'(e12.6)') densityTable(i)
+          call displayMessage('r, m(r), ρ(r) = '//trim(labelRadius)//', '//trim(labelMass)//', '//trim(labelDensity),verbosityLevelSilent)
+       end do
+       call displayUnindent('done',verbosityLevelSilent)
+       call Error_Report('unphysical solution - see preceeding report'//{introspection:location})
+    end if
+    ! Construct interpolators.
+    allocate(self%densityProfile)
+    allocate(self%   massProfile)
+    self%           densityProfile=interpolator(log(radiusTable),log(densityTable),extrapolationType=extrapolationTypeFix)
+    self%              massProfile=interpolator(log(radiusTable),log(   massTable),extrapolationType=extrapolationTypeFix)
+    self%velocityDispersionCentral=abs(velocityDispersionCentral)
     deallocate(odeSolver_    )
     deallocate(densityBaryons_)
     return
