@@ -290,7 +290,7 @@ contains
     !$GLC attributes unused :: self, time, expansionFactor, collapsingPhase
 
     staticUniverseOmegaMatterRateOfChange=0.0d0
-    call Error_Report('Omega_Matter is undefined in static universe'//{introspection:location})
+    !call Error_Report('Omega_Matter is undefined in static universe'//{introspection:location})
     return
   end function staticUniverseOmegaMatterRateOfChange
 

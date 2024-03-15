@@ -208,9 +208,13 @@ contains
             &                                       expansionFactor, &
             &                                       collapsing       &
             &                                      )
-       fixedDensityContrastRateOfChange=-self%densityContrastValue                                       &
+       if (self%cosmologyFunctions_ %omegaMatterRateOfChange(epochTime) == 0.0d0) then
+          fixedDensityContrastRateOfChange=0.0d0
+       else
+          fixedDensityContrastRateOfChange=-self%densityContrastValue                                       &
             &                           *self%cosmologyFunctions_ %omegaMatterRateOfChange(epochTime)    &
             &                           /self%cosmologyFunctions_ %omegaMatterEpochal     (epochTime)**2
+       end if
     end if
     return
   end function fixedDensityContrastRateOfChange
