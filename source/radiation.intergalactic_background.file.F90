@@ -185,9 +185,9 @@ contains
           ! Get the data.
           spectrum => spectraList(iSpectrum-1)%element
           ! Extract the redshift.
-          call extractDataContent(XML_Get_First_Element_By_Tag_Name(spectrum,"redshift"),self%spectraTimes(iSpectrum))
-          ! Convert redshift to a time.
-          self%spectraTimes(iSpectrum)=self%cosmologyFunctions_%cosmicTime(self%cosmologyFunctions_%expansionFactorFromRedshift(self%spectraTimes(iSpectrum)))
+          call extractDataContent(XML_Get_First_Element_By_Tag_Name(spectrum,"cosmic_times"),self%spectraTimes(iSpectrum))
+          ! Convert redshift to a time. -> No need! directly read times now.
+          self%spectraTimes(iSpectrum)=self%spectraTimes(iSpectrum)
        end do
        ! Check if the times are monotonically ordered.
        if (.not.Array_Is_Monotonic(self%spectraTimes)) call Error_Report('spectra must be monotonically ordered in time'//{introspection:location})
@@ -223,11 +223,11 @@ contains
        call file%readDataset('wavelengths',self%spectraWavelengths)
        self%spectraWavelengthsCount=size(self%spectraWavelengths)
        ! Read redshifts.
-       call file%readDataset('redshifts',self%spectraTimes)
+       call file%readDataset('cosmic_times',self%spectraTimes)
        self%spectraTimesCount=size(self%spectraTimes)
        do iSpectrum=1,self%spectraTimesCount
-          ! Convert redshift to a time.
-          self%spectraTimes(iSpectrum)=self%cosmologyFunctions_%cosmicTime(self%cosmologyFunctions_%expansionFactorFromRedshift(self%spectraTimes(iSpectrum)))
+          ! Convert redshift to a time.  -> No need! directly read times now.
+          self%spectraTimes(iSpectrum)=self%spectraTimes(iSpectrum)
        end do
        ! Check if the times are monotonically ordered.
        if (.not.Array_Is_Monotonic(self%spectraTimes)) call Error_Report('spectra must be monotonically ordered in time'//{introspection:location})
@@ -321,8 +321,9 @@ contains
     implicit none
     class           (radiationFieldIntergalacticBackgroundFile), intent(inout) :: self
     double precision                                           , intent(in   ) :: time
+    double precision                                           , parameter     :: timeFixed=0.5d0
 
-    self%time_=time
+    self%time_=timeFixed
     ! Find interpolating factors in the array of times.
     call self%interpolatorTimes%linearFactors(time,self%iTime,self%hTime)
     return
