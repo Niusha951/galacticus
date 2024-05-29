@@ -1,5 +1,5 @@
 !! Copyright 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018,
-!!           2019, 2020, 2021, 2022, 2023, 2024
+!!           2019, 2020, 2021, 2022, 2023
 !!    Andrew Benson <abenson@carnegiescience.edu>
 !!
 !! This file is part of Galacticus.
@@ -22,130 +22,124 @@ Contains a module which implements a selfInteracting dark matter particle class.
 !!}
 
   !![
-  <darkMatterParticle name="darkMatterParticleSelfInteractingDarkMatter">
+  <darkMatterParticle name="darkMatterParticleSelfInteractingDarkMatter" abstract="yes">
    <description>Provides a selfInteracting dark matter particle.</description>
   </darkMatterParticle>
   !!]
-  type, extends(darkMatterParticleClass) :: darkMatterParticleSelfInteractingDarkMatter
+  type, abstract, extends(darkMatterParticleClass) :: darkMatterParticleSelfInteractingDarkMatter
      !!{
      A selfInteracting dark matter particle class.
      !!}
      private
-     class           (darkMatterParticleClass), pointer :: darkMatterParticle_          => null()
-     double precision                                   :: crossSectionSelfInteraction_
    contains
      !![
      <methods>
-       <method description="Return the self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$."                                                     method="crossSectionSelfInteraction"            />
+       <method description="Return the self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteraction" />
        <method description="Return the differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\Omega$, of the dark matter particle in units of cm$^2$ g$^{-1}$ ster$^{-1}$." method="crossSectionSelfInteractionDifferential"/>
+       <method description="Return the momentum transfer self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteractionMomentumTransfer" />
+       <method description="Return the viscosity self-interaction cross section, $\sigma$, of the dark matter particle in units of cm$^2$ g$^{-1}$." method="crossSectionSelfInteractionViscosity" />
      </methods>
      !!]
-     final     ::                                            selfInteractingDMDestructor
-     procedure :: mass                                    => selfInteractingDMMass
-     procedure :: crossSectionSelfInteraction             => selfInteractingDMCrossSectionSelfInteraction
-     procedure :: crossSectionSelfInteractionDifferential => selfInteractingDMCrossSectionSelfInteractionDifferential
+     procedure(crossSectionSelfInteractionTemplate                ), deferred :: crossSectionSelfInteraction
+     procedure(crossSectionSelfInteractionDifferentialTemplate    ), deferred :: crossSectionSelfInteractionDifferential
+     procedure(crossSectionSelfInteractionDifferentialCosTemplate ), deferred :: crossSectionSelfInteractionDifferentialCos
+     procedure(crossSectionSelfInteractionMomentumTransferTemplate), deferred :: crossSectionSelfInteractionMomentumTransfer
+     procedure(crossSectionSelfInteractionViscosityTemplate       ), deferred :: crossSectionSelfInteractionViscosity
+     procedure                                                                :: effectiveCrossSection => effectiveCrossSection_
   end type darkMatterParticleSelfInteractingDarkMatter
 
-  interface darkMatterParticleSelfInteractingDarkMatter
-     !!{
-     Constructors for the ``{\normalfont \ttfamily selfInteractingDarkMatter}'' dark matter particle class.
-     !!}
-     module procedure selfInteractingDMConstructorParameters
-     module procedure selfInteractingDMConstructorInternal
-  end interface darkMatterParticleSelfInteractingDarkMatter
+  abstract interface
+    double precision function crossSectionSelfInteractionTemplate(self,velocityRelative)
+      !!{
+      Interface for self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
+      !!}
+      import darkMatterParticleSelfInteractingDarkMatter
+      class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+      double precision                                  , intent(in   ) :: velocityRelative
+      !return
+    end function crossSectionSelfInteractionTemplate
 
+    double precision function crossSectionSelfInteractionDifferentialTemplate(self,theta,velocityRelative)
+      !!{
+      Interface for differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\theta$, in units of cm$^2$ g$^{-1}$ ster$^{-1}$, of a self-interacting dark matter particle.
+      !!}
+      import darkMatterParticleSelfInteractingDarkMatter
+      class (darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+      double precision                                   , intent(in)    :: velocityRelative
+      double precision                                   , intent(in   ) :: theta
+    end function crossSectionSelfInteractionDifferentialTemplate
+
+    double precision function crossSectionSelfInteractionDifferentialCosTemplate(self,theta,velocityRelative)
+      !!{
+      Interface for differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\theta$, in units of cm$^2$ g$^{-1}$ ster$^{-1}$, of a self-interacting dark matter particle.
+      !!}
+      import darkMatterParticleSelfInteractingDarkMatter
+      class (darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+      double precision                                   , intent(in)    ::
+velocityRelative
+      double precision                                   , intent(in   ) ::
+theta
+    end function crossSectionSelfInteractionDifferentialCosTemplate
+
+    double precision function crossSectionSelfInteractionMomentumTransferTemplate(self,velocityRelative)
+      !!{
+      Interface for momentum transfer self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
+      !!}
+      import darkMatterParticleSelfInteractingDarkMatter
+      class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+      double precision                                  , intent(in   ) :: velocityRelative
+    end function crossSectionSelfInteractionMomentumTransferTemplate
+
+    double precision function crossSectionSelfInteractionViscosityTemplate(self,velocityRelative)
+      !!{
+      Interface for viscosity self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
+      !!}
+      import darkMatterParticleSelfInteractingDarkMatter
+      class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+      double precision                                  , intent(in   ) :: velocityRelative
+    end function crossSectionSelfInteractionViscosityTemplate
+
+  end interface  
+   
+  double precision :: Veff_
+  !$omp threadprivate (Veff_)
+
+  class (darkMatterParticleSelfInteractingDarkMatter) , pointer :: self_
+  !$omp threadprivate (self_)
+ 
 contains
 
-  function selfInteractingDMConstructorParameters(parameters) result(self)
-    !!{
-    Constructor for the ``{\normalfont \ttfamily selfInteractingDarkMatter}'' dark matter particle class which takes a parameter set as input.
-    !!}
-    use :: Input_Parameters, only : inputParameter, inputParameters
-    implicit none
-    type            (darkMatterParticleSelfInteractingDarkMatter)                :: self
-    type            (inputParameters                            ), intent(inout) :: parameters
-    class           (darkMatterParticleClass                    ), pointer       :: darkMatterParticle_
-    double precision                                                             :: crossSectionSelfInteraction
+  double precision function integrandNumerator(v,Costheta)
 
-    !![
-    <inputParameter>
-      <name>crossSectionSelfInteraction</name>
-      <source>parameters</source>
-      <description>The self-interaction cross section in units of cm$^2$ g$^{-1}$.</description>
-    </inputParameter>
-    <objectBuilder class="darkMatterParticle"  name="darkMatterParticle_"  source="parameters"/>
-    !!]
-    self=darkMatterParticleSelfInteractingDarkMatter(crossSectionSelfInteraction,darkMatterParticle_)
-    !![
-    <inputParametersValidate source="parameters"/>
-    <objectDestructor name="darkMatterParticle_" />
-    !!]
-    return
-  end function selfInteractingDMConstructorParameters
+    double precision, intent(in   ) :: v, Costheta
 
-  function selfInteractingDMConstructorInternal(crossSectionSelfInteraction,darkMatterParticle_) result(self)
-    !!{
-    Internal constructor for the ``{\normalfont \ttfamily selfInteractingDarkMatter}'' dark matter particle class.
-    !!}
-    implicit none
-    type            (darkMatterParticleSelfInteractingDarkMatter)                        :: self
-    class           (darkMatterParticleClass                    ), intent(in   ), target :: darkMatterParticle_
-    double precision                                             , intent(in   )         :: crossSectionSelfInteraction
-    !![
-    <constructorAssign variables="*darkMatterParticle_"/>
-    !!]
+    integrandNumerator = self_%crossSectionSelfInteractionDifferential(Costheta,
+v)*v**7*(1.0d0-Costheta**2)*np.exp(-v**2/(4.0d0*Veff_**2))
 
-    self%crossSectionSelfInteraction_=crossSectionSelfInteraction
-    return
-  end function selfInteractingDMConstructorInternal
+  end function integrandNumerator
 
-  subroutine selfInteractingDMDestructor(self)
-    !!{
-    Destructor for the {\normalfont \ttfamily selfInteractingDarkMatter} dark matter particle class.
-    !!}
-    implicit none
-    type(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
 
-    !![
-    <objectDestructor name="self%darkMatterParticle_" />
-    !!]
-    return
-  end subroutine selfInteractingDMDestructor
+  double precision function effectiveCrossSection_(self, Vmax)
+    use :: SIDM_Effective_Cross_Section_Integrator, only : SIDMEffectiveCrossSectionIntegrator2D
 
-  double precision function selfInteractingDMMass(self)
-    !!{
-    Return the mass, in units of keV, of a self-interacting dark matter particle.
-    !!}
-    implicit none
-    class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+    class           (darkMatterParticleSelfInteractingDarkMatter), intent(inout), target  :: self
+    type            (SIDMEffectiveCrossSectionIntegrator2D)                               :: integratorNumerator
+    double precision                                             , intent(in
+),     :: Vmax
+    double precision                                             , dimension(2,2)         :: boundaries
+    double precision                                                                      :: Veff = 0.64d0*Vmax
+    double precision                                                                      :: numeratorIntegral
+        
+    boundaries (1,:) = (/0.0d0,10.0d0*Veff/)
+    boundaries (2,:) = (/-1.0d0,1.0d0/)
+      
+    Veff_=Veff
+    self_ => self
 
-    selfInteractingDMMass=self%darkMatterParticle_%mass()
-    return
-  end function selfInteractingDMMass
+    integratorNumerator = SIDMEffectiveCrossSectionIntegrator2D(integrandNumerator)
+    numeratorIntegral = integratorNumerator%integrate(boundaries)
 
-  double precision function selfInteractingDMCrossSectionSelfInteraction(self)
-    !!{
-    Return the self-interaction cross section, in units of cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
-    !!}
-    implicit none
-    class(darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
+    effectiveCrossSection_ = numeratorIntegral/(512.0d0*Veff_**8)
+    
+  end function effectiveCrossSection_
 
-    selfInteractingDMCrossSectionSelfInteraction=self%crossSectionSelfInteraction_
-    return
-  end function selfInteractingDMCrossSectionSelfInteraction
-
-  double precision function selfInteractingDMCrossSectionSelfInteractionDifferential(self,theta)
-    !!{
-    Return the differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\theta$, in units of cm$^2$ g$^{-1}$
-    ster$^{-1}$, of a self-interacting dark matter particle.
-    !!}
-    implicit none
-    class           (darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
-    double precision                                             , intent(in   ) :: theta
-
-    ! Currently isotropic scattering is assumed.
-    selfInteractingDMCrossSectionSelfInteractionDifferential=+self%crossSectionSelfInteraction() &
-         &                                                   *0.5d0                              &
-         &                                                   *sin(theta)
-    return
-  end function selfInteractingDMCrossSectionSelfInteractionDifferential
