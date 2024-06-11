@@ -52,7 +52,7 @@
 
       double precision                     :: timeFormation
       double precision                     :: formationMassFraction = 50   
-      double precision                     :: tau, time, timePrevious
+      double precision                     :: tau, time, timePrevious, tc
 
 
       integer, intent(in) :: integerInput
@@ -69,19 +69,46 @@
       tau=0.0d0
       timePrevious=0.0d0
       nodeWork => node
+
+     !our assumption is that the starting time is always smaller or equal to the timeFormation?????
+
       do while (associated(nodeWork))
          ! Check if this node exists after the formation time. (If it is before, we do
          ! not increment τ.)
          basic => nodeWork%basic()
          time=basic%time()
+
          if (time > timeFormation) then
             ! Compute tc and increment τ.
             tc=get_tc(nodeWork, darkMatterProfileDMO_%circularVelocityMaximum(nodeWork), darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork))
             tau=tau+(time-timePrevious)/tc
+
+            ! Check if dtr is greater than 0.05 and print a message if true
+            if (dtr > 0.05d0) then
+               print *, 'Gravothermal evolution too fast, dtr: ', dtr
+            end if
+
+            VmaxSIDM = VmaxSIDMPrevious + dvmaxt(tau,darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)) * (time-timePrevious)/tc
+
+            RmaxSIDM = RmaxSIDMPrevious + drmax(tau,darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)) * (time-timePrevious)/tc
+
          end if
          ! Store the value of τ in the dark matter profile component of this node.
          darkMatterProfile => node%darkMatterProfile()
          call darkMatterProfile%floatRank0MetaPropertySet(self%tauID,tau)
+         call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,VmaxSIDM)
+         call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID,RmaxSIDM)
+
+
+         if (time > timeFormation) then
+            VmaxSIDMPrevious = VmaxSIDM
+            RmaxSIDMPrevious = RmaxSIDM
+         else
+            VmaxSIDMPrevious = darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)
+            RmaxSIDMPrevious = darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)
+         end if
+
+
          ! Update the timePrevious variable so that we can compute the time interval
          ! on the next pass through this loop.
          timePrevious=time
@@ -105,7 +132,10 @@
       !!{
       Evalluating tc based on Eq. 2.2 from Yang et al. 2024:https://arxiv.org/pdf/2305.16176
       !!}
-  
+ 
+      use :: Dark_Matter_Particle_Self_Interacting_Dark_Matter, only : effectiveCrossSection
+ 
+      type effectiveCrossSection      :: sigmaeff
       double precision, intent(in   ) :: Vmax, Rvmax
 
       double precision                :: reff, rhoeff, GG = 4.30073*1e-6, C = 0.75, pi = 3.1415926535897932384626433832795d0
@@ -113,34 +143,38 @@
 
       reff = Rvmax/2.1626    
       rhoeff = (Vmax/1.648/reff)**2 / GG
-      sigmaeff = sigma_eff()
+      sigmaeff = effectiveCrossSection(Vmax)
 
       get_tc = (150.0d0/C) * (1.0d0/(sigmaeff * rhoeff * reff)) * (4.0d0*pi*GG*rhoeff)**(-0.5)
 
 
     end function get_tc
 
-    double precision function sigma_eff()
+    double precision function dvmaxt(tau, Vmaxt)
 
-    end function sigma_eff
+      double precision, intent(in   ) :: tau, Vmaxt
+      if (tau > 1.1d0) then
+        tau = 1.1d0
+      end if
 
-    double precision function VelocityDependentCrossSectionDifferential(self,theta,velocityRelative)
-    !!{
-    Return the differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\theta$, in units of cm$^2$ g$^{-1}$ ster$^{-1}$, of a self-interacting dark matter particle.
-    !!}
-    implicit none
-    class           (darkMatterParticleSIDMVelocityDependent), intent(inout) :: self
-    double precision                                         , intent(in   ) :: velocityRelative
-    double precision                                         , intent(in   ) :: theta
+      dvmaxt = 0.17774902d0 - 13.195824689999998d0 * tau**2 + 66.62092676d0 * tau**3 - 94.33706049999999d0 * tau**4 + 63.53766111d0 * tau**6 - 21.925108889999997d0 * tau**8
+ 
+      dvmaxt = dvmaxt * Vmaxt
 
-    ! Currently isotropic scattering is assumed.
-    VelocityDependentCrossSectionDifferential=+(self%velocityCharacteristic)**4
-* (self%sigma0) *0.5d0 * sin(theta) / ((self%velocityCharacteristic)**2 + 0.5d0
-* velocityRelative**2 * (1 - cos(theta)))**2
-    return
-  end function sidmVelocityDependentCrossSectionSelfInteractionDifferential
+    end function dvmaxt
 
+    double precision function drmaxt(tau, Rmaxt)
 
+      double precision, intent(in   ) :: tau, Rmaxt
+      if (tau > 1.1d0) then
+        tau = 1.1d0
+      end if
+
+      drmaxt = 0.00762288d0 - 1.43996392d0 * tau + 1.01282643d0 * tau**2 - 0.55015288d0 * tau**3
+
+      drmaxt = drmaxt * Rmaxt
+
+    end function drmaxt
 
 
   end module MyNewClassModule

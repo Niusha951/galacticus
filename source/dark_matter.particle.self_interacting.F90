@@ -113,8 +113,7 @@ contains
 
     double precision, intent(in   ) :: v, Costheta
 
-    integrandNumerator = self_%crossSectionSelfInteractionDifferential(Costheta,
-v)*v**7*(1.0d0-Costheta**2)*np.exp(-v**2/(4.0d0*Veff_**2))
+    integrandNumerator = self_%crossSectionSelfInteractionDifferential(Costheta,v)*v**7*(1.0d0-Costheta**2)*np.exp(-v**2/(4.0d0*Veff_**2))
 
   end function integrandNumerator
 
@@ -124,7 +123,7 @@ v)*v**7*(1.0d0-Costheta**2)*np.exp(-v**2/(4.0d0*Veff_**2))
 
     class           (darkMatterParticleSelfInteractingDarkMatter), intent(inout), target  :: self
     type            (SIDMEffectiveCrossSectionIntegrator2D)                               :: integratorNumerator
-    double precision                                             , intent(in
+    doublion(2,2) precision                                             , intent(in
 ),     :: Vmax
     double precision                                             , dimension(2,2)         :: boundaries
     double precision                                                                      :: Veff = 0.64d0*Vmax
