@@ -53,7 +53,7 @@
       double precision                     :: timeFormation
       double precision                     :: formationMassFraction = 50   
       double precision                     :: tau, time, timePrevious, tc
-
+      double precision                     :: RmaxNFW0, VmaxNFW0, r_sNFW0, rho_sNFW0, rho_s, r_s, r_c
 
       integer, intent(in) :: integerInput
       real, intent(in) :: realInput
@@ -99,6 +99,15 @@
          call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,VmaxSIDM)
          call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID,RmaxSIDM)
 
+         RmaxNFW0 = Rmax_NFW(RmaxSIDM,tau)
+         VmaxNFW0 = Vmax_NFW(VmaxSIDM,tau)
+
+         r_sNFW0 = r_s0(RmaxNFW0)
+         rho_sNFW0 = rho_s0(r_s0,VmaxNFW0)
+
+         rho_s = get_rho_s(rho_sNFW0, tau)
+         r_s = get_r_s(r_sNFW0, tau)
+         r_c = get_r_c(r_sNFW0, tau)
 
          if (time > timeFormation) then
             VmaxSIDMPrevious = VmaxSIDM
@@ -175,6 +184,56 @@
       drmaxt = drmaxt * Rmaxt
 
     end function drmaxt
+
+    double precision function Rmax_NFW(RmaxSIDM, tau)
+      double precision, intent(in   ) :: RmaxSIDM, tau
+
+      Rmax_NFW = RmaxSIDM/(1 + 0.007623d0*tau - 0.7200d0*tau**2 + 0.3376d0*tau**3 -
+0.1375d0*tau**4)
+
+    end function Rmax_NFW
+
+    double precision function Vmax_NFW(VmaxSIDM, tau)
+      double precision, intent(in   ) :: VmaxSIDM, tau
+
+      Vmax_NFW = VmaxSIDM/(1 + 0.1777d0*tau - 4.399d0*tau**3 + 16.66d0*tau**4 -
+18.87d0*tau**5 + 9.077d0*tau**7 - 2.436d0*tau**9)
+
+    end function Vmax_NFW
+
+    double precision function r_s0(Rmax)
+      double precision, intent(in   ) :: Rmax
+
+      r_s0 = Rmax/2.163d0
+    end function r_s0
+
+    double precision function rho_s0(Rs,Vmax)
+      use :: Numerical_Constants_Math  , only : Pi
+      use :: Numerical_Constants_Physical , only : gravitationalConstant
+      double precision, intent(in   ) :: Rs, Vmax
+
+      rho_s0 = Vmax**2/(0.465d0**2 * 4.0d0 * Pi * gravitationalConstant * Rs**2)
+
+    end function rho_s0
+
+    double precision function get_rho_s(rho_s0, tau)
+      double precision, intent(in   ) :: rho_s0, tau
+
+      get_rho_s = rho_s0 * (2.033d0 + 0.7381d0*tau + 7.264d0*tau**5 - 12.73d0*tau**7 + 9.915d0*tau**9 + (1.0d0+2.033d0)*log(tau + 0.001d0)/log(0.001d0))
+    end function get_rho_s
+
+    double precision function get_r_s(r_s0, tau)
+      double precision, intent(in   ) :: r_s0, tau
+
+      get_r_s = r_s0 * (0.7178d0 - 0.1026d0*tau + 0.2474d0*tau**2 - 0.4079d0*tau**3 + (1.0d0 - 0.7178d0)*log(tau + 0.001d0)/log(0.001d0))
+    end function get_r_s
+
+    double precision function get_r_c(r_s0, tau)
+      double precision, intent(in   ) :: r_s0, tau
+
+      get_r_c = r_s0 * (2.555d0*sqrt(tau) - 3.632d0*tau + 2.131d0*tau**2 - 1.415d0*tau**3 + 0.4683d0*tau**4)
+    end function get_r_c
+
 
 
   end module MyNewClassModule

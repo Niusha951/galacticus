@@ -44,8 +44,9 @@ Contains a module which implements a selfInteracting dark matter particle class.
      !!]
      final     ::                                                sidmConstantDestructor
      procedure :: mass                                        => sidmConstantMass
-     procedure :: crossSectionSelfInteraction                 => sidmConstantCrossSectionSelfInteraction
+     procedure :: crossSectionSelfInteraction                 => sidmConstantCrossSectionSelfInteraction     
      procedure :: crossSectionSelfInteractionDifferential     => sidmConstantCrossSectionSelfInteractionDifferential
+     procedure :: crossSectionSelfInteractionDifferentialCos  => sidmConstantCrossSectionSelfInteractionDifferentialCos
      procedure :: crossSectionSelfInteractionMomentumTransfer => sidmConstantCrossSectionMomentumTransfer
      procedure :: crossSectionSelfInteractionViscosity        => sidmConstantCrossSectionViscosity
   end type darkMatterParticleSelfInteractingDarkMatterConstant
@@ -156,6 +157,20 @@ contains
          &                                                   *sin(theta)
     return
   end function sidmConstantCrossSectionSelfInteractionDifferential
+
+  double precision function sidmConstantCrossSectionSelfInteractionDifferentialCos(self,Costheta,velocityRelative)
+    !!{
+    Return the momentum transfer self-interaction cross section, in units of
+cm$^2$ g$^{-1}$, of a self-interacting dark matter particle.
+    !!}
+    implicit none
+    class(darkMatterParticleSelfInteractingDarkMatterConstant), intent(inout) :: self
+
+    double precision                                          , intent(in   ) :: velocityRelative, Costheta
+
+    sidmConstantCrossSectionSelfInteractionDifferentialCos=self%crossSectionSelfInteraction_
+    return
+  end function sidmConstantCrossSectionSelfInteractionDifferentialCos
 
   double precision function sidmConstantCrossSectionMomentumTransfer(self,velocityRelative)
     !!{

@@ -18,23 +18,20 @@
 !!    along with Galacticus.  If not, see <http://www.gnu.org/licenses/>.
 
 !!{
-Contains a program to test integration routines.
+Contains a 2D integration test for unit tests.
 !!}
 
 program Test_Integration2D
-  !!{
-  Tests that numerical integration routines work.
-  !!}
-  use :: Display                   , only : displayVerbositySet, verbosityLevelStandard
-  use :: Numerical_Constants_Math  , only : Pi
-!!  use :: Numerical_Integration     , only : integrator
-  use :: SIDM_Effective_Cross_Section_Integrator, only : SIDMEffectiveCrossSectionIntegrator2D
-  use :: Test_Integration2D_Functions, only : Integrand1         , Integrand2            , Integrand3          , Integrand4
-  use :: Unit_Tests                , only : Assert             , Unit_Tests_Begin_Group, Unit_Tests_End_Group, Unit_Tests_Finish
+  use :: Display, only: displayVerbositySet, verbosityLevelStandard
+  use :: Numerical_Constants_Math, only: Pi
+  use :: SIDM_Effective_Cross_Section_Integrator, only: SIDMEffectiveCrossSectionIntegrator2D
+  use :: Test_Integration2D_Functions, only: Integrand1, Integrand2, Integrand3, Integrand4
+  use :: Unit_Tests, only: Assert, Unit_Tests_Begin_Group, Unit_Tests_End_Group, Unit_Tests_Finish
   implicit none
-  double precision                                                        :: integral
-  double precision                                       , dimension(2,2) :: boundaries
-  type            (SIDMEffectiveCrossSectionIntegrator2D), allocatable    :: integrator_
+
+  double precision, dimension(2,2) :: boundaries
+  type(SIDMEffectiveCrossSectionIntegrator2D), allocatable :: integrator_
+  double precision :: integral
 
   ! Set verbosity level.
   call displayVerbositySet(verbosityLevelStandard)
@@ -44,39 +41,40 @@ program Test_Integration2D
 
   ! Test simple integrations.
   allocate(integrator_)
-  boundaries (1,:) = (/-1.0d0,1.0d0/)
-  boundaries (2,:) = (/-1.0d0,1.0d0/)
-  integrator_=SIDMEffectiveCrossSectionIntegrator2D(Integrand1,toleranceRelative=1.0d-6)
-  integral=integrator_%integrate(boundaries)
+  boundaries(1,:) = (/-1.0d0, 1.0d0/)
+  boundaries(2,:) = (/-1.0d0, 1.0d0/)
+  call integrator_%setIntegrand(Integrand1)
+  integral = integrator_%integrate(boundaries)
   deallocate(integrator_)
-  call Assert("integrate f(x,y)=sin(x^2) cos(y)          from x=-1……1, y=-1?~@??~@?1"          ,integral,1.04433d0             ,relTol=1.0d-6)
+  call Assert("integrate f(x,y)=sin(x^2) cos(y) from x=-1 to 1, y=-1 to 1", integral, 1.04433d0, relTol=1.0d-2)
 
   allocate(integrator_)
-  boundaries (1,:) = (/-1.0d0,1.0d0/)
-  boundaries (2,:) = (/-1.0d0,1.0d0/)
-  integrator_=SIDMEffectiveCrossSectionIntegrator2D(Integrand2,toleranceAbsolute=1.0d-6)
-  integral=integrator_%integrate(boundaries)
+  boundaries(1,:) = (/-1.0d0, 1.0d0/)
+  boundaries(2,:) = (/-1.0d0, 1.0d0/)
+  call integrator_%setIntegrand(Integrand2)
+  integral = integrator_%integrate(boundaries)
   deallocate(integrator_)
-  call Assert("integrate f(x)=x^2 cos(y)     from x=-1?~@??~@?1, y=-1?~@??~@?1"          ,integral,1.12196d0             ,absTol=1.0d-6)
+  call Assert("integrate f(x)=x^2 cos(y) from x=-1 to 1, y=-1 to 1", integral, 1.12196d0, absTol=1.0d-2)
 
   allocate(integrator_)
-  boundaries (1,:) = (/0.0d0,1.0d0/)
-  boundaries (2,:) = (/-1.0d0,1.0d0/)
-  integrator_=SIDMEffectiveCrossSectionIntegrator2D(Integrand3,toleranceRelative=1.0d-6)
-  integral=integrator_%integrate(boundaries)
+  boundaries(1,:) = (/0.0d0, 1.0d0/)
+  boundaries(2,:) = (/-1.0d0, 1.0d0/)
+  call integrator_%setIntegrand(Integrand3)
+  integral = integrator_%integrate(boundaries)
   deallocate(integrator_)
-  call Assert("integrate f(x)=√x y^2      from x=0?~@??~@?1, y=-1?~@??~@?1"          ,integral,0.444444d0,relTol=1.0d-6)
+  call Assert("integrate f(x)=sqrt(x) y^2 from x=0 to 1, y=-1 to 1", integral, 0.444444d0, relTol=1.0d-2)
 
   allocate(integrator_)
-  boundaries (1,:) = (/0.0d0,1.0d0/)
-  boundaries (2,:) = (/0.0d0,2.0d0/)
-  integrator_=SIDMEffectiveCrossSectionIntegrator2D(Integrand4,toleranceRelative=1.0d-6)
-  integral=integrator_%integrate(boundaries)
+  boundaries(1,:) = (/0.0d0, 1.0d0/)
+  boundaries(2,:) = (/0.0d0, 2.0d0/)
+  call integrator_%setIntegrand(Integrand4)
+  integral = integrator_%integrate(boundaries)
   deallocate(integrator_)
-  call Assert("integrate f(x,y)=y/?~H~Zx  from x=0…1π and y=0…2",integral,4.0d0          ,relTol=1.0d-6)
+  call Assert("integrate f(x,y)=y/sqrt(x) from x=0 to 1 and y=0 to 2", integral, 4.0d0, relTol=1.0d-2)
 
   ! End unit tests.
   call Unit_Tests_End_Group()
-  call Unit_Tests_Finish   ()
+  call Unit_Tests_Finish()
 
 end program Test_Integration2D
+

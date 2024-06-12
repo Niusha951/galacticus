@@ -24,7 +24,7 @@
 
   use :: Dark_Matter_Particles   , only : darkMatterParticleClass
   use :: Dark_Matter_Profiles_DMO, only : darkMatterProfileDMOClass
-  use :: Numerical_Interpolation , only : interpolator
+  use :: Numerical_Interpolation , only : interpolator2D
   use :: Galactic_Structure      , only : galacticStructureClass
 
   !![
@@ -41,17 +41,18 @@
      class           (darkMatterParticleClass  ), pointer     :: darkMatterParticle_         => null()
      class           (darkMatterProfileDMOClass), pointer     :: darkMatterProfileDMO_       => null()
      class           (galacticStructureClass   ), pointer     :: galacticStructure_          => null()
-     type            (interpolator             ), allocatable :: decelerationFactor
-     double precision                                         :: rateScatteringNormalization          , xMaximum
+     type            (interpolator2D           ), allocatable :: decelerationFactor_
+     double precision                                         :: rateScatteringNormalization          , xMaximum, vMaximum, vMinimum
    contains
      !![
      <methods>
        <method description="Tabulate the deceleration factor." method="tabulate" />
      </methods>
      !!]
-     final     ::                 kummer2018Destructor
-     procedure :: acceleration => kummer2018Acceleration
-     procedure :: tabulate     => kummer2018Tabulate
+     final     ::                       kummer2018Destructor
+     procedure :: acceleration       => kummer2018Acceleration
+     procedure :: tabulate           => kummer2018Tabulate
+     procedure :: decelerationFactor => kummer2018DecelerationFactor
   end type satelliteDecelerationSIDMKummer2018
 
   interface satelliteDecelerationSIDMKummer2018
@@ -97,9 +98,6 @@ contains
     Internal constructor for the {\normalfont \ttfamily kummer2018} satellite deceleration due to dark matter self-interactions
     class.
     !!}
-    use :: Dark_Matter_Particles           , only : darkMatterParticleSelfInteractingDarkMatter
-    use :: Numerical_Constants_Prefixes    , only : centi                                     , milli   , kilo
-    use :: Numerical_Constants_Astronomical, only : megaParsec                                , gigaYear, massSolar
     implicit none
     type (satelliteDecelerationSIDMKummer2018)                        :: self
     class(darkMatterParticleClass            ), intent(in   ), target :: darkMatterParticle_
@@ -109,21 +107,11 @@ contains
     <constructorAssign variables="*darkMatterParticle_, *darkMatterProfileDMO_, *galacticStructure_"/>
     !!]
 
-    select type (darkMatterParticle_ => self%darkMatterParticle_)
-    class is (darkMatterParticleSelfInteractingDarkMatter)
-       ! Compute the normalization of the scattering rate in units such that when multiplied by a velocity in km s⁻¹, and a
-       ! density in units of M☉ Mpc⁻³, we get a rate in units of Gyr⁻¹.
-       self%rateScatteringNormalization=+darkMatterParticle_%crossSectionSelfInteraction()*centi    **2/milli         & ! Convert cross-section from cm² g⁻¹ to m² kg⁻¹.
-            &                           *                                                  kilo                       & ! Convert velocity from km s⁻¹ to m s⁻¹.
-            &                           *                                                  massSolar   /megaParsec**3 & ! Convert density from M☉ Mpc⁻³ to kg m⁻³.
-            &                           *                                                  gigaYear                     ! Convert rate from s⁻¹ to Gyr⁻¹.
-    class default
-       ! No scattering.
-       self%rateScatteringNormalization=+0.0d0
-    end select
     ! Initialize the maximum tabulated x to an unphysical value. This will force tabulation on the first attempt to evaluate the
     ! deceleration factor.
     self%xMaximum=-1.0d0
+    self%vMinimum=huge(0.0d0)
+    self%vMaximum=-huge(0.0d0)
     return
 
   end function kummer2018ConstructorInternal
@@ -151,6 +139,9 @@ contains
     use :: Galacticus_Nodes                , only : nodeComponentSatellite         , nodeComponentBasic
     use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
     use :: Vectors                         , only : Vector_Magnitude
+    use :: Dark_Matter_Particles           , only : darkMatterParticleSelfInteractingDarkMatter
+    use :: Numerical_Constants_Prefixes    , only : centi , milli   , kilo
+    use :: Numerical_Constants_Astronomical, only : megaParsec , gigaYear, massSolar
     implicit none
     double precision                                     , dimension(3)  :: kummer2018Acceleration
     class           (satelliteDecelerationSIDMKummer2018), intent(inout) :: self
@@ -171,8 +162,6 @@ contains
 
     ! Set zero acceleration by default.
     kummer2018Acceleration=0.0d0
-    ! If the scattering cross section is zero, we can return immediately.
-    if (self%rateScatteringNormalization == 0.0d0) return
     ! Evaluate satellite and host properties.
     nodeHost                     =>  node                               %mergesWith(                                           )
     satellite                    =>  node                               %satellite (                                           )
@@ -181,6 +170,25 @@ contains
     radiusOrbital                =   Vector_Magnitude                              (         position                          )
     speedOrbital                 =   Vector_Magnitude                              (         velocity                          )
     densityHost                  =   self            %galacticStructure_%density   (nodeHost,position,coordinateSystemCartesian)
+
+    ! repositioned select block + if-expersion
+    select type (darkMatterParticle_ => self%darkMatterParticle_)
+    class is (darkMatterParticleSelfInteractingDarkMatter)
+       ! Compute the normalization of the scattering rate in units such that when multiplied by a velocity in km s?~A?¹, and a
+       ! density in units of M?~X~I Mpc?~A?³, we get a rate in unitss ofGyr??~A?¹.
+       self%rateScatteringNormalization=+darkMatterParticle_%crossSectionSelfInteraction(speedOrbital)*centi**2/milli & ! Convert cross-section from cm² g?~A?¹ to m² kg?~A?¹.
+            &                           * kilo                       & !Convertvelocity from km s?~A?¹ to m s?~A?¹.
+            &                           * massSolar   /megaParsec**3 & !Convertdensity from M?~X~I Mpc?~A?³ to kg m?~A??³.
+            &                           * gigaYear                     !Convertrate from s?~A?¹ to Gyr?~A?¹.
+    class default
+       ! No scattering.
+       self%rateScatteringNormalization=+0.0d0
+    end select
+
+    ! If the scattering cross section is zero, we can return immediately.
+    if (self%rateScatteringNormalization == 0.0d0) return
+
+
     ! Find the escape velocity from the half-mass radius of the subhalo. This is equal to the potential difference between the
     ! half-mass radius and outer boundary of the subhalo, plus the potential difference from the outer boundary to infinity (for
     ! which we can treat the subhalo as a point mass).
@@ -195,24 +203,28 @@ contains
          &             basic    %     mass()  &
          &            )
     if (massBoundary > 0.0d0) then
-       radiusBoundary      =self%galacticStructure_%radiusEnclosingMass(node,mass  =      massBoundary  )
-       radiusHalfMass      =self%galacticStructure_%radiusEnclosingMass(node,mass  =0.5d0*massBoundary  )
-       if (radiusBoundary < 0.5d0*radiusLarge) then
-          potentialBoundary=self%galacticStructure_%potential          (node,radius=      radiusBoundary)
-          potentialHalfMass=self%galacticStructure_%potential          (node,radius=      radiusHalfMass)
-          potentialEscape  =+potentialBoundary               &
-               &            -potentialHalfMass               &
-               &            +gravitationalConstantGalacticus &
-               &            *massBoundary                    &
-               &            /radiusBoundary
-          if (potentialEscape > 0.0d0) then
-             velocityEscape=sqrt(2.0d0*potentialEscape)
+       if (self%galacticStructure_%massEnclosed(node,radius=0.5d0*radiusLarge) > massBoundary) then
+          radiusBoundary      =self%galacticStructure_%radiusEnclosingMass(node,mass  =      massBoundary  )
+          radiusHalfMass      =self%galacticStructure_%radiusEnclosingMass(node,mass  =0.5d0*massBoundary  )
+          if (radiusBoundary < 0.5d0*radiusLarge) then
+             potentialBoundary=self%galacticStructure_%potential          (node,radius=      radiusBoundary)
+             potentialHalfMass=self%galacticStructure_%potential          (node,radius=      radiusHalfMass)
+             potentialEscape  =+potentialBoundary               &
+                  &            -potentialHalfMass               &
+                  &            +gravitationalConstantGalacticus &
+                  &            *massBoundary                    &
+                  &            /radiusBoundary
+             if (potentialEscape > 0.0d0) then
+                velocityEscape=sqrt(2.0d0*potentialEscape)
+             else
+                velocityEscape=0.0d0
+             end if
           else
              velocityEscape=0.0d0
           end if
        else
           velocityEscape=0.0d0
-       end if
+       end if   
        ! Get the speed of a host particle at the half-mass radius of the subhalo - this is the sum of the kinetic energy or host
        ! particles in the rest-frame of the subhalo, plus the energy they gain by falling in to the half-mass radius of the
        ! subhalo.
@@ -222,11 +234,14 @@ contains
             &             )
        x            =+      velocityEscape    &
             &        /      speedOrbital
-       if (x > self%xMaximum) call self%tabulate(x+1.0d0)
        ! Find the combined velocity dispersion of satellite and host, and evaluate the correction factor given in Appendix A of
        ! Kummer et al. (2018).
        velocityDispersionHost     =+self%darkMatterProfileDMO_%radialVelocityDispersion(nodeHost,radiusOrbital )
-       velocityDispersionSatellite=+self%darkMatterProfileDMO_%radialVelocityDispersion(node    ,radiusHalfMass)
+       if (radiusHalfMass > 0.0d0) then
+          velocityDispersionSatellite=+self%darkMatterProfileDMO_%radialVelocityDispersion(node    ,radiusHalfMass)
+       else
+          velocityDispersionSatellite=0.0d0
+       end if 
        velocityDispersion         =+sqrt(                                &
             &                            +velocityDispersionHost     **2 &
             &                            +velocityDispersionSatellite**2 &
@@ -245,28 +260,29 @@ contains
             &                          *self%rateScatteringNormalization
        kummer2018Acceleration       =  -     velocity                                   &
             &                          *     rateScattering                             &
-            &                          *self%decelerationFactor         %interpolate(x) &
+            &                          *self%decelerationFactor(x,speedOrbital) &
             &                          *     dispersionFactor
     end if
     return
   end function kummer2018Acceleration
 
-  subroutine kummer2018Tabulate(self,xMaximum)
+  subroutine kummer2018Tabulate(self,xMaximum,vMinimum,vMaximum)
     !!{
     Tabulate the deceleration factor, $\chi_\mathrm{d}$.
     !!}
     use :: Dark_Matter_Particles, only : darkMatterParticleSelfInteractingDarkMatter
     use :: Numerical_Integration, only : integrator
-    use :: Numerical_Ranges     , only : Make_Range                                 , rangeTypeLinear
+    use :: Numerical_Ranges     , only : Make_Range                                 , rangeTypeLinear, rangeTypeLogarithmic
     implicit none
     class           (satelliteDecelerationSIDMKummer2018        ), intent(inout)               :: self
-    double precision                                             , intent(in   )               :: xMaximum
+    double precision                                             , intent(in   )               :: xMaximum, vMinimum, vMaximum
     class           (darkMatterParticleSelfInteractingDarkMatter), pointer                     :: darkMatterParticleSIDM_
-    double precision                                             , allocatable  , dimension(:) :: x                         , decelerationFactor
-    integer                                                      , parameter                   :: countPerUnit           =10
+    double precision                                             , allocatable  , dimension(:,:) :: decelerationFactor_
+    double precision                                             , allocatable, dimension(:) :: x, v 
+    integer                                                      , parameter                   :: countPerUnit           =10, countPerDex           =10
     type            (integrator                                 )                              :: integrator_
     double precision                                                                           :: thetaCritical
-    integer                                                                                    :: i                         , countX
+    integer                                                                                    :: i, j                         , countX, countV
 
     select type (darkMatterParticle_ => self%darkMatterParticle_)
     class is (darkMatterParticleSelfInteractingDarkMatter)
@@ -274,8 +290,16 @@ contains
        self%xMaximum=xMaximum
        countX       =int(xMaximum*dble(countPerUnit))+1
        allocate(x                 (countX))
-       allocate(decelerationFactor(countX))
+       
+       self%vMaximum=vMaximum
+       self%vMinimum=vMinimum
+       countV = int(LOG10(vMaximum/vMinimum) * countPerDex) + 1
+       allocate(v                 (countV))
+       allocate(decelerationFactor_(countX,countV))
+
+
        x                       =  Make_Range(0.0d0,xMaximum,countX,rangeTypeLinear)
+       v                       =  Make_Range(vMinimum,vMaximum,countV,rangeTypeLogarithmic)
        darkMatterParticleSIDM_ => darkMatterParticle_
        integrator_             =  integrator(integrandDecelerationFactor,toleranceAbsolute=1.0d-6,toleranceRelative=1.0d-3)
        do i=1,countX
@@ -283,14 +307,17 @@ contains
                &                      +(+x(i)**2-1.0d0) &
                &                      /(+x(i)**2+1.0d0) &
                &                     )
-          decelerationFactor(i)=+1.0d0                                                                &
+          do j=1,countV
+             
+             decelerationFactor_(i,j)=+1.0d0                                                                &
                &                -integrator_        %integrate                  (0.0d0,thetaCritical) &
-               &                /darkMatterParticle_%crossSectionSelfInteraction(                   ) &
+               &                /darkMatterParticle_%crossSectionSelfInteraction(v(j)               ) &
                &                /sqrt(2.0d0)
+          end do
        end do
-       if (allocated(self%decelerationFactor)) deallocate(self%decelerationFactor)
-       allocate(self%decelerationFactor)
-       self%decelerationFactor=interpolator(x,decelerationFactor)
+       if (allocated(self%decelerationFactor_)) deallocate(self%decelerationFactor_)
+       allocate(self%decelerationFactor_)
+       self%decelerationFactor_=interpolator2D(x,v,decelerationFactor_)
     end select
     return
 
@@ -307,11 +334,31 @@ contains
       integrandDecelerationFactor=+                                   cos(0.5d0*theta)                         &
            &                      *sqrt(1.0d0-x(i)**2+(1.0d0+x(i)**2)*cos(      theta))                        &
            &                      *(                                                                           &
-           &                        +darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(  +theta) &
-           &                        +darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(Pi-theta) &
+           &                        +darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(  +theta,v(j)) &
+           &                        +darkMatterParticleSIDM_%crossSectionSelfInteractionDifferential(Pi-theta,v(j)) &
            &                       )
       return
     end function integrandDecelerationFactor
 
   end subroutine kummer2018Tabulate
   
+  double precision function kummer2018DecelerationFactor(self,x,speedOrbital)
+    implicit none
+    class           (satelliteDecelerationSIDMKummer2018         ), intent(inout) :: self
+    double precision                                              , intent(in   ) :: x
+    double precision                                              , intent(in   ) :: speedOrbital
+    double precision                                                              :: q, velocityCharacteristic = 24.33d0, xCritical = 100.0d0
+
+    if (x > self%xMaximum .or. speedOrbital > self%vMaximum .or. speedOrbital < self%vMinimum) then 
+       if (x < xCritical) call self%tabulate(x+1.0d0,MIN(speedOrbital/2,self%vMinimum),MAX(2*speedOrbital,self%vMaximum))
+    end if
+    if (x < xCritical) then
+       kummer2018DecelerationFactor=self%decelerationFactor_%interpolate(x,speedOrbital)
+    else
+       q = speedOrbital/velocityCharacteristic
+       kummer2018DecelerationFactor = 1.0d0 - sqrt(2.0d0)* (1.0d0+q**2)*((2.0d0*sqrt(2.0d0)/(3.0d0*x**2))-((12.0d0*sqrt(2.0d0) - (8.0d0*sqrt(2.0d0)*q**2))/(15.0d0*x**4)))   
+    end if 
+
+    return
+  end function kummer2018DecelerationFactor
+

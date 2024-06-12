@@ -69,16 +69,14 @@ Contains a module which implements a selfInteracting dark matter particle class.
       double precision                                   , intent(in   ) :: theta
     end function crossSectionSelfInteractionDifferentialTemplate
 
-    double precision function crossSectionSelfInteractionDifferentialCosTemplate(self,theta,velocityRelative)
+    double precision function crossSectionSelfInteractionDifferentialCosTemplate(self,Costheta,velocityRelative)
       !!{
       Interface for differential self-interaction cross section, $\mathrm{d}\sigma/\mathrm{d}\theta$, in units of cm$^2$ g$^{-1}$ ster$^{-1}$, of a self-interacting dark matter particle.
       !!}
       import darkMatterParticleSelfInteractingDarkMatter
       class (darkMatterParticleSelfInteractingDarkMatter), intent(inout) :: self
-      double precision                                   , intent(in)    ::
-velocityRelative
-      double precision                                   , intent(in   ) ::
-theta
+      double precision                                   , intent(in)    :: velocityRelative
+      double precision                                   , intent(in   ) :: Costheta
     end function crossSectionSelfInteractionDifferentialCosTemplate
 
     double precision function crossSectionSelfInteractionMomentumTransferTemplate(self,velocityRelative)
@@ -113,7 +111,7 @@ contains
 
     double precision, intent(in   ) :: v, Costheta
 
-    integrandNumerator = self_%crossSectionSelfInteractionDifferential(Costheta,v)*v**7*(1.0d0-Costheta**2)*np.exp(-v**2/(4.0d0*Veff_**2))
+    integrandNumerator = self_%crossSectionSelfInteractionDifferentialCos(Costheta,v)*v**7*(1.0d0-Costheta**2)*exp(-v**2/(4.0d0*Veff_**2))
 
   end function integrandNumerator
 
@@ -122,20 +120,21 @@ contains
     use :: SIDM_Effective_Cross_Section_Integrator, only : SIDMEffectiveCrossSectionIntegrator2D
 
     class           (darkMatterParticleSelfInteractingDarkMatter), intent(inout), target  :: self
-    type            (SIDMEffectiveCrossSectionIntegrator2D)                               :: integratorNumerator
-    doublion(2,2) precision                                             , intent(in
-),     :: Vmax
+    type            (SIDMEffectiveCrossSectionIntegrator2D)      , allocatable            :: integratorNumerator
+    double precision                                             , intent(in   )          :: Vmax
     double precision                                             , dimension(2,2)         :: boundaries
-    double precision                                                                      :: Veff = 0.64d0*Vmax
+    double precision                                                                      :: Veff
     double precision                                                                      :: numeratorIntegral
-        
+    
+    Veff = 0.64d0*Vmax
+    
     boundaries (1,:) = (/0.0d0,10.0d0*Veff/)
     boundaries (2,:) = (/-1.0d0,1.0d0/)
       
     Veff_=Veff
     self_ => self
 
-    integratorNumerator = SIDMEffectiveCrossSectionIntegrator2D(integrandNumerator)
+    call integratorNumerator%setIntegrand(integrandNumerator)
     numeratorIntegral = integratorNumerator%integrate(boundaries)
 
     effectiveCrossSection_ = numeratorIntegral/(512.0d0*Veff_**8)
