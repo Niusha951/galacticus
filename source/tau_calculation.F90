@@ -4,43 +4,57 @@
 !!
 !! This file is part of Galacticus.
 
-  <tau_calculation name="tau_calculation">
+  <tauCalculation name="tauCalculation">
     <description>
     </description>
-  </tau_calculation>
+  </tauCalculation>
 
-  module MyNewClassModule
+  module tauCalculationClassModule
     implicit none
   
     ! Import the pre-written classes
 
-    use :: PreWrittenClassA, only : PreWrittenClassAType
-    use :: PreWrittenClassB, only : PreWrittenClassBType
+    !use :: PreWrittenClassA, only : PreWrittenClassAType
+    !use :: PreWrittenClassB, only : PreWrittenClassBType
 
-  
     ! Define the new class
-    type :: tau_calculation
+    type :: tauCalculation
       ! Components specific to the new class
-      integer :: myInteger
-      real    :: myReal
+      !integer :: myInteger
+      !real    :: myReal
     
       ! Components from pre-written classes
-      type(PreWrittenClassAType) :: classAInstance
-      type(PreWrittenClassBType) :: classBInstance
-    end type MyNewClassType
+      !type(PreWrittenClassAType) :: classAInstance
+      !type(PreWrittenClassBType) :: classBInstance
+    end type tauCalculation
   
+    !interface tauCalculation
+    !   module procedure tauCalculationConstructorParameters
+    !   module procedure tauCalculationConstructorInternal
+    !end interface tauCalculation
+
   contains
 
     ! Constructor for MyNewClassType
 
+    !function tauCalculationConstructorInternal() result(self)
+    !  implicit none
+    !  type            (tauCalculation)                                 :: self
+    !  class           (darkMatterParticleClass), intent(in   ), target :: darkMatterParticle_
+    !  double precision                         , intent(in   )         :: 
+    !  !![
+    !  <constructorAssign  variables="velocityCharacteristic,sigma0,*darkMatterParticle_"/>
+    !  !!]
 
+    !  return
+    !end function tauCalculationConstructorInternal
 
-    subroutine MyNewClass(self, node, integerInput, realInput)
+    subroutine tauCalculationClass(self, node)
 
       use :: Galacticus_Nodes, only : treeNode
       use :: Dark_Matter_Halo_Mass_Accretion_Histories, only : darkMatterHaloMassAccretionHistoryClass
 
-      type(tau_calculation), intent(  out) :: self
+      type(tauCalculation), intent(  out) :: self
       type(treeNode),        intent(inout) :: node
       type(treeNode),        pointer       :: nodeFinal   
       type(treeNode),        pointer       :: nodeWork
@@ -132,8 +146,8 @@
          end if
       end do
 
-
-    end subroutine MyNewClass
+      return
+    end subroutine tauCalculationClass
 
   contains
     
@@ -170,6 +184,7 @@
  
       dvmaxt = dvmaxt * Vmaxt
 
+      return
     end function dvmaxt
 
     double precision function drmaxt(tau, Rmaxt)
@@ -182,7 +197,7 @@
       drmaxt = 0.00762288d0 - 1.43996392d0 * tau + 1.01282643d0 * tau**2 - 0.55015288d0 * tau**3
 
       drmaxt = drmaxt * Rmaxt
-
+      return
     end function drmaxt
 
     double precision function Rmax_NFW(RmaxSIDM, tau)
@@ -191,6 +206,7 @@
       Rmax_NFW = RmaxSIDM/(1 + 0.007623d0*tau - 0.7200d0*tau**2 + 0.3376d0*tau**3 -
 0.1375d0*tau**4)
 
+      return
     end function Rmax_NFW
 
     double precision function Vmax_NFW(VmaxSIDM, tau)
@@ -199,12 +215,15 @@
       Vmax_NFW = VmaxSIDM/(1 + 0.1777d0*tau - 4.399d0*tau**3 + 16.66d0*tau**4 -
 18.87d0*tau**5 + 9.077d0*tau**7 - 2.436d0*tau**9)
 
+      return
     end function Vmax_NFW
 
     double precision function r_s0(Rmax)
       double precision, intent(in   ) :: Rmax
 
       r_s0 = Rmax/2.163d0
+
+      return
     end function r_s0
 
     double precision function rho_s0(Rs,Vmax)
@@ -214,27 +233,42 @@
 
       rho_s0 = Vmax**2/(0.465d0**2 * 4.0d0 * Pi * gravitationalConstant * Rs**2)
 
+      return
     end function rho_s0
 
     double precision function get_rho_s(rho_s0, tau)
       double precision, intent(in   ) :: rho_s0, tau
 
       get_rho_s = rho_s0 * (2.033d0 + 0.7381d0*tau + 7.264d0*tau**5 - 12.73d0*tau**7 + 9.915d0*tau**9 + (1.0d0+2.033d0)*log(tau + 0.001d0)/log(0.001d0))
+
+      return
     end function get_rho_s
 
     double precision function get_r_s(r_s0, tau)
       double precision, intent(in   ) :: r_s0, tau
 
       get_r_s = r_s0 * (0.7178d0 - 0.1026d0*tau + 0.2474d0*tau**2 - 0.4079d0*tau**3 + (1.0d0 - 0.7178d0)*log(tau + 0.001d0)/log(0.001d0))
+      return
     end function get_r_s
 
     double precision function get_r_c(r_s0, tau)
       double precision, intent(in   ) :: r_s0, tau
 
       get_r_c = r_s0 * (2.555d0*sqrt(tau) - 3.632d0*tau + 2.131d0*tau**2 - 1.415d0*tau**3 + 0.4683d0*tau**4)
+      return
     end function get_r_c
 
+    double precision function SIDMDensityProfileIsolated(rho_s, r_s, r_c, r)
+      double precision, intent(in   ) :: rho_s, r_s, r_c, r
+      double precision                :: beta = 4.0d0, term1, term2
 
+      term1 = ((r**beta + r_c**beta)**(1.0d0 / beta) / r_s)
+      term2 = (1.0d0 + r / r_s)**2
 
-  end module MyNewClassModule
+      SIDMDensityProfileIsolated = rho_s / (term1 * term2)
+
+      return
+    end function SIDMDensityProfileIsolated
+
+  end module tauCalculationClassModule
 
