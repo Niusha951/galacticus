@@ -23,6 +23,7 @@ program Tests_Tau_Calculation
   use :: Cosmology_Functions, only : cosmologyFunctionsMatterLambda
   use :: Cosmology_Parameters,only : cosmologyParametersSimple
   use :: Dark_Matter_Halo_Scales, only : darkMatterHaloScaleVirialDensityContrastDefinition
+  use :: Dark_Matter_Particles, only : darkMatterParticleSelfInteractingDarkMatter, darkMatterParticleSIDMVelocityDependent
   !use :: Virial_Density_Contrast   , only : virialDensityContrastSphericalCollapseClsnlssMttrCsmlgclCnstnt
   use :: Dark_Matter_Profiles_DMO, only : darkMatterProfileDMOPenarrubia2010, darkMatterProfileDMONFW
   use :: Events_Hooks                , only : eventsHooksInitialize
@@ -34,6 +35,7 @@ program Tests_Tau_Calculation
   !use :: Merger_Tree_Walkers, only : mergerTreeWalkerAllNodes
   use :: Unit_Tests         , only : Assert                  , Unit_Tests_Begin_Group, Unit_Tests_End_Group, Unit_Tests_Finish
   use :: Virial_Density_Contrast, only : virialDensityContrastSphericalCollapseClsnlssMttrCsmlgclCnstnt, virialDensityContrastFixed, fixedDensityTypeCritical, virialDensityContrastBryanNorman1998
+  use :: tauCalculationClassModule, only : tauCalculation, tauCalculationClass
 
 
   implicit none
@@ -50,7 +52,8 @@ program Tests_Tau_Calculation
   !type   (virialDensityContrastSphericalCollapseClsnlssMttrCsmlgclCnstnt), pointer :: virialDensityContrast_
   !type   (virialDensityContrastFixed), pointer :: virialDensityContrast_
   type   (virialDensityContrastBryanNorman1998), pointer :: virialDensityContrast_
-
+  type   (darkMatterParticleSelfInteractingDarkMatter) :: darkMatterParticle_
+  type   (darkMatterParticleSIDMVelocityDependent) :: darkMatterParticleSIDMVelDep_
 
   class(nodeComponentBasic),             pointer :: basic
   class(nodeComponentDarkmatterProfile), pointer :: darkMatterProfile
@@ -67,6 +70,7 @@ program Tests_Tau_Calculation
   double precision :: h = 0.7
 
   integer :: output_unit
+  type(tauCalculation) :: tauCalc
 
 
   ! Set verbosity level.
@@ -91,6 +95,8 @@ program Tests_Tau_Calculation
   allocate(virialDensityContrast_                           )
   allocate(darkMatterHaloScale_                             )
   allocate(darkMatterProfileDMONFW_                         )
+  allocate(darkMatterParticle_                              )
+  allocate(darkMatterParticleSIDMVelDep_                    )
 
   cosmologyParameters_ = cosmologyParametersSimple( &
        OmegaMatter=0.2815d0, &
@@ -105,7 +111,8 @@ program Tests_Tau_Calculation
   virialDensityContrast_ = virialDensityContrastBryanNorman1998(allowUnsupportedCosmology = .false., cosmologyParameters_ = cosmologyParameters_, cosmologyFunctions_ = cosmologyFunctions_)
   darkMatterHaloScale_ = darkMatterHaloScaleVirialDensityContrastDefinition(cosmologyParameters_ = cosmologyParameters_, cosmologyFunctions_ = cosmologyFunctions_, virialDensityContrast_ = virialDensityContrast_)
   darkMatterProfileDMONFW_ = darkMatterProfileDMONFW(velocityDispersionUseSeriesExpansion=.false., darkMatterHaloScale_ = darkMatterHaloScale_)
-
+  darkMatterParticle_ = darkMatterParticleSelfInteractingDarkMatter()
+  darkMatterParticleSIDMVelDep_ = darkMatterParticleSIDMVelocityDependent(velocityCharacteristic = 24.3289794155754d0, sigma0 = 147.10088d0, darkMatterParticle_ = darkMatterParticle_)
 
   ! Read the data from file
   open(unit=10, file='data_799_cdm_NFW.txt', status='old', action='read')
@@ -195,6 +202,14 @@ program Tests_Tau_Calculation
 
      radiusVirial(i)=darkMatterHaloScale_%radiusVirial(nodes(i)%node)
      !call Assert("maximum Velocity radius comparison:", radiusVelocityMaximum(i),Rvmax_test(i), relTol=1.0d-3)
+
+     ! Call the tauCalculationClass subroutine
+     call tauCalculationClass(tauCalc, nodes(i)%node)
+
+     ! Retrieve the computed values of VmaxSIDM and RmaxSIDM
+     call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%VmaxSIDMID, VmaxSIDM)
+     call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%RmaxSIDMID, RmaxSIDM)
+
 
      call Assert("virial radius: ", radiusVirial(i)*1e3, rvir_test(i), relTol=1.0d-2)
      call Assert("mass radius: ", massVirial(i), mvir_test(i), relTol=1.0d-2)
