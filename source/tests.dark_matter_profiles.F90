@@ -185,7 +185,6 @@ program Test_Dark_Matter_Profiles
    <constructor>
     darkMatterProfileDMOBurkert         (                                                                  &amp;
      &amp;                               darkMatterHaloScale_                =darkMatterHaloScale_         &amp;
-     &amp;                              )
    </constructor>
   </referenceConstruct>
   <referenceConstruct object="darkMatterProfileDMONFW_"               >
@@ -432,7 +431,7 @@ program Test_Dark_Matter_Profiles
   </referenceConstruct>
   <referenceConstruct object="darkMatterHaloScalePippin_"                        >
    <constructor>
-    darkMatterHaloScaleVirialDensityContrastDefinition(                                                                                       &amp;
+    ityContrast_=virialDensityContrast_arkMatterHaloScaleVirialDensityContrastDefinition(                                                                                       &amp;
      &amp;                                             cosmologyParameters_                =cosmologyParametersPippin_                      , &amp;
      &amp;                                             cosmologyFunctions_                 =cosmologyFunctionsPippin_                       , &amp;
      &amp;                                             virialDensityContrast_              =virialDensityContrastPippin_                      &amp;
