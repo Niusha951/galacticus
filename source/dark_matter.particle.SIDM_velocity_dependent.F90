@@ -107,7 +107,6 @@ contains
     <constructorAssign variables="velocityCharacteristic,sigma0,*darkMatterParticle_"/>
     !!]
 
-    return
   end function sidmVelocityDependentConstructorInternal
 
   subroutine sidmVelocityDependentDestructor(self)

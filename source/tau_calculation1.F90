@@ -4,58 +4,27 @@
 !!
 !! This file is part of Galacticus.
 
-!<tauCalculation name="tauCalculation">
-!  <description>
-!  </description>
-!</tauCalculation>
+<tauCalculation name="tauCalculation">
+  <description>
+  </description>
+</tauCalculation>
 
 module tauCalculationClassModule
   use Galacticus_Nodes, only: treeNode
   use Dark_Matter_Halo_Mass_Accretion_Histories, only: darkMatterHaloMassAccretionHistoryClass
-  !use dark_matter_particle_self_interacting, only: effectiveCrossSection
+  use dark_matter_particle_self_interacting, only: effectiveCrossSection
   !use :: Dark_Matter_Particles, only : darkMatterParticleSelfInteractingDarkMatterConstant
-  public :: tauCalculationClass
+
 
   implicit none
 
   ! Define the new class
   type :: tauCalculation
-    private
-    class (darkMatterParticleClass), pointer :: darkMatterParticle_ => null()
-    !double precision :: VmaxSIDM
-    !double precision :: RmaxSIDM
+    double precision :: VmaxSIDM
+    double precision :: RmaxSIDM
   end type tauCalculation
 
-  interface tauCalculation
-    module procedure tauCalculationConstructorParameters
-    module procedure tauCalculationConstructorInternal
-  end interface tauCalculation
-
 contains
-
-  function tauCalculationConstructorParameters() result(self)
-    implicit none
-    type  (tauCalculation)                   :: self
-    class (darkMatterParticleClass), pointer :: darkMatterParticle_
-
-    !![
-    <objectBuilder class="darkMatterParticle"  name="darkMatterParticle_" source="parameters"/>
-    !!]
-    self=tauCalculation(darkMatterParticle_)
-    
-    return
-  end function tauCalculationConstructorParameters
-
-  function tauCalculationConstructorInternal(darkMatterParticle_) result(self)
-    implicit none
-    type  (tauCalculation)                   :: self
-    class (darkMatterParticleClass), intent(in   ), target :: darkMatterParticle_
-
-    !![
-    <constructorAssign variables="*darkMatterParticle_"/>
-    !!]
-  end function tauCalculationConstructorInternal
-
 
   subroutine tauCalculationClass(self, node)
 
@@ -155,23 +124,22 @@ contains
     return
   end subroutine tauCalculationClass
 
-  double precision function get_tc(self, node, Vmax, Rvmax)
+  double precision function get_tc(node, Vmax, Rvmax)
     !!{
     Evaluating tc based on Eq. 2.2 from Yang et al. 2024:https://arxiv.org/pdf/2305.16176
     !!}
-    !use Dark_Matter_Particle_Self_Interacting_Dark_Matter, only: effectiveCrossSection
+    use Dark_Matter_Particle_Self_Interacting_Dark_Matter, only: effectiveCrossSection
 
-    class(tauCalculation), intent(inout) :: self
     type(treeNode), intent(in) :: node
     double precision, intent(in) :: Vmax, Rvmax
 
     double precision :: reff, rhoeff, GG = 4.30073e-6, C = 0.75, pi = 3.1415926535897932384626433832795d0
-    !type(effectiveCrossSection) :: sigmaeff
+    type(effectiveCrossSection) :: sigmaeff
 
 
     reff = Rvmax / 2.1626    
     rhoeff = (Vmax / 1.648 / reff) ** 2 / GG
-    sigmaeff = self%darkMatterParticle_%effectiveCrossSection(Vmax)
+    sigmaeff = effectiveCrossSection(Vmax)
 
     get_tc = (150.0d0 / C) * (1.0d0 / (sigmaeff * rhoeff * reff)) * (4.0d0 * pi * GG * rhoeff) ** (-0.5)
   end function get_tc

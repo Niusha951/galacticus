@@ -20,10 +20,12 @@
 program Tests_Tau_Calculation
   use :: Display            , only : displayVerbositySet     , verbosityLevelStandard
   use :: Functions_Global_Utilities, only : Functions_Global_Set
+  use :: Cosmological_Density_Field, only : cosmologicalMassVarianceFilteredPower
   use :: Cosmology_Functions, only : cosmologyFunctionsMatterLambda
   use :: Cosmology_Parameters,only : cosmologyParametersSimple
   use :: Dark_Matter_Halo_Scales, only : darkMatterHaloScaleVirialDensityContrastDefinition
-  use :: Dark_Matter_Particles, only : darkMatterParticleSelfInteractingDarkMatter, darkMatterParticleSIDMVelocityDependent
+  use :: Dark_Matter_Particles, only : darkMatterParticleCDM, darkMatterParticleSelfInteractingDarkMatter, darkMatterParticleSIDMVelocityDependent
+  !use :: Dark_Matter_Particles, only :: darkMatterParticleSelfInteractingDarkMatterConstant
   !use :: Virial_Density_Contrast   , only : virialDensityContrastSphericalCollapseClsnlssMttrCsmlgclCnstnt
   use :: Dark_Matter_Profiles_DMO, only : darkMatterProfileDMOPenarrubia2010, darkMatterProfileDMONFW
   use :: Events_Hooks                , only : eventsHooksInitialize
@@ -35,8 +37,14 @@ program Tests_Tau_Calculation
   !use :: Merger_Tree_Walkers, only : mergerTreeWalkerAllNodes
   use :: Unit_Tests         , only : Assert                  , Unit_Tests_Begin_Group, Unit_Tests_End_Group, Unit_Tests_Finish
   use :: Virial_Density_Contrast, only : virialDensityContrastSphericalCollapseClsnlssMttrCsmlgclCnstnt, virialDensityContrastFixed, fixedDensityTypeCritical, virialDensityContrastBryanNorman1998
-  use :: tauCalculationClassModule, only : tauCalculation, tauCalculationClass
-
+!  use :: tauCalculationClassModule, only : tauCalculation, tauCalculationClass
+  use :: Dark_Matter_Halo_Mass_Accretion_Histories, only : darkMatterHaloMassAccretionHistoryCorrea2015
+  use :: Nodes_Operators , only : nodeOperatorSIDMParametric
+  use :: Linear_Growth   , only : linearGrowthCollisionlessMatter
+  use :: Power_Spectra_Primordial             , only : powerSpectrumPrimordialPowerLaw
+  use :: Power_Spectra_Primordial_Transferred , only : powerSpectrumPrimordialTransferredSimple
+  use :: Power_Spectrum_Window_Functions      , only : powerSpectrumWindowFunctionTopHat
+  use :: Transfer_Functions                   , only : transferFunctionEisensteinHu1999
 
   implicit none
   type   (varying_string          )            :: parameterFile
@@ -52,8 +60,19 @@ program Tests_Tau_Calculation
   !type   (virialDensityContrastSphericalCollapseClsnlssMttrCsmlgclCnstnt), pointer :: virialDensityContrast_
   !type   (virialDensityContrastFixed), pointer :: virialDensityContrast_
   type   (virialDensityContrastBryanNorman1998), pointer :: virialDensityContrast_
-  type   (darkMatterParticleSelfInteractingDarkMatter) :: darkMatterParticle_
-  type   (darkMatterParticleSIDMVelocityDependent) :: darkMatterParticleSIDMVelDep_
+  !type   (darkMatterParticleSelfInteractingDarkMatter) :: darkMatterParticle_
+  type   (darkMatterParticleCDM)                   :: darkMatterParticleCDM_ 
+  type   (darkMatterParticleSIDMVelocityDependent) :: darkMatterParticle_
+  !type   (darkMatterParticleSelfInteractingDarkMatterConstant) :: darkMatterParticle_
+  type   (nodeOperatorSIDMParametric), pointer :: nodeOperatorSIDMParametric_
+  type   (darkMatterHaloMassAccretionHistoryCorrea2015) :: darkMatterHaloMassAccretionHistory_
+  type   (linearGrowthCollisionlessMatter             ) :: linearGrowth_
+  type   (cosmologicalMassVarianceFilteredPower       ) :: cosmologicalMassVariance_
+  type   (powerSpectrumPrimordialPowerLaw             ) :: powerSpectrumPrimordial_
+  type   (powerSpectrumPrimordialTransferredSimple    ) :: powerSpectrumPrimordialTransferred_
+  type   (powerSpectrumWindowFunctionTopHat           ) :: powerSpectrumWindowFunction_
+  type   (transferFunctionEisensteinHu1999            ) :: transferFunction_
+
 
   class(nodeComponentBasic),             pointer :: basic
   class(nodeComponentDarkmatterProfile), pointer :: darkMatterProfile
@@ -68,9 +87,11 @@ program Tests_Tau_Calculation
   character(len=256)                           :: line
   double precision :: temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8
   double precision :: h = 0.7
+  double precision :: RmaxSIDM, VmaxSIDM
 
   integer :: output_unit
-  type(tauCalculation) :: tauCalc
+  integer :: tauID, VmaxSIDMID, RmaxSIDMID 
+!  type(tauCalculation) :: tauCalc_
 
 
   ! Set verbosity level.
@@ -90,13 +111,19 @@ program Tests_Tau_Calculation
   !call Node_Components_Initialize  (parameters)
   !call Node_Components_Thread_Initialize(parameters)
 
-  allocate(cosmologyParameters_                             )
-  allocate(cosmologyFunctions_                              )
-  allocate(virialDensityContrast_                           )
-  allocate(darkMatterHaloScale_                             )
-  allocate(darkMatterProfileDMONFW_                         )
-  allocate(darkMatterParticle_                              )
-  allocate(darkMatterParticleSIDMVelDep_                    )
+  allocate(cosmologyParameters_               )
+  allocate(cosmologyFunctions_                )
+  allocate(virialDensityContrast_             )
+  allocate(darkMatterHaloScale_               )
+  allocate(darkMatterProfileDMONFW_           )
+!  allocate(darkMatterParticleCDM_             )
+!  allocate(darkMatterParticle_                )
+!  allocate(linearGrowth_                      )
+!  allocate(cosmologicalMassVariance_          )
+!  allocate(darkMatterHaloMassAccretionHistory_)
+  allocate(nodeOperatorSIDMParametric_        )
+!  allocate(taucalc_                                         )
+  !allocate(darkMatterParticleSIDMVelDep_                    )
 
   cosmologyParameters_ = cosmologyParametersSimple( &
        OmegaMatter=0.2815d0, &
@@ -111,8 +138,40 @@ program Tests_Tau_Calculation
   virialDensityContrast_ = virialDensityContrastBryanNorman1998(allowUnsupportedCosmology = .false., cosmologyParameters_ = cosmologyParameters_, cosmologyFunctions_ = cosmologyFunctions_)
   darkMatterHaloScale_ = darkMatterHaloScaleVirialDensityContrastDefinition(cosmologyParameters_ = cosmologyParameters_, cosmologyFunctions_ = cosmologyFunctions_, virialDensityContrast_ = virialDensityContrast_)
   darkMatterProfileDMONFW_ = darkMatterProfileDMONFW(velocityDispersionUseSeriesExpansion=.false., darkMatterHaloScale_ = darkMatterHaloScale_)
-  darkMatterParticle_ = darkMatterParticleSelfInteractingDarkMatter()
-  darkMatterParticleSIDMVelDep_ = darkMatterParticleSIDMVelocityDependent(velocityCharacteristic = 24.3289794155754d0, sigma0 = 147.10088d0, darkMatterParticle_ = darkMatterParticle_)
+  !darkMatterParticle_ = darkMatterParticleSelfInteractingDarkMatter()
+  darkMatterParticleCDM_ = darkMatterParticleCDM()
+  darkMatterParticle_ = darkMatterParticleSIDMVelocityDependent(velocityCharacteristic = 24.3289794155754d0, sigma0 = 147.10088d0, darkMatterParticle_ = darkMatterParticleCDM_)
+  !darkMatterParticle_=darkMatterParticleSelfInteractingDarkMatterConstant(sigma,darkMatterParticleCDM_)
+!  tauCalc_ = tauCalculation(darkMatterParticle_ = darkMatterParticle_)
+  linearGrowth_ = linearGrowthCollisionlessMatter(cosmologyParameters_ = cosmologyParameters_, cosmologyFunctions_ = cosmologyFunctions_)
+  powerSpectrumWindowFunction_ = powerSpectrumWindowFunctionTopHat(cosmologyParameters_ = cosmologyParameters_)
+  powerSpectrumPrimordial_ = powerSpectrumPrimordialPowerLaw( &
+       index_ = 0.971d0, &
+       running = +0.0d0, &
+       runningRunning = +0.0d0, &
+       wavenumberReference = +1.0d0, &
+       runningSmallScalesOnly = .false.)
+  transferFunction_ = transferFunctionEisensteinHu1999( &
+       neutrinoNumberEffective = 3.046d0, &
+       neutrinoMassSummed = 0.0d0, &
+       darkMatterParticle_ = darkMatterParticleCDM_, &
+       cosmologyParameters_ = cosmologyParameters_, &
+       cosmologyFunctions_ = cosmologyFunctions_)
+  powerSpectrumPrimordialTransferred_ = powerSpectrumPrimordialTransferredSimple(powerSpectrumPrimordial_ = powerSpectrumPrimordial_, transferFunction_ = transferFunction_, linearGrowth_ = linearGrowth_)
+  cosmologicalMassVariance_ = cosmologicalMassVarianceFilteredPower(&
+       sigma8 = 0.82d0, &
+       tolerance = 4.0d-6, &
+       toleranceTopHat = 1.0d-6, &
+       nonMonotonicIsFatal = .true., &
+       monotonicInterpolation = .false., &
+       truncateAtParticleHorizon = .false., &
+       cosmologyParameters_ = cosmologyParameters_, &
+       cosmologyFunctions_ = cosmologyFunctions_, &
+       linearGrowth_ = linearGrowth_, &
+       powerSpectrumPrimordialTransferred_ = powerSpectrumPrimordialTransferred_, &
+       powerSpectrumWindowFunction_ = powerSpectrumWindowFunction_)
+  darkMatterHaloMassAccretionHistory_ = darkMatterHaloMassAccretionHistoryCorrea2015(cosmologyFunctions_ = cosmologyFunctions_, linearGrowth_ = linearGrowth_, cosmologicalMassVariance_ = cosmologicalMassVariance_) 
+  nodeOperatorSIDMParametric_ = nodeOperatorSIDMParametric(darkMatterParticle_ = darkMatterParticle_, darkMatterHaloMassAccretionHistory_ = darkMatterHaloMassAccretionHistory_)
 
   ! Read the data from file
   open(unit=10, file='data_799_cdm_NFW.txt', status='old', action='read')
@@ -174,6 +233,10 @@ program Tests_Tau_Calculation
   ! Create nodes.
   do i=1,N
      nodes(i)%node => treeNode()
+
+     nodes(i)%node%parent => null()
+     nodes(i)%node%firstChild => null()
+     nodes(i)%node%sibling => null()
   end do
 
   ! Set child nodes.
@@ -204,11 +267,31 @@ program Tests_Tau_Calculation
      !call Assert("maximum Velocity radius comparison:", radiusVelocityMaximum(i),Rvmax_test(i), relTol=1.0d-3)
 
      ! Call the tauCalculationClass subroutine
-     call tauCalculationClass(tauCalc, nodes(i)%node)
+     !call tauCalculationClass(tauCalc, nodes(i)%node)
 
      ! Retrieve the computed values of VmaxSIDM and RmaxSIDM
-     call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%VmaxSIDMID, VmaxSIDM)
-     call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%RmaxSIDMID, RmaxSIDM)
+     !call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%VmaxSIDMID, VmaxSIDM)
+     !call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%RmaxSIDMID, RmaxSIDM)
+
+     call nodeOperatorSIDMParametric_%calculateTau(nodes(i)%node)
+
+     tauID = nodeOperatorSIDMParametric_%getTauID()
+     VmaxSIDMID = nodeOperatorSIDMParametric_%getVmaxSIDMID()
+     RmaxSIDMID = nodeOperatorSIDMParametric_%getRmaxSIDMID()
+
+!     call darkMatterProfile%floatRank0MetaPropertyGet(nodeOperatorSIDMParametric_%VmaxSIDMID, VmaxSIDM)
+!     call darkMatterProfile%floatRank0MetaPropertyGet(nodeOperatorSIDMParametric_%RmaxSIDMID, RmaxSIDM)
+     VmaxSIDM=darkMatterProfile%floatRank0MetaPropertyGet(VmaxSIDMID)
+     RmaxSIDM=darkMatterProfile%floatRank0MetaPropertyGet(RmaxSIDMID)
+
+!     call darkMatterProfile%floatRank0MetaPropertyGet(VmaxSIDMID, VmaxSIDM)
+!     call darkMatterProfile%floatRank0MetaPropertyGet(RmaxSIDMID, RmaxSIDM)
+
+!     print *, RmaxSIDM
+!     print *, VmaxSIDM
+     !call tauCalc_%VmaxSIDM(nodes(i)%node)
+     !call tauCalc_%RmaxSIDM(nodes(i)%node)
+
 
 
      call Assert("virial radius: ", radiusVirial(i)*1e3, rvir_test(i), relTol=1.0d-2)
