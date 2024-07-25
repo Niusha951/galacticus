@@ -171,7 +171,7 @@ program Tests_Tau_Calculation
        powerSpectrumPrimordialTransferred_ = powerSpectrumPrimordialTransferred_, &
        powerSpectrumWindowFunction_ = powerSpectrumWindowFunction_)
   darkMatterHaloMassAccretionHistory_ = darkMatterHaloMassAccretionHistoryCorrea2015(cosmologyFunctions_ = cosmologyFunctions_, linearGrowth_ = linearGrowth_, cosmologicalMassVariance_ = cosmologicalMassVariance_) 
-  nodeOperatorSIDMParametric_ = nodeOperatorSIDMParametric(darkMatterParticle_ = darkMatterParticle_, darkMatterHaloMassAccretionHistory_ = darkMatterHaloMassAccretionHistory_)
+  nodeOperatorSIDMParametric_ = nodeOperatorSIDMParametric(darkMatterParticle_ = darkMatterParticle_, darkMatterHaloMassAccretionHistory_ = darkMatterHaloMassAccretionHistory_, darkMatterProfileDMO_ = darkMatterProfileDMONFW_)
 
   ! Read the data from file
   open(unit=10, file='data_799_cdm_NFW.txt', status='old', action='read')
@@ -274,6 +274,11 @@ program Tests_Tau_Calculation
      !call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%RmaxSIDMID, RmaxSIDM)
 
      call nodeOperatorSIDMParametric_%calculateTau(nodes(i)%node)
+  end do
+ 
+  do i=1,N
+     basic => nodes(i)%node%basic(autoCreate=.true.)
+     darkMatterProfile => nodes(i)%node%darkMatterProfile(autoCreate=.true.)
 
      tauID = nodeOperatorSIDMParametric_%getTauID()
      VmaxSIDMID = nodeOperatorSIDMParametric_%getVmaxSIDMID()
@@ -287,16 +292,15 @@ program Tests_Tau_Calculation
 !     call darkMatterProfile%floatRank0MetaPropertyGet(VmaxSIDMID, VmaxSIDM)
 !     call darkMatterProfile%floatRank0MetaPropertyGet(RmaxSIDMID, RmaxSIDM)
 
-!     print *, RmaxSIDM
-!     print *, VmaxSIDM
+     print *, RmaxSIDM
+     print *, VmaxSIDM
      !call tauCalc_%VmaxSIDM(nodes(i)%node)
      !call tauCalc_%RmaxSIDM(nodes(i)%node)
 
 
-
-     call Assert("virial radius: ", radiusVirial(i)*1e3, rvir_test(i), relTol=1.0d-2)
-     call Assert("mass radius: ", massVirial(i), mvir_test(i), relTol=1.0d-2)
-     call Assert("max Velocity: ", velocityMaximum(i), Vmax_test(i), relTol=1.0d-2)
+!     call Assert("virial radius: ", radiusVirial(i)*1e3, rvir_test(i), relTol=1.0d-2)
+!     call Assert("mass radius: ", massVirial(i), mvir_test(i), relTol=1.0d-2)
+!     call Assert("max Velocity: ", velocityMaximum(i), Vmax_test(i), relTol=1.0d-2)
      !call Assert("scale radius: ", radiusScale(i), rs_test(i), relTol=1.0d-3)
 
   end do

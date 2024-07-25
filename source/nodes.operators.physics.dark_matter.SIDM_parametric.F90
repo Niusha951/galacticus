@@ -37,13 +37,13 @@
      private
      class(darkMatterParticleClass                ), pointer :: darkMatterParticle_        => null()
      class(darkMatterHaloMassAccretionHistoryClass), pointer :: darkMatterHaloMassAccretionHistory_ => null()
-
+     class(darkMatterProfileDMOClass              ), pointer :: darkMatterProfileDMO_
+ 
      integer                                                 :: tauID, VmaxSIDMID, RmaxSIDMID
    contains
      !![
      <methods>
-       <method method="calculateTau" description="Computes tau, VmaxSIDM and
-RmaxSIDM for each node."/>
+       <method method="calculateTau" description="Computes tau, VmaxSIDM and RmaxSIDM for each node."/>
      </methods>
      !!]
      final     ::                                        SIDMParametricDestructor
@@ -74,21 +74,24 @@ contains
     type (inputParameters             ), intent(inout) :: parameters
     class(darkMatterParticleClass                ), pointer :: darkMatterParticle_
     class(darkMatterHaloMassAccretionHistoryClass), pointer :: darkMatterHaloMassAccretionHistory_
+    class(darkMatterProfileDMOClass              ), pointer :: darkMatterProfileDMO_
 
     !![
     <objectBuilder class="darkMatterParticle" name="darkMatterParticle_" source="parameters"/>
     <objectBuilder class="darkMatterHaloMassAccretionHistory" name="darkMatterHaloMassAccretionHistory_" source="parameters"/>
+    <objectBuilder class="darkMatterProfileDMO" name="darkMatterProfileDMO_" source="parameters"/>
     !!]
-    self=nodeOperatorSIDMParametric(darkMatterParticle_,darkMatterHaloMassAccretionHistory_)
+    self=nodeOperatorSIDMParametric(darkMatterParticle_,darkMatterHaloMassAccretionHistory_, darkMatterProfileDMO_)
     !![
     <inputParametersValidate source="parameters"/>
     <objectDestructor name="darkMatterParticle_"/>
     <objectDestructor name="darkMatterHaloMassAccretionHistory_"/>
+    <objectDestructor name="darkMatterProfileDMO_"/>
     !!]
     return
   end function SIDMParametricConstructorParameters
 
-  function SIDMParametricConstructorInternal(darkMatterParticle_, darkMatterHaloMassAccretionHistory_) result(self)
+  function SIDMParametricConstructorInternal(darkMatterParticle_, darkMatterHaloMassAccretionHistory_, darkMatterProfileDMO_) result(self)
     !!{
     Internal constructor for the {\normalfont \ttfamily SIDMParametric} node operator class.
     !!}
@@ -96,9 +99,10 @@ contains
     type (nodeOperatorSIDMParametric)                        :: self
     class(darkMatterParticleClass   ), intent(in   ), target :: darkMatterParticle_
     class(darkMatterHaloMassAccretionHistoryClass), intent(in   ),target  :: darkMatterHaloMassAccretionHistory_
+    class(darkMatterProfileDMOClass), intent(in   ), target :: darkMatterProfileDMO_
 
     !![
-    <constructorAssign variables="*darkMatterParticle_, *darkMatterHaloMassAccretionHistory_"/>
+    <constructorAssign variables="*darkMatterParticle_, *darkMatterHaloMassAccretionHistory_, *darkMatterProfileDMO_"/>
     !!]
     
     !![
@@ -119,6 +123,7 @@ contains
     !![
     <objectDestructor name="self%darkMatterParticle_"/>
     <objectDestructor name="self%darkMatterHaloMassAccretionHistory_"/>
+    <objectDestructor name="self%darkMatterProfileDMO_"/>
     !!]
     return
   end subroutine SIDMParametricDestructor
@@ -138,7 +143,7 @@ contains
   subroutine SIDMParametriCalculateTau(self, node)
     use Galacticus_Nodes, only: treeNode, nodeComponentBasic, nodeComponentDarkMatterProfile
 !    use Dark_Matter_Halo_Mass_Accretion_Histories, only: darkMatterHaloMassAccretionHistoryClass
-    use Dark_Matter_Profiles_DMO , only : darkMatterProfileDMOClass
+!    use Dark_Matter_Profiles_DMO , only : darkMatterProfileDMOClass
     use :: Dark_Matter_Halo_Formation_Times, only : Dark_Matter_Halo_Formation_Time
 
     type(treeNode), intent(inout), target :: node
@@ -151,57 +156,83 @@ contains
 !    class(darkMatterHaloMassAccretionHistoryClass), pointer :: darkMatterHaloMassAccretionHistory_
     class(nodeComponentBasic), pointer :: basic
     class(nodeComponentDarkMatterProfile), pointer :: darkMatterProfile
-    class(darkMatterProfileDMOClass), pointer :: darkMatterProfileDMO_
+!    class(darkMatterProfileDMOClass), pointer :: darkMatterProfileDMO_
 
     double precision :: timeFormation
     double precision :: formationMassFraction = 0.5d0
     double precision :: tau, time, timePrevious, tc
     double precision :: RmaxNFW0, VmaxNFW0, r_sNFW0, rho_sNFW0, rho_s, r_s, r_c
-    double precision :: VmaxSIDM, RmaxSIDM, VmaxSIDMPrevious, RmaxSIDMPrevious
+    double precision :: VmaxSIDM=0.0d0, RmaxSIDM=0.0d0, VmaxSIDMPrevious, RmaxSIDMPrevious, VmaxCDM, RmaxCDM, VmaxCDMPrevious, RmaxCDMPrevious
     double precision :: dtr
 
-    print *, 'Does this node have children?'
-    if (associated(node%firstChild)) then 
-       print *, 'Yes!'
-    else 
-       print *, 'No!'
-    end if
+!    print *, 'Does this node have children?'
+!    if (associated(node%firstChild)) then 
+!       print *, 'Yes!'
+!    else 
+!       print *, 'No!'
+!    end if
 
     basic => node%basic()
-    print *, 'time associated to this node: ', basic%time()
+!    print *, 'time associated to this node: ', basic%time()
+!    print *, 'mass associated to this node: ', basic%mass()
 
     ! Check if the node has children, if so, return
     if (associated(node%firstChild)) return
 
     nodeFinal => node
     do while (nodeFinal%isPrimaryProgenitor())
-      print *, 'repeat is num. of loop!'
+!      print *, 'repeat is num. of loop!'
       nodeFinal => nodeFinal%parent
     end do
 
-    print *, 'End of cheching for children of nodes!'
+    basic => nodefinal%basic()
+!    print *, 'time associated to nodefinal: ', basic%time()
+!    print *, 'mass associated to nodefinal: ', basic%mass()
+!    print *, 'End of cheching for children of nodes!'
 
     ! Calculate the formation time
-    timeFormation = Dark_Matter_Halo_Formation_Time(nodeFinal, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
+!    timeFormation = Dark_Matter_Halo_Formation_Time(node, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
+
+    !Just for test!
+    timeFormation = 2.1903d0
 
     print *, 'Formation time: ', timeFormation
 
+    basic => node%basic()
+    print *, 'time associated to node: ', basic%time()
+    print *, 'mass associated to node: ', basic%mass()
+
     tau = 0.0d0
     timePrevious = 0.0d0
-    nodeWork => node
+    VmaxSIDMPrevious = 0.0d0
+    RmaxSIDMPrevious = 0.0d0
+!    nodeWork => node
+    nodework => nodefinal
 
     print *, 'Starting the while loop.'
+
+    ! Open the output file
+    open(unit=20, file='/home/nahvazi/Galacticus_SIDM_parametric/gal/galacticus/SIDM_output_data.txt', status='replace', action='write')
+    write(20, '(A)') 'time tau VmaxSIDM RmaxSIDM' ! Write header line
+!     open(unit=20, file='/home/nahvazi/Galacticus_SIDM_parametric/gal/galacticus/SIDM_output_data_sigmaEff.txt', status='replace', action='write')
+!     write(20, '(A)') 'time sigma_effective'
 
     do while (associated(nodeWork))
       basic => nodeWork%basic()
       time = basic%time()
 
-      print *, 'Initiate basic, and read time: ', time
+      print *, 'Initiate basic, and read time for nodeWork: ', time
 
       if (time > timeFormation) then
+        print *, 'Test1: inside if loop.'
         ! Compute tc and increment ?~D.
-        tc = get_tc(self, nodeWork, darkMatterProfileDMO_%circularVelocityMaximum(nodeWork), darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork))
-        tau = tau + (time - timePrevious) / tc
+        tc = get_tc(self, nodeWork, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork), VmaxSIDMPrevious)
+        print *, 'after tc: ', tc
+
+!        tau = tau + (time - timePrevious) / tc
+        tau = (time - timeFormation) / tc
+
+        print *, 'after tau: ', tau
 
         ! Check if dtr is greater than 0.05 and print a message if true
         dtr = (time - timePrevious) / tc
@@ -209,19 +240,40 @@ contains
           print *, 'Gravothermal evolution too fast, dtr: ', dtr
         end if
 
-        VmaxSIDM = VmaxSIDMPrevious + dvmaxt(tau, darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
-        RmaxSIDM = RmaxSIDMPrevious + drmaxt(tau, darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
+        VmaxCDM = self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)
+        RmaxCDM = self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)
+
+        print *, 'VmaxCDM: ', VmaxCDM
+        print *, 'VmaxCDMPrevious: ', VmaxCDMPrevious
+        print *, 'subtract: ', VmaxCDM - VmaxCDMPrevious
+
+        VmaxSIDM = (VmaxCDM - VmaxCDMPrevious) + VmaxSIDMPrevious + dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
+!        VmaxSIDM = VmaxCDM + dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
+        RmaxSIDM = (RmaxCDM - RmaxCDMPrevious) + RmaxSIDMPrevious + drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
+!        RmaxSIDM = RmaxCDM + drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
+
+        print *, 'VmaxSIDM: ', VmaxSIDM
+        print *, 'RmaxSIDM: ', RmaxSIDM
+
+
+        ! Store the value of tau, VmaxSIDM, and RmaxSIDM in the dark matter
+        ! profile component of this node.
+        darkMatterProfile => node%darkMatterProfile()
+        call darkMatterProfile%floatRank0MetaPropertySet(self%tauID, tau)
+        call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID, VmaxSIDM)
+        call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID, RmaxSIDM)
+
       end if
 
-      ! Store the value of tau, VmaxSIDM, and RmaxSIDM in the dark matter
-      ! profile component of this node.
-      darkMatterProfile => node%darkMatterProfile()
-      call darkMatterProfile%floatRank0MetaPropertySet(self%tauID, tau)
-      call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID, VmaxSIDM)
-      call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID, RmaxSIDM)
+      ! Write the data to the output file
+      write(20, '(F20.6, 2X, F20.6, 2X, F20.6, 2X, F20.6)') time, tau, VmaxSIDM, RmaxSIDM
+!      if (time<timeFormation) then
+!         write(20, '(F20.6, 2X, F20.6)') time, 0.0d0 
+!      end if
 
       RmaxNFW0 = Rmax_NFW(RmaxSIDM, tau)
       VmaxNFW0 = Vmax_NFW(VmaxSIDM, tau)
+
 
       r_sNFW0 = r_s0(RmaxNFW0)
       rho_sNFW0 = rho_s0(r_sNFW0, VmaxNFW0)
@@ -230,62 +282,98 @@ contains
       r_s = get_r_s(r_sNFW0, tau)
       r_c = get_r_c(r_sNFW0, tau)
 
+!      print *, 'Testing VmaxSIDMPrevious: ', VmaxSIDMPrevious
+
       if (time > timeFormation) then
+        print *, 'check if inside the correct if condition: time > timeFormation'
         VmaxSIDMPrevious = VmaxSIDM
         RmaxSIDMPrevious = RmaxSIDM
+        VmaxCDMPrevious = VmaxCDM
+        RmaxCDMPrevious = RmaxCDM
       else
-        VmaxSIDMPrevious = darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)
-        RmaxSIDMPrevious = darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)
+        print *, 'Test if it goes through the correct section of if/else'
+        VmaxSIDMPrevious = self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)
+!        print *, 'Testing VmaxSIDMPrevious after association: ', VmaxSIDMPrevious
+        RmaxSIDMPrevious = self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)
+        VmaxCDMPrevious = self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)
+        RmaxCDMPrevious = self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)
+
       end if
+
+      print *, 'End of setting previous Vmax and Rmax', VmaxSIDMPrevious, RmaxSIDMPrevious
 
       ! Update the timePrevious variable so that we can compute the time
       ! interval on the next pass through this loop.
       timePrevious = time
+      !VmaxCDMPrevious = VmaxCDM
+      !RmaxCDMPrevious = RmaxCDM
 
       ! Move to the next node.
-      if (associated(nodeWork, nodeFinal)) then
+!      if (associated(nodeWork, nodeFinal)) then
+      if (associated(nodeWork, node)) then
         ! We've reached the final node in the branch - set our worker node to
         ! null
         ! so we exit the loop.
         nodeWork => null()
       else
         ! Move up the branch.
-        nodeWork => nodeWork%parent
+!        nodeWork => nodeWork%parent
+        nodeWork => nodeWork%firstChild
       end if
     end do
 
     return
   end subroutine SIDMParametriCalculateTau
 
-  double precision function get_tc(self, node, Vmax, Rvmax)
+  double precision function get_tc(self, node, Vmax, Rvmax, VmaxSIDM)
     !!{
     Evaluating tc based on Eq. 2.2 from Yang et al. 2024:https://arxiv.org/pdf/2305.16176
     !!}
     use Numerical_Constants_Math, only: Pi
-    use Numerical_Constants_Physical, only: gravitationalConstant
+!    use Numerical_Constants_Physical, only: gravitationalConstant
+    use :: Numerical_Constants_astronomical, only : gravitationalConstantGalacticus
     use :: Error, only : Error_Report
     use :: Dark_Matter_Particles, only : darkMatterParticleSelfInteractingDarkMatter
 
-
     class(nodeOperatorSIDMParametric), intent(inout) :: self
     type(treeNode), intent(in) :: node
-    double precision, intent(in) :: Vmax, Rvmax
+    double precision, intent(in) :: Vmax, Rvmax, VmaxSIDM
 
-    double precision :: sigmaeff, reff, rhoeff, C = 0.75 !GG = 4.30073e-6, C = 0.75, pi = 3.1415926535897932384626433832795d0
+    double precision :: sigmaeff, reff, rhoeff, C = 0.75, gravitationalConstant !GG = 4.30073e-6, C = 0.75, pi = 3.1415926535897932384626433832795d0
     !type(effectiveCrossSection) :: sigmaeff
+
+    print *, 'Vmax: ', Vmax
+    print *, 'VmaxSIDM: ', VmaxSIDM
 
     select type (darkMatterParticle_ => self%darkMatterParticle_)
     class is (darkMatterParticleSelfInteractingDarkMatter)
-       sigmaeff = darkMatterParticle_%effectiveCrossSection(Vmax)
+       print *, 'darkMatterParticle_ is of type SIDM'
+       sigmaeff = darkMatterParticle_%effectiveCrossSection(VmaxSIDM)
+!       sigmaeff = darkMatterParticle_%effectiveCrossSection(Vmax)
     class default
        call Error_Report('unexpected class'//{introspection:location})
     end select
 
-    reff = Rvmax / 2.1626
-    rhoeff = (Vmax / 1.648 / reff) ** 2 / gravitationalConstant
+    print *, 'right after sigma effective calculations...', sigmaeff
+    gravitationalConstant = gravitationalConstantGalacticus*1e3
+    print *, 'gravitaional constant: ', gravitationalConstant
+    print *, 'Rmax: ', Rvmax
+    print *, 'Vmax: ', Vmax
+
+!    write(20, '(F20.6, 2X, F20.6)') 0.0d0, sigmaeff 
+
+    !we need the conversion of Rvmax to kpc rather than Mpc
+    reff = Rvmax*1e3 / 2.1626 
+    rhoeff = (Vmax / (1.648 * reff))**2 / gravitationalConstant
 !    sigmaeff = self%darkMatterParticle_%effectiveCrossSection(Vmax)
 
-    get_tc = (150.0d0 / C) * (1.0d0 / (sigmaeff * rhoeff * reff)) * (4.0d0 * Pi * gravitationalConstant * rhoeff) ** (-0.5)
+    print *, 'reff: ', reff
+    print *, 'rhoeff: ', rhoeff
+
+!    get_tc = (150.0d0 / C) * (1.0d0 / (sigmaeff * rhoeff * reff)) * (4.0d0 * Pi * gravitationalConstant * rhoeff) ** (-0.5)
+    !the constant 2.09e-10 is multiplied for unit conversion of sigma
+    get_tc = (150.0d0 / C) * (1.0d0 / (sigmaeff * 2.09e-10 * rhoeff * reff)) * (1.0d0 / sqrt(4.0d0 * Pi * gravitationalConstant * rhoeff))
+
   end function get_tc
 
   double precision function dvmaxt(tau, Vmaxt)
@@ -314,7 +402,7 @@ contains
     end if
 
     drmaxt = 0.00762288d0 - 1.43996392d0 * tau_local + 1.01282643d0 * tau_local ** 2 - 0.55015288d0 * tau_local ** 3
-    drmaxt = drmaxt * Rmaxt
+    drmaxt = drmaxt * Rmaxt 
   end function drmaxt
 
   double precision function Rmax_NFW(RmaxSIDM, tau)

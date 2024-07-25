@@ -125,19 +125,31 @@ contains
     double precision                                             , dimension(2,2)         :: boundaries
     double precision                                                                      :: Veff
     double precision                                                                      :: numeratorIntegral
+
+!    print *, 'begining of effective cross section function'
     
     Veff = 0.64d0*Vmax
     
     boundaries (1,:) = (/0.0d0,10.0d0*Veff/)
     boundaries (2,:) = (/-1.0d0,1.0d0/)
       
+!    print *, 'finished setting V_eff and boundaries'
+
     Veff_=Veff
     self_ => self
 
+    allocate(integratorNumerator)
     call integratorNumerator%setIntegrand(integrandNumerator)
+
+!    print *, 'call intrgrator ...'
+
     numeratorIntegral = integratorNumerator%integrate(boundaries)
 
+!    print *, 'numerator integral ...', numeratorIntegral
+
     effectiveCrossSection_ = numeratorIntegral/(512.0d0*Veff_**8)
+
+!    print *, 'finished integration', effectiveCrossSection_
     
   end function effectiveCrossSection_
 
