@@ -191,10 +191,10 @@ contains
 !    print *, 'End of cheching for children of nodes!'
 
     ! Calculate the formation time
-!    timeFormation = Dark_Matter_Halo_Formation_Time(node, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
+    timeFormation = Dark_Matter_Halo_Formation_Time(node, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
 
     !Just for test!
-    timeFormation = 2.1903d0
+!    timeFormation = 2.1903d0
 
     print *, 'Formation time: ', timeFormation
 
@@ -258,7 +258,7 @@ contains
 
         ! Store the value of tau, VmaxSIDM, and RmaxSIDM in the dark matter
         ! profile component of this node.
-        darkMatterProfile => node%darkMatterProfile()
+        darkMatterProfile => nodeWork%darkMatterProfile()
         call darkMatterProfile%floatRank0MetaPropertySet(self%tauID, tau)
         call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID, VmaxSIDM)
         call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID, RmaxSIDM)
