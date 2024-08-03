@@ -136,7 +136,9 @@ contains
     class(nodeOperatorSIDMParametric), intent(inout), target  :: self
     type (treeNode                  ), intent(inout), target  :: node
     
+    print *, 'Test inside SIDM parametric NodeTreeInitialize ...'
     call self%nodeInitialize(node)
+    call self%calculateTau(node)
     return
   end subroutine SIDMParametricNodeTreeInitialize
  
@@ -149,6 +151,7 @@ contains
     type(treeNode), intent(inout), target :: node
     type(treeNode), pointer :: nodeFinal
     type(treeNode), pointer :: nodeWork
+    type(treeNode), pointer :: nodeStart
 !    type(darkMatterProfileDMO), pointer :: darkMatterProfileDMO_
 
     class(nodeOperatorSIDMParametric), intent(inout) :: self
@@ -177,21 +180,34 @@ contains
 !    print *, 'mass associated to this node: ', basic%mass()
 
     ! Check if the node has children, if so, return
-    if (associated(node%firstChild)) return
-
+!    if (.not.node%isPrimaryProgenitor()) return
     nodeFinal => node
-    do while (nodeFinal%isPrimaryProgenitor())
-!      print *, 'repeat is num. of loop!'
-      nodeFinal => nodeFinal%parent
+
+    nodeStart => nodeFinal
+    do while (associated(nodeStart%firstChild))
+      nodeStart => nodeStart%firstChild
     end do
 
+    basic => nodeStart%basic()
+    print *, 'starting node time and mass: ', basic%time(), basic%mass()
+
+!    if (associated(node%firstChild)) return
+!    if (associated(node%parent)) return
+
+!    nodeFinal => node
+!    do while (nodeFinal%isPrimaryProgenitor())
+!      nodeFinal => nodeFinal%parent
+!    end do
+
     basic => nodefinal%basic()
-!    print *, 'time associated to nodefinal: ', basic%time()
-!    print *, 'mass associated to nodefinal: ', basic%mass()
+    print *, 'time associated to nodefinal: ', basic%time()
+    print *, 'mass associated to nodefinal: ', basic%mass()
 !    print *, 'End of cheching for children of nodes!'
 
     ! Calculate the formation time
-    timeFormation = Dark_Matter_Halo_Formation_Time(node, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
+!    timeFormation = Dark_Matter_Halo_Formation_Time(node, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
+    timeFormation = Dark_Matter_Halo_Formation_Time(nodeFinal, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
+
 
     !Just for test!
 !    timeFormation = 2.1903d0
@@ -202,18 +218,21 @@ contains
     print *, 'time associated to node: ', basic%time()
     print *, 'mass associated to node: ', basic%mass()
 
+    if (associated(node%parent)) return
+
     tau = 0.0d0
     timePrevious = 0.0d0
     VmaxSIDMPrevious = 0.0d0
     RmaxSIDMPrevious = 0.0d0
 !    nodeWork => node
-    nodework => nodefinal
-
+!    nodework => nodefinal
+    nodeWork => nodeStart
+ 
     print *, 'Starting the while loop.'
 
     ! Open the output file
-    open(unit=20, file='/home/nahvazi/Galacticus_SIDM_parametric/gal/galacticus/SIDM_output_data.txt', status='replace', action='write')
-    write(20, '(A)') 'time tau VmaxSIDM RmaxSIDM' ! Write header line
+!    open(unit=20, file='/home/nahvazi/Galacticus_SIDM_parametric/gal/galacticus/SIDM_output_data.txt', status='replace', action='write')
+!    write(20, '(A)') 'time tau VmaxSIDM RmaxSIDM' ! Write header line
 !     open(unit=20, file='/home/nahvazi/Galacticus_SIDM_parametric/gal/galacticus/SIDM_output_data_sigmaEff.txt', status='replace', action='write')
 !     write(20, '(A)') 'time sigma_effective'
 
@@ -225,6 +244,8 @@ contains
 
       if (time > timeFormation) then
         print *, 'Test1: inside if loop.'
+        call nodeWork%serializeASCII()
+
         ! Compute tc and increment ?~D.
         tc = get_tc(self, nodeWork, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork), VmaxSIDMPrevious)
         print *, 'after tc: ', tc
@@ -266,7 +287,7 @@ contains
       end if
 
       ! Write the data to the output file
-      write(20, '(F20.6, 2X, F20.6, 2X, F20.6, 2X, F20.6)') time, tau, VmaxSIDM, RmaxSIDM
+!      write(20, '(F20.6, 2X, F20.6, 2X, F20.6, 2X, F20.6)') time, tau, VmaxSIDM, RmaxSIDM
 !      if (time<timeFormation) then
 !         write(20, '(F20.6, 2X, F20.6)') time, 0.0d0 
 !      end if
@@ -317,8 +338,8 @@ contains
         nodeWork => null()
       else
         ! Move up the branch.
-!        nodeWork => nodeWork%parent
-        nodeWork => nodeWork%firstChild
+        nodeWork => nodeWork%parent
+!        nodeWork => nodeWork%firstChild
       end if
     end do
 

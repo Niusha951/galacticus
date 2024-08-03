@@ -621,6 +621,7 @@ contains
 
     darkMatterProfile                =>  node             %darkMatterProfile(autoCreate=.true.)
     scaleRadius                      =   darkMatterProfile%scale            (                 )
+    print *, 'scaleRadius: ', scaleRadius
     nfwRadiusCircularVelocityMaximum =  +radiusCircularVelocityMaximumScaleFree &
          &                              *scaleRadius
     return
@@ -649,8 +650,15 @@ contains
        darkMatterProfile => node             %darkMatterProfile(autoCreate=.true.)
        scaleRadius       =  darkMatterProfile%scale            (                 )
        ! Ensure mass profile normalization factor has been computed.
+       print *, 'scaleRadius: ', scaleRadius
+       print *, 'self%darkMatterHaloScale_%radiusVirial(node):', self%darkMatterHaloScale_%radiusVirial(node)
+
        call nfwMassNormalizationFactor(self,self%darkMatterHaloScale_%radiusVirial(node)/scaleRadius)
        ! Evaluate the circular velocity at the peak of the rotation curve.
+       print *, 'circularVelocityMaximumScaleFree: ', circularVelocityMaximumScaleFree
+       print *, 'basic%mass:', basic%mass()
+       print *, 'self%nfwNormalizationFactorPrevious: ', self%nfwNormalizationFactorPrevious
+
        self%maximumVelocityPrevious=+circularVelocityMaximumScaleFree                                       &
             &                       *sqrt(                                                                  &
             &                             +gravitationalConstantGalacticus                                  &
