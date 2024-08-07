@@ -48,6 +48,7 @@
      !!]
      final     ::                                        SIDMParametricDestructor
      procedure :: nodeTreeInitialize                  => SIDMParametricNodeTreeInitialize
+     procedure :: nodePromote                         => SIDMParametricNodePromote
      procedure :: calculateTau                        => SIDMParametriCalculateTau
      procedure :: getTauID                            => getTauID_SIDMParametric
      procedure :: getVmaxSIDMID                       => getVmaxSIDMID_SIDMParametric
@@ -141,6 +142,48 @@ contains
     call self%calculateTau(node)
     return
   end subroutine SIDMParametricNodeTreeInitialize
+
+  subroutine SIDMParametricNodePromote(self,node)
+    !!{
+    Ensure that {\normalfont \ttfamily node} is ready for promotion to its parent.
+    !!}
+
+    use :: Error             , only : Error_Report
+    use :: Galacticus_Nodes  , only : nodeComponentBasic, nodeComponentDarkMatterProfile
+    use :: ISO_Varying_String, only : var_str           , varying_string, operator(//)
+    use :: String_Handling   , only : operator(//)
+
+    implicit none
+    class    (nodeOperatorSIDMParametric), intent(inout) :: self
+    type     (treeNode                  ), intent(inout) :: node
+    type     (treeNode                  ), pointer       :: nodeParent
+    class    (nodeComponentBasic        ), pointer       :: basicParent, basic
+    class(nodeComponentDarkMatterProfile), pointer       :: darkMatterProfile, darkMatterProfileParent
+    type     (varying_string            )                :: message
+    character(len=12                    )                :: label
+    !$GLC attributes unused :: self
+    
+    nodeParent  => node      %parent
+    basic       => node      %basic ()
+    basicParent => nodeParent%basic ()
+    darkMatterProfile => node%darkMatterProfile()    
+    darkMatterProfileParent => nodeParent%darkMatterProfile()
+    ! Ensure the two halos exist at the same time.
+    if (basic%time() /= basicParent%time()) then
+       message=var_str("node [")//node%index()//"] has not been evolved to its parent ["//nodeParent%index()//"]"//char(10)
+       write (label,'(f12.6)') basic%time()
+       message=message//"    node is at time: "//label//" Gyr"//char(10)
+       write (label,'(f12.6)') basicParent%time()
+       message=message//"  parent is at time: "//label//" Gyr"
+       call Error_Report(message//{introspection:location})
+    end if
+
+    call darkMatterProfile%floatRank0MetaPropertySet(self%tauID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%tauID))
+    call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%VmaxSIDMID))
+    call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%RmaxSIDMID))
+
+    return
+  end subroutine SIDMParametricNodePromote
  
   subroutine SIDMParametriCalculateTau(self, node)
     use Galacticus_Nodes, only: treeNode, nodeComponentBasic, nodeComponentDarkMatterProfile

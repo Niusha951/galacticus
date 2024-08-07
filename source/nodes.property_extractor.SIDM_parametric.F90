@@ -97,9 +97,11 @@ contains
     Implement a SIDMParametric output extractor.
     !!}
     use :: Galacticus_Nodes, only : nodeComponentBasic, nodeComponentDarkmatterProfile 
+    !use :: Nodes_Operators , only : nodeOperatorSIDMParametric
     implicit none
     double precision                                              , dimension(:) , allocatable :: SIDMParametricExtract
     class           (nodePropertyExtractorSIDMParametric         ), intent(inout), target      :: self
+    !type            (nodeOperatorSIDMParametric                  )               , pointer     :: nodeOperatorSIDMParametric_ 
     type            (treeNode                                    ), intent(inout), target      :: node
     double precision                                              , intent(in   )              :: time
     type            (multiCounter                                ), intent(inout), optional    :: instance
