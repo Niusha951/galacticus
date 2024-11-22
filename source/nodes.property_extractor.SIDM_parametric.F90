@@ -72,9 +72,9 @@ contains
     type(nodePropertyExtractorSIDMParametric) :: self
     
     !![
-    <addMetaProperty component="darkMatterProfile" name="tau"      id="self%tauID"      isEvolvable="no" isCreator="no"/>
-    <addMetaProperty component="darkMatterProfile" name="VmaxSIDM" id="self%VmaxSIDMID" isEvolvable="no" isCreator="no"/>
-    <addMetaProperty component="darkMatterProfile" name="RmaxSIDM" id="self%RmaxSIDMID" isEvolvable="no" isCreator="no"/>
+    <addMetaProperty component="darkMatterProfile" name="tau"      id="self%tauID"      isEvolvable="yes" isCreator="no"/>
+    <addMetaProperty component="darkMatterProfile" name="VmaxSIDM" id="self%VmaxSIDMID" isEvolvable="yes" isCreator="no"/>
+    <addMetaProperty component="darkMatterProfile" name="RmaxSIDM" id="self%RmaxSIDMID" isEvolvable="yes" isCreator="no"/>
     !!]
     return
   end function SIDMParametricConstructorInternal

@@ -264,6 +264,9 @@ program Tests_Tau_Calculation
      massVirial(i)= basic%mass()
 
      radiusVirial(i)=darkMatterHaloScale_%radiusVirial(nodes(i)%node)
+
+     print *, 'massVirial: ', massVirial(i)
+     print *, 'velocityMaximum: ', velocityMaximum(i)
      !call Assert("maximum Velocity radius comparison:", radiusVelocityMaximum(i),Rvmax_test(i), relTol=1.0d-3)
 
      ! Call the tauCalculationClass subroutine
@@ -273,27 +276,30 @@ program Tests_Tau_Calculation
      !call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%VmaxSIDMID, VmaxSIDM)
      !call darkMatterProfile%floatRank0MetaPropertyGet(tauCalc%RmaxSIDMID, RmaxSIDM)
 
-     call nodeOperatorSIDMParametric_%calculateTau(nodes(i)%node)
+     !!call nodeOperatorSIDMParametric_%calculateTau(nodes(i)%node)
+     !call nodeOperatorSIDMParametric_%differentialEvolutionScales(nodes(i)%node)
+     !call nodeOperatorSIDMParametric_%differentialEvolution(nodes(i)%node)
+
   end do
  
   do i=1,N
      basic => nodes(i)%node%basic(autoCreate=.true.)
      darkMatterProfile => nodes(i)%node%darkMatterProfile(autoCreate=.true.)
 
-     tauID = nodeOperatorSIDMParametric_%getTauID()
-     VmaxSIDMID = nodeOperatorSIDMParametric_%getVmaxSIDMID()
-     RmaxSIDMID = nodeOperatorSIDMParametric_%getRmaxSIDMID()
+     !!tauID = nodeOperatorSIDMParametric_%getTauID()
+     !!VmaxSIDMID = nodeOperatorSIDMParametric_%getVmaxSIDMID()
+!     RmaxSIDMID = nodeOperatorSIDMParametric_%getRmaxSIDMID()
 
 !     call darkMatterProfile%floatRank0MetaPropertyGet(nodeOperatorSIDMParametric_%VmaxSIDMID, VmaxSIDM)
 !     call darkMatterProfile%floatRank0MetaPropertyGet(nodeOperatorSIDMParametric_%RmaxSIDMID, RmaxSIDM)
-     VmaxSIDM=darkMatterProfile%floatRank0MetaPropertyGet(VmaxSIDMID)
-     RmaxSIDM=darkMatterProfile%floatRank0MetaPropertyGet(RmaxSIDMID)
+     !!VmaxSIDM=darkMatterProfile%floatRank0MetaPropertyGet(VmaxSIDMID)
+!     RmaxSIDM=darkMatterProfile%floatRank0MetaPropertyGet(RmaxSIDMID)
 
 !     call darkMatterProfile%floatRank0MetaPropertyGet(VmaxSIDMID, VmaxSIDM)
 !     call darkMatterProfile%floatRank0MetaPropertyGet(RmaxSIDMID, RmaxSIDM)
 
-     print *, RmaxSIDM
-     print *, VmaxSIDM
+!     print *, RmaxSIDM
+     !!print *, VmaxSIDM
      !call tauCalc_%VmaxSIDM(nodes(i)%node)
      !call tauCalc_%RmaxSIDM(nodes(i)%node)
 

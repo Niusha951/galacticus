@@ -39,7 +39,7 @@
      class(darkMatterHaloMassAccretionHistoryClass), pointer :: darkMatterHaloMassAccretionHistory_ => null()
      class(darkMatterProfileDMOClass              ), pointer :: darkMatterProfileDMO_
  
-     integer                                                 :: tauID, VmaxSIDMID, RmaxSIDMID
+     integer                                                 :: tauID, VmaxSIDMID, RmaxSIDMID, nodeFormationTimeSIDMID
    contains
      !![
      <methods>
@@ -49,7 +49,10 @@
      final     ::                                        SIDMParametricDestructor
      procedure :: nodeTreeInitialize                  => SIDMParametricNodeTreeInitialize
      procedure :: nodePromote                         => SIDMParametricNodePromote
-     procedure :: calculateTau                        => SIDMParametriCalculateTau
+     procedure :: differentialEvolutionScales         => SIDMParametriCalculateTauDifferentialEvolutionScale
+     procedure :: differentialEvolution               => SIDMParametriCalculateTauDifferentialEvolution
+!     procedure :: differentialEvolutionAnalytics      => SIDMParametriDifferentialVmaxAnalytics
+!     procedure :: differentialEvolutionSolveAnalytics => SIDMParametriDifferentialVmaxSolveAnalytics
      procedure :: getTauID                            => getTauID_SIDMParametric
      procedure :: getVmaxSIDMID                       => getVmaxSIDMID_SIDMParametric
      procedure :: getRmaxSIDMID                       => getRmaxSIDMID_SIDMParametric
@@ -107,9 +110,10 @@ contains
     !!]
     
     !![
-    <addMetaProperty component="darkMatterProfile" name="tau"      id="self%tauID"      isEvolvable="no" isCreator="yes"/>
-    <addMetaProperty component="darkMatterProfile" name="VmaxSIDM" id="self%VmaxSIDMID" isEvolvable="no"  isCreator="yes"/>
-    <addMetaProperty component="darkMatterProfile" name="RmaxSIDM" id="self%RmaxSIDMID" isEvolvable="no"  isCreator="yes"/>
+    <addMetaProperty component="darkMatterProfile" name="tau"      id="self%tauID"      isEvolvable="yes" isCreator="yes"/>
+    <addMetaProperty component="darkMatterProfile" name="VmaxSIDM" id="self%VmaxSIDMID" isEvolvable="yes"  isCreator="yes"/>
+    <addMetaProperty component="darkMatterProfile" name="RmaxSIDM" id="self%RmaxSIDMID" isEvolvable="yes"  isCreator="yes"/>
+    <addMetaProperty component="basic" name="nodeFormationTimeSIDM" id="self%nodeFormationTimeSIDMID" isEvolvable="no" isCreator="yes"/>
     !!]
     return
   end function SIDMParametricConstructorInternal
@@ -133,13 +137,67 @@ contains
     !!{
     Initialize the SIDMParametric of all nodes in the tree.    
     !!}
+
+    use :: Galacticus_Nodes  , only : nodeComponentBasic
+    use :: Dark_Matter_Halo_Formation_Times, only : Dark_Matter_Halo_Formation_Time
+
     implicit none
     class(nodeOperatorSIDMParametric), intent(inout), target  :: self
     type (treeNode                  ), intent(inout), target  :: node
+    type (treeNode                  ),                pointer :: nodeParent, nodeFormation
+    class    (nodeComponentBasic        ), pointer       :: basic, basicParent, basicNode
     
+    double precision :: formationMassFraction = 0.5d0
+    double precision :: timeFormation
+
     print *, 'Test inside SIDM parametric NodeTreeInitialize ...'
     call self%nodeInitialize(node)
-    call self%calculateTau(node)
+
+!    basicNode => node%basic()
+!    print *, 'node time: ', basicNode%time()
+
+    !calculating the formation time
+    nodeParent    => node
+    basic => node%basic()
+    do while (associated(nodeParent))
+       basicParent => nodeParent%basic()
+       print *, 'what is parent time: ', basicParent%time()
+       print *, 'parent index: ', nodeParent%index()
+       timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
+       if (nodeParent%isPrimaryProgenitor()) then
+          nodeParent => nodeParent%parent
+       else
+          nodeParent => null()
+       end if
+    end do
+    call basic%floatRank0MetaPropertySet(self%nodeFormationTimeSIDMID,timeFormation)
+    print *, 'Formation time: ', basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)
+    print *, 'node index: ', node%index()
+
+!    !calculating the formation time
+!    if (.not.associated(node%firstChild)) then
+!       print *, 'Node that has no first child, has the time: ', basicNode%time()
+!       nodeParent    => node
+!       nodeFormation => node
+!       do while (associated(nodeParent))
+!!          basic         => nodeParent%basic()
+!          basic => nodeFormation%basic()
+!          basicParent => nodeParent%basic()
+!          print *, 'if it has no child, now what is its parent time: ', basicParent%time()
+!          timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
+!          if (nodeParent%isPrimaryProgenitor()) then
+!             nodeParent => nodeParent%parent
+!          else
+!             nodeParent => null()
+!          end if 
+!       end do
+!       call basic%floatRank0MetaPropertySet(self%nodeFormationTimeID,timeFormation)
+!       print *, 'Formation time: ', basic%floatRank0MetaPropertyGet(self%nodeFormationTimeID)
+!    end if
+
+    print *, 'Test end of initialization ...'
+
+!    call self%calculateTau(node, basic%floatRank0MetaPropertyGet(self%nodeFormationTimeID))
     return
   end subroutine SIDMParametricNodeTreeInitialize
 
@@ -178,14 +236,34 @@ contains
        call Error_Report(message//{introspection:location})
     end if
 
-    call darkMatterProfile%floatRank0MetaPropertySet(self%tauID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%tauID))
-    call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%VmaxSIDMID))
-    call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%RmaxSIDMID))
 
+    print *, 'Test inside nodePromote ...'
+
+!    call basic%floatRank0MetaPropertySet(self%nodeFormationTimeID,basicParent%floatRank0MetaPropertyGet(self%nodeFormationTimeID))
+!    call darkMatterProfile%floatRank0MetaPropertySet(self%tauID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%tauID))
+!    call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID))    
+!    call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%RmaxSIDMID))
+!    call basic%floatRank0MetaPropertySet(self%nodeFormationTimeID, basicParent%floatRank0MetaPropertyGet(self%nodeFormationTimeID))
     return
   end subroutine SIDMParametricNodePromote
  
-  subroutine SIDMParametriCalculateTau(self, node)
+
+  subroutine SIDMParametriCalculateTauDifferentialEvolutionScale(self, node)
+    use Galacticus_Nodes, only: treeNode, nodeComponentBasic, nodeComponentDarkMatterProfile
+
+    type(treeNode), intent(inout) :: node
+    class(nodeOperatorSIDMParametric), intent(inout) :: self
+    class(nodeComponentDarkMatterProfile), pointer :: darkMatterProfile
+
+    print *, 'Test inside evolutionScale ...'
+
+    darkMatterProfile => node%darkMatterProfile()
+    call darkMatterProfile%floatRank0MetaPropertyScale(self%tauID, 1.0d0)
+!    call darkMatterProfile%floatRank0MetaPropertyScale(self%VmaxSIDMID, 1.0d0)
+    return
+  end subroutine SIDMParametriCalculateTauDifferentialEvolutionScale
+
+  subroutine SIDMParametriCalculateTauDifferentialEvolution(self, node,interrupt,functionInterrupt,propertyType)
     use Galacticus_Nodes, only: treeNode, nodeComponentBasic, nodeComponentDarkMatterProfile
 !    use Dark_Matter_Halo_Mass_Accretion_Histories, only: darkMatterHaloMassAccretionHistoryClass
 !    use Dark_Matter_Profiles_DMO , only : darkMatterProfileDMOClass
@@ -195,12 +273,13 @@ contains
     type(treeNode), pointer :: nodeFinal
     type(treeNode), pointer :: nodeWork
     type(treeNode), pointer :: nodeStart
-!    type(darkMatterProfileDMO), pointer :: darkMatterProfileDMO_
+    type(treeNode), pointer :: nodeParent
+    !    type(darkMatterProfileDMO), pointer :: darkMatterProfileDMO_
 
-    class(nodeOperatorSIDMParametric), intent(inout) :: self
+    class(nodeOperatorSIDMParametric), intent(inout), target :: self
 !    class(darkMatterHaloMassAccretionHistoryClass), target :: darkMatterHaloMassAccretionHistory_
 !    class(darkMatterHaloMassAccretionHistoryClass), pointer :: darkMatterHaloMassAccretionHistory_
-    class(nodeComponentBasic), pointer :: basic
+    class(nodeComponentBasic), pointer :: basic, basicParent
     class(nodeComponentDarkMatterProfile), pointer :: darkMatterProfile
 !    class(darkMatterProfileDMOClass), pointer :: darkMatterProfileDMO_
 
@@ -210,184 +289,111 @@ contains
     double precision :: RmaxNFW0, VmaxNFW0, r_sNFW0, rho_sNFW0, rho_s, r_s, r_c
     double precision :: VmaxSIDM=0.0d0, RmaxSIDM=0.0d0, VmaxSIDMPrevious, RmaxSIDMPrevious, VmaxCDM, RmaxCDM, VmaxCDMPrevious, RmaxCDMPrevious
     double precision :: dtr
+    double precision :: tau, VmaxSIDM, tc, dvdt
 
-!    print *, 'Does this node have children?'
-!    if (associated(node%firstChild)) then 
-!       print *, 'Yes!'
-!    else 
-!       print *, 'No!'
-!    end if
+    logical, intent(inout) :: interrupt
+    procedure(interruptTask), intent(inout), pointer :: functionInterrupt
+    integer, intent(in   ) :: propertyType
+
+    !$GLC attributes unused :: interrupt, functionInterrupt, propertyType
+
+
+    print *, 'Test inside DiffEvolution ...'
+
+    print *, 'node index: ', node%index()
+    !nodeParent => node%parent
+    print *, 'parent index: ', node%Parent%index()
 
     basic => node%basic()
-!    print *, 'time associated to this node: ', basic%time()
-!    print *, 'mass associated to this node: ', basic%mass()
+    time = basic%time()
+!!    timeFormation = basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)
+    timeFormation = 2.1903d0
+!    timeFormation = 1.7887838371779103d0
 
-    ! Check if the node has children, if so, return
-!    if (.not.node%isPrimaryProgenitor()) return
-    nodeFinal => node
-
-    nodeStart => nodeFinal
-    do while (associated(nodeStart%firstChild))
-      nodeStart => nodeStart%firstChild
-    end do
-
-    basic => nodeStart%basic()
-    print *, 'starting node time and mass: ', basic%time(), basic%mass()
-
-!    if (associated(node%firstChild)) return
-!    if (associated(node%parent)) return
-
-!    nodeFinal => node
-!    do while (nodeFinal%isPrimaryProgenitor())
-!      nodeFinal => nodeFinal%parent
+!    !calculating the formation time
+!    nodeParent => node
+!!    basic => node%basic()
+!    do while (associated(nodeParent))
+!       basicParent => nodeParent%basic()
+!       print *, 'what is parent time: ', basicParent%time()
+!       timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
+!       if (nodeParent%isPrimaryProgenitor()) then
+!          nodeParent => nodeParent%parent
+!       else
+!          nodeParent => null()
+!       end if
 !    end do
+!    print *, 'Formation time: ', timeFormation
 
-    basic => nodefinal%basic()
-    print *, 'time associated to nodefinal: ', basic%time()
-    print *, 'mass associated to nodefinal: ', basic%mass()
-!    print *, 'End of cheching for children of nodes!'
+    darkMatterProfile => node%darkMatterProfile()
 
-    ! Calculate the formation time
-!    timeFormation = Dark_Matter_Halo_Formation_Time(node, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
-    timeFormation = Dark_Matter_Halo_Formation_Time(nodeFinal, formationMassFraction, self%darkMatterHaloMassAccretionHistory_)
+    print *, 'Time: ', time, timeFormation
+!    print *, 'nodeFormationTimeID: ', self%nodeFormationTimeID
 
-
-    !Just for test!
 !    timeFormation = 2.1903d0
-
-    print *, 'Formation time: ', timeFormation
-
-    basic => node%basic()
-    print *, 'time associated to node: ', basic%time()
-    print *, 'mass associated to node: ', basic%mass()
-
-    if (associated(node%parent)) return
-
-    tau = 0.0d0
-    timePrevious = 0.0d0
-    VmaxSIDMPrevious = 0.0d0
-    RmaxSIDMPrevious = 0.0d0
-!    nodeWork => node
-!    nodework => nodefinal
-    nodeWork => nodeStart
- 
-    print *, 'Starting the while loop.'
-
     ! Open the output file
-!    open(unit=20, file='/home/nahvazi/Galacticus_SIDM_parametric/gal/galacticus/SIDM_output_data.txt', status='replace', action='write')
-!    write(20, '(A)') 'time tau VmaxSIDM RmaxSIDM' ! Write header line
-!     open(unit=20, file='/home/nahvazi/Galacticus_SIDM_parametric/gal/galacticus/SIDM_output_data_sigmaEff.txt', status='replace', action='write')
-!     write(20, '(A)') 'time sigma_effective'
+!    open(unit=20, file='test_output_data.txt', status='replace', action='write')
+!    write(20, '(A)') 'time timeFormation M_vir R_vir R_max V_max tau V_maxSIDM' ! Write header line
 
-    do while (associated(nodeWork))
-      basic => nodeWork%basic()
-      time = basic%time()
+    if (time > timeFormation) then
+!            call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node))
 
-      print *, 'Initiate basic, and read time for nodeWork: ', time
+            VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
+            tc = get_tc(self, node, self%darkMatterProfileDMO_%circularVelocityMaximum(node), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node), VmaxSIDM)
+            call darkMatterProfile%floatRank0MetaPropertyRate(self%tauID, 1.0d0/tc)
 
-      if (time > timeFormation) then
-        print *, 'Test1: inside if loop.'
-        call nodeWork%serializeASCII()
+            tau = darkMatterProfile%floatRank0MetaPropertyGet(self%tauID)
+            dvdt = dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node)) * (1.0d0) / tc
+!            call self%differentialVmaxSolveAnalytics(node)
+            call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, dvdt)
 
-        ! Compute tc and increment ?~D.
-        tc = get_tc(self, nodeWork, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork), VmaxSIDMPrevious)
-        print *, 'after tc: ', tc
+            print *, 'Read Here!'
+            print *, time, timeFormation, tc, tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
 
-!        tau = tau + (time - timePrevious) / tc
-        tau = (time - timeFormation) / tc
-
-        print *, 'after tau: ', tau
-
-        ! Check if dtr is greater than 0.05 and print a message if true
-        dtr = (time - timePrevious) / tc
-        if (dtr > 0.05d0) then
-          print *, 'Gravothermal evolution too fast, dtr: ', dtr
-        end if
-
-        VmaxCDM = self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)
-        RmaxCDM = self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)
-
-        print *, 'VmaxCDM: ', VmaxCDM
-        print *, 'VmaxCDMPrevious: ', VmaxCDMPrevious
-        print *, 'subtract: ', VmaxCDM - VmaxCDMPrevious
-
-        VmaxSIDM = (VmaxCDM - VmaxCDMPrevious) + VmaxSIDMPrevious + dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
-!        VmaxSIDM = VmaxCDM + dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
-        RmaxSIDM = (RmaxCDM - RmaxCDMPrevious) + RmaxSIDMPrevious + drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
-!        RmaxSIDM = RmaxCDM + drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)) * (time - timePrevious) / tc
-
-        print *, 'VmaxSIDM: ', VmaxSIDM
-        print *, 'RmaxSIDM: ', RmaxSIDM
-
-
-        ! Store the value of tau, VmaxSIDM, and RmaxSIDM in the dark matter
-        ! profile component of this node.
-        darkMatterProfile => nodeWork%darkMatterProfile()
-        call darkMatterProfile%floatRank0MetaPropertySet(self%tauID, tau)
-        call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID, VmaxSIDM)
-        call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID, RmaxSIDM)
-
-      end if
-
-      ! Write the data to the output file
-!      write(20, '(F20.6, 2X, F20.6, 2X, F20.6, 2X, F20.6)') time, tau, VmaxSIDM, RmaxSIDM
-!      if (time<timeFormation) then
-!         write(20, '(F20.6, 2X, F20.6)') time, 0.0d0 
-!      end if
-
-      RmaxNFW0 = Rmax_NFW(RmaxSIDM, tau)
-      VmaxNFW0 = Vmax_NFW(VmaxSIDM, tau)
-
-
-      r_sNFW0 = r_s0(RmaxNFW0)
-      rho_sNFW0 = rho_s0(r_sNFW0, VmaxNFW0)
-
-      rho_s = get_rho_s(rho_sNFW0, tau)
-      r_s = get_r_s(r_sNFW0, tau)
-      r_c = get_r_c(r_sNFW0, tau)
-
-!      print *, 'Testing VmaxSIDMPrevious: ', VmaxSIDMPrevious
-
-      if (time > timeFormation) then
-        print *, 'check if inside the correct if condition: time > timeFormation'
-        VmaxSIDMPrevious = VmaxSIDM
-        RmaxSIDMPrevious = RmaxSIDM
-        VmaxCDMPrevious = VmaxCDM
-        RmaxCDMPrevious = RmaxCDM
-      else
-        print *, 'Test if it goes through the correct section of if/else'
-        VmaxSIDMPrevious = self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)
-!        print *, 'Testing VmaxSIDMPrevious after association: ', VmaxSIDMPrevious
-        RmaxSIDMPrevious = self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)
-        VmaxCDMPrevious = self%darkMatterProfileDMO_%circularVelocityMaximum(nodeWork)
-        RmaxCDMPrevious = self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeWork)
-
-      end if
-
-      print *, 'End of setting previous Vmax and Rmax', VmaxSIDMPrevious, RmaxSIDMPrevious
-
-      ! Update the timePrevious variable so that we can compute the time
-      ! interval on the next pass through this loop.
-      timePrevious = time
-      !VmaxCDMPrevious = VmaxCDM
-      !RmaxCDMPrevious = RmaxCDM
-
-      ! Move to the next node.
-!      if (associated(nodeWork, nodeFinal)) then
-      if (associated(nodeWork, node)) then
-        ! We've reached the final node in the branch - set our worker node to
-        ! null
-        ! so we exit the loop.
-        nodeWork => null()
-      else
-        ! Move up the branch.
-        nodeWork => nodeWork%parent
-!        nodeWork => nodeWork%firstChild
-      end if
-    end do
+    else
+!            print *, 'test1'
+            call darkMatterProfile%floatRank0MetaPropertyRate(self%tauID, 0.0d0)
+!            print *, 'test2'
+            call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, 0.0d0)
+    end if
+    
+    !call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node))
 
     return
-  end subroutine SIDMParametriCalculateTau
+  end subroutine SIDMParametriCalculateTauDifferentialEvolution
+
+!  subroutine SIDMParametriDifferentialVmaxAnalytics(self, node)
+!    !!{
+!    Mark analytically-solvable properties.
+!    !!}
+!    use :: Galacticus_Nodes, only : nodeComponentBasic, nodeComponentDarkMatterProfile, treeNode
+!    class(nodeOperatorSIDMParametric), intent(inout) :: self
+!    class(nodeComponentDarkMatterProfile), pointer :: darkMatterProfile
+!    type(treeNode), intent(inout), target :: node
+
+!    darkMatterProfile => node%darkMatterProfile()
+!    call darkMatterProfile%floatRank0MetaPropertyAnalytic(self%VmaxSIDMID)
+!    return
+!  end subroutine SIDMParametriDifferentialVmaxAnalytics
+
+
+!  subroutine SIDMParametriDifferentialVmaxSolveAnalytics(self, node)
+
+!    use :: Galacticus_Nodes, only : nodeComponentBasic, nodeComponentDarkMatterProfile, treeNode
+!    class(nodeOperatorSIDMParametric), intent(inout) :: self
+!    class(nodeComponentDarkMatterProfile), pointer :: darkMatterProfile
+!    type(treeNode), intent(inout), target :: node
+!    double precision :: tau, VmaxSIDM, tc, dvdt
+
+!    tau = darkMatterProfile%floatRank0MetaPropertyGet(self%tauID)
+!    VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
+!    tc = get_tc(self, node, self%darkMatterProfileDMO_%circularVelocityMaximum(node), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node), VmaxSIDM)
+!    dvdt = dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node)) * (1.0d0) / tc
+
+!    call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, dvdt)
+!    return
+!  end subroutine SIDMParametriDifferentialVmaxSolveAnalytics 
+
 
   double precision function get_tc(self, node, Vmax, Rvmax, VmaxSIDM)
     !!{
@@ -437,6 +443,8 @@ contains
 !    get_tc = (150.0d0 / C) * (1.0d0 / (sigmaeff * rhoeff * reff)) * (4.0d0 * Pi * gravitationalConstant * rhoeff) ** (-0.5)
     !the constant 2.09e-10 is multiplied for unit conversion of sigma
     get_tc = (150.0d0 / C) * (1.0d0 / (sigmaeff * 2.09e-10 * rhoeff * reff)) * (1.0d0 / sqrt(4.0d0 * Pi * gravitationalConstant * rhoeff))
+
+    print *, 'get_tc value: ', get_tc
 
   end function get_tc
 
