@@ -22,6 +22,14 @@
   !!}
   
   use :: Dark_Matter_Halo_Mass_Accretion_Histories, only : darkMatterHaloMassAccretionHistory  , darkMatterHaloMassAccretionHistoryClass
+  use :: Cosmology_Functions                      , only : cosmologyFunctionsClass
+  use :: Cosmology_Parameters                     , only : cosmologyParametersClass
+  use :: Merger_Trees_Build_Mass_Resolution       , only : mergerTreeMassResolutionClass, mergerTreeMassResolutionFixed
+  use :: Merger_Trees_Builders                    , only : mergerTreeBuilderSmoothAccretion
+  use :: Dark_Matter_Profile_Scales               , only : darkMatterProfileScaleRadiusConcentration
+  use :: Dark_Matter_Halo_Scales                  , only : darkMatterHaloScaleClass
+  use :: Virial_Density_Contrast                  , only : virialDensityContrastClass
+  use :: Dark_Matter_Profiles_Concentration       , only : darkMatterProfileConcentrationClass
 
   !![
   <nodeOperator name="nodeOperatorSIDMParametric">
@@ -38,7 +46,16 @@
      class(darkMatterParticleClass                ), pointer :: darkMatterParticle_        => null()
      class(darkMatterHaloMassAccretionHistoryClass), pointer :: darkMatterHaloMassAccretionHistory_ => null()
      class(darkMatterProfileDMOClass              ), pointer :: darkMatterProfileDMO_
- 
+     class(cosmologyFunctionsClass                ), pointer :: cosmologyFunctions_              => null()
+     class(cosmologyParametersClass               ), pointer :: cosmologyParameters_  => null()
+     class(darkMatterHaloScaleClass               ), pointer :: darkMatterHaloScale_  => null()
+     class(virialDensityContrastClass             ), pointer :: virialDensityContrast_  => null()
+     class(darkMatterProfileConcentrationClass    ), pointer :: darkMatterProfileConcentration_ => null()
+             !     class(mergerTreeMassResolutionClass          ), pointer :: mergerTreeMassResolution_           => null()        
+!     class(mergerTreeMassResolutionClass          ), pointer :: mergerTreeMassResolutionFixed_ => null()
+     type (mergerTreeBuilderSmoothAccretion),        pointer :: mergerTreeBuilderSmoothAccretion_ => null() 
+     type (mergerTreeMassResolutionFixed),           pointer :: mergerTreeMassResolutionFixed_ => null()
+     type (darkMatterProfileScaleRadiusConcentration),pointer:: darkMatterProfileScaleRadius_ => null()
      integer                                                 :: tauID, VmaxSIDMID, RmaxSIDMID, nodeFormationTimeSIDMID
    contains
      !![
@@ -79,36 +96,69 @@ contains
     class(darkMatterParticleClass                ), pointer :: darkMatterParticle_
     class(darkMatterHaloMassAccretionHistoryClass), pointer :: darkMatterHaloMassAccretionHistory_
     class(darkMatterProfileDMOClass              ), pointer :: darkMatterProfileDMO_
+    class(cosmologyFunctionsClass                ), pointer :: cosmologyFunctions_
+    class(cosmologyParametersClass               ), pointer :: cosmologyParameters_
+    class(darkMatterHaloScaleClass               ), pointer :: darkMatterHaloScale_
+    class(virialDensityContrastClass             ), pointer :: virialDensityContrast_
+    class(darkMatterProfileConcentrationClass    ), pointer :: darkMatterProfileConcentration_
 
     !![
     <objectBuilder class="darkMatterParticle" name="darkMatterParticle_" source="parameters"/>
     <objectBuilder class="darkMatterHaloMassAccretionHistory" name="darkMatterHaloMassAccretionHistory_" source="parameters"/>
     <objectBuilder class="darkMatterProfileDMO" name="darkMatterProfileDMO_" source="parameters"/>
+    <objectBuilder class="cosmologyFunctions"    name="cosmologyFunctions_"    source="parameters"/>
+    <objectBuilder class="cosmologyParameters"    name="cosmologyParameters_"    source="parameters"/>
+    <objectBuilder class="darkMatterHaloScale"    name="darkMatterHaloScale_"    source="parameters"/>
+    <objectBuilder class="virialDensityContrast"    name="virialDensityContrast_"    source="parameters"/>
+    <objectBuilder class="darkMatterProfileConcentration"    name="darkMatterProfileConcentration_"    source="parameters"/>
     !!]
-    self=nodeOperatorSIDMParametric(darkMatterParticle_,darkMatterHaloMassAccretionHistory_, darkMatterProfileDMO_)
+    self=nodeOperatorSIDMParametric(darkMatterParticle_,darkMatterHaloMassAccretionHistory_, darkMatterProfileDMO_, cosmologyFunctions_, cosmologyParameters_, darkMatterHaloScale_, virialDensityContrast_, darkMatterProfileConcentration_)
     !![
     <inputParametersValidate source="parameters"/>
     <objectDestructor name="darkMatterParticle_"/>
     <objectDestructor name="darkMatterHaloMassAccretionHistory_"/>
     <objectDestructor name="darkMatterProfileDMO_"/>
+    <objectDestructor name="cosmologyFunctions_"/>
+    <objectDestructor name="cosmologyParameters_"/>
+    <objectDestructor name="darkMatterHaloScale_"/>
+    <objectDestructor name="virialDensityContrast_"/>
+    <objectDestructor name="darkMatterProfileConcentration_"/>
     !!]
     return
   end function SIDMParametricConstructorParameters
 
-  function SIDMParametricConstructorInternal(darkMatterParticle_, darkMatterHaloMassAccretionHistory_, darkMatterProfileDMO_) result(self)
+  function SIDMParametricConstructorInternal(darkMatterParticle_, darkMatterHaloMassAccretionHistory_, darkMatterProfileDMO_, cosmologyFunctions_, cosmologyParameters_, darkMatterHaloScale_, virialDensityContrast_, darkMatterProfileConcentration_) result(self)
     !!{
     Internal constructor for the {\normalfont \ttfamily SIDMParametric} node operator class.
     !!}
+    !use :: Merger_Trees_Build_Mass_Resolution       , only : mergerTreeMassResolutionClass
+    !use :: Merger_Trees_Builders                    , only : mergerTreeBuilderSmoothAccretion
     implicit none
     type (nodeOperatorSIDMParametric)                        :: self
     class(darkMatterParticleClass   ), intent(in   ), target :: darkMatterParticle_
     class(darkMatterHaloMassAccretionHistoryClass), intent(in   ),target  :: darkMatterHaloMassAccretionHistory_
-    class(darkMatterProfileDMOClass), intent(in   ), target :: darkMatterProfileDMO_
+    class(darkMatterProfileDMOClass ), intent(in   ), target :: darkMatterProfileDMO_
+    class(cosmologyFunctionsClass   ), intent(in   ), target :: cosmologyFunctions_
+    class(cosmologyParametersClass  ), intent(in   ), target :: cosmologyParameters_
+    class(darkMatterHaloScaleClass  ), intent(in   ), target :: darkMatterHaloScale_
+    class(virialDensityContrastClass), intent(in   ), target :: virialDensityContrast_
+    class(darkMatterProfileConcentrationClass), intent(in   ), target :: darkMatterProfileConcentration_
+    !class(mergerTreeMassResolutionClass)            , target :: mergerTreeMassResolutionFixed_
+    double precision                                         :: massHaloDeclineFactor=0.99d0, timeEarliest=0.0d0, massResolution=5.0d2 
 
     !![
-    <constructorAssign variables="*darkMatterParticle_, *darkMatterHaloMassAccretionHistory_, *darkMatterProfileDMO_"/>
+    <constructorAssign variables="*darkMatterParticle_, *darkMatterHaloMassAccretionHistory_, *darkMatterProfileDMO_, *cosmologyFunctions_, *cosmologyParameters_, *darkMatterHaloScale_, *virialDensityContrast_, *darkMatterProfileConcentration_"/>
     !!]
-    
+
+    allocate(self%mergerTreeMassResolutionFixed_)
+    allocate(self%mergerTreeBuilderSmoothAccretion_)
+    allocate(self%darkMatterProfileScaleRadius_)
+    !![
+    <referenceConstruct isResult="yes" owner="self" object="mergerTreeMassResolutionFixed_" constructor="mergerTreeMassResolutionFixed(massResolution)"/>
+    <referenceConstruct isResult="yes" owner="self" object="mergerTreeBuilderSmoothAccretion_" constructor="mergerTreeBuilderSmoothAccretion(massHaloDeclineFactor,timeEarliest,cosmologyFunctions_,darkMatterHaloMassAccretionHistory_,self%mergerTreeMassResolutionFixed_)"/>
+    <referenceConstruct isResult="yes" owner="self" object="darkMatterProfileScaleRadius_" constructor="darkMatterProfileScaleRadiusConcentration(.false., .false., cosmologyParameters_, cosmologyFunctions_, darkMatterHaloScale_, darkMatterProfileDMO_, virialDensityContrast_, darkMatterProfileConcentration_)"/>
+    !!]
+
     !![
     <addMetaProperty component="darkMatterProfile" name="tau"      id="self%tauID"      isEvolvable="yes" isCreator="yes"/>
     <addMetaProperty component="darkMatterProfile" name="VmaxSIDM" id="self%VmaxSIDMID" isEvolvable="yes"  isCreator="yes"/>
@@ -129,8 +179,15 @@ contains
     <objectDestructor name="self%darkMatterParticle_"/>
     <objectDestructor name="self%darkMatterHaloMassAccretionHistory_"/>
     <objectDestructor name="self%darkMatterProfileDMO_"/>
+    <objectDestructor name="self%cosmologyFunctions_"/>
+    <objectDestructor name="self%cosmologyParameters_"/>
+    <objectDestructor name="self%darkMatterHaloScale_"/>
+    <objectDestructor name="self%virialDensityContrast_"/>
+    <objectDestructor name="self%darkMatterProfileConcentration_"/>
     !!]
-    return
+!    <objectDestructor name="self%mergerTreeMassResolutionFixed_"/>
+!    <objectDestructor name="self%mergerTreeBuilderSmoothAccretion_"/> 
+  return
   end subroutine SIDMParametricDestructor
 
   subroutine SIDMParametricNodeTreeInitialize(self,node)
@@ -138,17 +195,20 @@ contains
     Initialize the SIDMParametric of all nodes in the tree.    
     !!}
 
-    use :: Galacticus_Nodes  , only : nodeComponentBasic
+    use :: Galacticus_Nodes  , only : mergerTree, nodeComponentBasic, nodeComponentDarkMatterProfile
     use :: Dark_Matter_Halo_Formation_Times, only : Dark_Matter_Halo_Formation_Time
 
     implicit none
     class(nodeOperatorSIDMParametric), intent(inout), target  :: self
     type (treeNode                  ), intent(inout), target  :: node
-    type (treeNode                  ),                pointer :: nodeParent, nodeFormation
-    class    (nodeComponentBasic        ), pointer       :: basic, basicParent, basicNode
-    
+    type (treeNode                  ),                pointer :: nodeParent, nodeBase, nodeChild, nodeNew
+    type (mergerTree)                                         :: treeNew
+    class(nodeComponentBasic        ),                pointer :: basic, basicParent, basicNode, basicChild, basicNew, basicBase, basicNewChild
+    class(nodeComponentDarkMatterProfile),            pointer :: darkMatterProfile, darkMatterProfileChild, darkMatterProfileCopy
+
     double precision :: formationMassFraction = 0.5d0
     double precision :: timeFormation
+    double precision :: VmaxSIDMPrevious, tc, tau, dtr, VmaxSIDM
 
     print *, 'Test inside SIDM parametric NodeTreeInitialize ...'
     call self%nodeInitialize(node)
@@ -163,7 +223,8 @@ contains
        basicParent => nodeParent%basic()
        print *, 'what is parent time: ', basicParent%time()
        print *, 'parent index: ', nodeParent%index()
-       timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
+!       timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
+       timeFormation = 2.1903d0
        if (nodeParent%isPrimaryProgenitor()) then
           nodeParent => nodeParent%parent
        else
@@ -173,6 +234,109 @@ contains
     call basic%floatRank0MetaPropertySet(self%nodeFormationTimeSIDMID,timeFormation)
     print *, 'Formation time: ', basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)
     print *, 'node index: ', node%index()
+
+!    need to add the merger tree below resolution calculation here:
+!    in-progress !!!!!
+    print *, 'Test starting below resolution tree generation ...'
+    if (.not.associated(node%firstChild)) then
+         print *, 'node time: ', basic%time()
+         print *, 'node Formation time: ', basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)
+         if (basic%time() > basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)) then
+          ! if this node is at the tip of the branch and the time associated to it is larger than the formation time of the
+          ! branch then we need to build the rest of the tree (extrapolate back in time) to start the parametric SIDM
+          ! calculation from then
+          
+
+          print *, 'let`s test this ...!'
+          treeNew%randomNumberGenerator_ => node%hostTree%randomNumberGenerator_
+          allocate(treeNew%nodeBase)
+          call node%copyNodeTo(treeNew%nodeBase)
+
+          print *, 'end of copying the last node into the new tree'
+
+          call self%mergerTreeBuilderSmoothAccretion_%build(treeNew)
+
+          print *, 'new tree is generated!'
+          
+          nodeChild => treeNew%nodeBase
+          do while (associated(nodeChild))
+             basicChild => nodeChild%basic()
+             print *, 'nodeChild index and time, mass: ', nodeChild%index(), basicChild%time(), basicChild%mass()
+
+             darkMatterProfile => nodeChild%darkMatterProfile(autoCreate=.true.)
+             call darkMatterProfile%scaleSet(self%darkMatterProfileScaleRadius_%radius(nodeChild))
+
+             if (basicChild%time() > timeFormation) then
+                nodeNew => nodeChild
+                nodeChild => nodeChild%firstChild
+             else
+                nodeChild => null()
+             end if
+          end do
+
+          basicBase => treeNew%nodeBase%basic()
+          print *, 'nodeBase index, time and mass: : ', treeNew%nodeBase%index(), basicBase%time(), basicBase%mass()
+          print *, 'nodeBase parent index: ', treeNew%nodeBase%parent%index()
+          do while (associated(nodeNew))
+             basicNew => nodeNew%basic()
+             darkMatterProfile => nodeNew%darkMatterProfile()
+             print *, 'nodeNew index and time, mass: ', nodeNew%index(), basicNew%time(), basicNew%mass()
+
+             basicNewChild => nodeNew%firstChild%basic()
+             darkMatterProfileChild => nodeNew%firstChild%darkMatterProfile()   
+             print *, 'nodeNew index and time, mass: ', nodeNew%firstChild%index(), basicNewChild%time(), basicNewChild%mass()
+
+             VmaxSIDMPrevious = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew%firstChild)
+
+             print *, 'VmaxSIDMPrevious: ', VmaxSIDMPrevious
+
+             tc = get_tc(self, nodeNew, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeNew), VmaxSIDMPrevious)
+
+             print *, 'tc: ', tc
+
+             tau = darkMatterProfileChild%floatRank0MetaPropertyGet(self%tauID)+(basicNew%time() - basicNewChild%time())/tc
+
+             print *,'tau: ', tau
+             call darkMatterProfile%floatRank0MetaPropertySet(self%tauID, tau)
+
+             dtr = (basicNew%time() - basicNewChild%time())/tc
+             if (dtr > 0.05d0) then
+                print *, 'Gravothermal evolution too fast, dtr: ', dtr
+             end if
+
+             VmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID) + dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew)) * (basicNew%time() - basicNewChild%time())/tc
+
+             print *, 'dvmaxSIDM cumulative: ', VmaxSIDM
+             call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID, VmaxSIDM)
+
+             !copy the values from the new tree to the tip of the original branch
+             darkMatterProfile => node%darkMatterProfile()
+             darkMatterProfileCopy => treeNew%nodeBase%darkMatterProfile()
+
+             call darkMatterProfile%floatRank0MetaPropertySet(self%tauID,darkMatterProfileCopy%floatRank0MetaPropertyGet(self%tauID))
+             call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfileCopy%floatRank0MetaPropertyGet(self%VmaxSIDMID))
+
+
+             if (.not.nodeNew%index() == treeNew%nodeBase%index()) then
+                nodeNew => nodeNew%parent
+             else
+                nodeNew => null()
+             end if
+
+          end do
+
+!          do while (.not.nodeNew%index() == treeNew%nodeBase%index())
+!             basicNew => nodeNew%basic()
+!             print *, 'nodeNew index and time, mass: ', nodeNew%index(), basicNew%time(), basicNew%mass()
+
+!             nodeNew => nodeNew%parent
+!          end do
+
+          call treeNew%nodeBase%destroyBranch()
+          deallocate(treeNew%nodeBase)
+
+       end if
+    end if
 
 !    !calculating the formation time
 !    if (.not.associated(node%firstChild)) then
@@ -239,11 +403,6 @@ contains
 
     print *, 'Test inside nodePromote ...'
 
-!    call basic%floatRank0MetaPropertySet(self%nodeFormationTimeID,basicParent%floatRank0MetaPropertyGet(self%nodeFormationTimeID))
-!    call darkMatterProfile%floatRank0MetaPropertySet(self%tauID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%tauID))
-!    call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID))    
-!    call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID,darkMatterProfileParent%floatRank0MetaPropertyGet(self%RmaxSIDMID))
-!    call basic%floatRank0MetaPropertySet(self%nodeFormationTimeID, basicParent%floatRank0MetaPropertyGet(self%nodeFormationTimeID))
     return
   end subroutine SIDMParametricNodePromote
  
@@ -310,33 +469,13 @@ contains
     timeFormation = 2.1903d0
 !    timeFormation = 1.7887838371779103d0
 
-!    !calculating the formation time
-!    nodeParent => node
-!!    basic => node%basic()
-!    do while (associated(nodeParent))
-!       basicParent => nodeParent%basic()
-!       print *, 'what is parent time: ', basicParent%time()
-!       timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
-!       if (nodeParent%isPrimaryProgenitor()) then
-!          nodeParent => nodeParent%parent
-!       else
-!          nodeParent => null()
-!       end if
-!    end do
-!    print *, 'Formation time: ', timeFormation
 
     darkMatterProfile => node%darkMatterProfile()
 
     print *, 'Time: ', time, timeFormation
-!    print *, 'nodeFormationTimeID: ', self%nodeFormationTimeID
 
-!    timeFormation = 2.1903d0
-    ! Open the output file
-!    open(unit=20, file='test_output_data.txt', status='replace', action='write')
-!    write(20, '(A)') 'time timeFormation M_vir R_vir R_max V_max tau V_maxSIDM' ! Write header line
 
     if (time > timeFormation) then
-!            call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node))
 
             VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
             tc = get_tc(self, node, self%darkMatterProfileDMO_%circularVelocityMaximum(node), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node), VmaxSIDM)
@@ -344,55 +483,19 @@ contains
 
             tau = darkMatterProfile%floatRank0MetaPropertyGet(self%tauID)
             dvdt = dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node)) * (1.0d0) / tc
-!            call self%differentialVmaxSolveAnalytics(node)
             call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, dvdt)
 
             print *, 'Read Here!'
             print *, time, timeFormation, tc, tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
 
     else
-!            print *, 'test1'
             call darkMatterProfile%floatRank0MetaPropertyRate(self%tauID, 0.0d0)
-!            print *, 'test2'
             call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, 0.0d0)
     end if
     
-    !call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node))
 
     return
   end subroutine SIDMParametriCalculateTauDifferentialEvolution
-
-!  subroutine SIDMParametriDifferentialVmaxAnalytics(self, node)
-!    !!{
-!    Mark analytically-solvable properties.
-!    !!}
-!    use :: Galacticus_Nodes, only : nodeComponentBasic, nodeComponentDarkMatterProfile, treeNode
-!    class(nodeOperatorSIDMParametric), intent(inout) :: self
-!    class(nodeComponentDarkMatterProfile), pointer :: darkMatterProfile
-!    type(treeNode), intent(inout), target :: node
-
-!    darkMatterProfile => node%darkMatterProfile()
-!    call darkMatterProfile%floatRank0MetaPropertyAnalytic(self%VmaxSIDMID)
-!    return
-!  end subroutine SIDMParametriDifferentialVmaxAnalytics
-
-
-!  subroutine SIDMParametriDifferentialVmaxSolveAnalytics(self, node)
-
-!    use :: Galacticus_Nodes, only : nodeComponentBasic, nodeComponentDarkMatterProfile, treeNode
-!    class(nodeOperatorSIDMParametric), intent(inout) :: self
-!    class(nodeComponentDarkMatterProfile), pointer :: darkMatterProfile
-!    type(treeNode), intent(inout), target :: node
-!    double precision :: tau, VmaxSIDM, tc, dvdt
-
-!    tau = darkMatterProfile%floatRank0MetaPropertyGet(self%tauID)
-!    VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
-!    tc = get_tc(self, node, self%darkMatterProfileDMO_%circularVelocityMaximum(node), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node), VmaxSIDM)
-!    dvdt = dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node)) * (1.0d0) / tc
-
-!    call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, dvdt)
-!    return
-!  end subroutine SIDMParametriDifferentialVmaxSolveAnalytics 
 
 
   double precision function get_tc(self, node, Vmax, Rvmax, VmaxSIDM)
@@ -430,7 +533,6 @@ contains
     print *, 'Rmax: ', Rvmax
     print *, 'Vmax: ', Vmax
 
-!    write(20, '(F20.6, 2X, F20.6)') 0.0d0, sigmaeff 
 
     !we need the conversion of Rvmax to kpc rather than Mpc
     reff = Rvmax*1e3 / 2.1626 
