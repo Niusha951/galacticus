@@ -483,7 +483,7 @@ contains
             print *, time, timeFormation, tc, tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
            
             print *, 'RmaxCDM and SIDM: '
-!            print *, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
+            print *, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
 
     else
             call darkMatterProfile%floatRank0MetaPropertyRate(self%tauID, 0.0d0)
