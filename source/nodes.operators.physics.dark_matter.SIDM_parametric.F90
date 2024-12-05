@@ -434,7 +434,7 @@ contains
     double precision :: RmaxNFW0, VmaxNFW0, r_sNFW0, rho_sNFW0, rho_s, r_s, r_c
     double precision :: VmaxSIDM=0.0d0, RmaxSIDM=0.0d0, VmaxSIDMPrevious, RmaxSIDMPrevious, VmaxCDM, RmaxCDM, VmaxCDMPrevious, RmaxCDMPrevious
     double precision :: dtr
-    double precision :: tau, VmaxSIDM, tc, dvdt, drdt
+    double precision :: tau, VmaxSIDM, tc, dvdt, drdt, RmaxSIDM
 
     logical, intent(inout) :: interrupt
     procedure(interruptTask), intent(inout), pointer :: functionInterrupt
@@ -475,8 +475,13 @@ contains
 
             print *, 'Read Here!'
             print *, time, timeFormation, tc, tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
-           
-            print *, 'RmaxCDM and SIDM: '
+
+            RmaxCDM = self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
+
+            RmaxSIDM = RmaxCDM+darkMatterProfile%floatRank0MetaPropertyGet(self%RmaxSIDMID)   
+
+            print *, 'RmaxCDM and SIDM: ', RmaxCDM, RmaxSIDM
+
 !            print *, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
 
     else
