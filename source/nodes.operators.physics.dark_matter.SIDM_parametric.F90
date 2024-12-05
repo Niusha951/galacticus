@@ -36,12 +36,6 @@
    <description>
      A node operator class that maps the CDM solution to SIDM based on the parametric model introduced in Yang et al. 2023: arXiv:2305.16176
    </description>
-   <deepCopy>
-    <functionClass variables="darkMatterProfileScaleRadius_ mergerTreeBuilderSmoothAccretion_ mergerTreeMassResolutionFixed_"/>
-   </deepCopy>
-   <stateStorable>
-    <functionClass variables="darkMatterProfileScaleRadius_ mergerTreeBuilderSmoothAccretion_ mergerTreeMassResolutionFixed_"/>
-   </stateStorable>
   </nodeOperator>
   !!]
   type, extends(nodeOperatorClass) :: nodeOperatorSIDMParametric
@@ -59,9 +53,9 @@
      class(darkMatterProfileConcentrationClass    ), pointer :: darkMatterProfileConcentration_ => null()
              !     class(mergerTreeMassResolutionClass          ), pointer :: mergerTreeMassResolution_           => null()        
 !     class(mergerTreeMassResolutionClass          ), pointer :: mergerTreeMassResolutionFixed_ => null()
-     type (mergerTreeBuilderSmoothAccretion),        pointer :: mergerTreeBuilderSmoothAccretion_ => null() 
-     type (mergerTreeMassResolutionFixed),           pointer :: mergerTreeMassResolutionFixed_ => null()
-     type (darkMatterProfileScaleRadiusConcentration),pointer:: darkMatterProfileScaleRadius_ => null()
+!     type (mergerTreeBuilderSmoothAccretion),        pointer :: mergerTreeBuilderSmoothAccretion_ => null() 
+!     type (mergerTreeMassResolutionFixed),           pointer :: mergerTreeMassResolutionFixed_ => null()
+!     type (darkMatterProfileScaleRadiusConcentration),pointer:: darkMatterProfileScaleRadius_ => null()
      integer                                                 :: tauID, VmaxSIDMID, RmaxSIDMID, nodeFormationTimeSIDMID
    contains
      !![
@@ -483,7 +477,7 @@ contains
             print *, time, timeFormation, tc, tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
            
             print *, 'RmaxCDM and SIDM: '
-            print *, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
+!            print *, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
 
     else
             call darkMatterProfile%floatRank0MetaPropertyRate(self%tauID, 0.0d0)
