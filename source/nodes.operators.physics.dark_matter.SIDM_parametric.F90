@@ -36,6 +36,12 @@
    <description>
      A node operator class that maps the CDM solution to SIDM based on the parametric model introduced in Yang et al. 2023: arXiv:2305.16176
    </description>
+   <deepCopy>
+    <functionClass variables="darkMatterProfileScaleRadius_ mergerTreeBuilderSmoothAccretion_ mergerTreeMassResolutionFixed_"/>
+   </deepCopy>
+   <stateStorable>
+    <functionClass variables="darkMatterProfileScaleRadius_ mergerTreeBuilderSmoothAccretion_ mergerTreeMassResolutionFixed_"/>
+   </stateStorable>
   </nodeOperator>
   !!]
   type, extends(nodeOperatorClass) :: nodeOperatorSIDMParametric
@@ -150,21 +156,12 @@ contains
     <constructorAssign variables="*darkMatterParticle_, *darkMatterHaloMassAccretionHistory_, *darkMatterProfileDMO_, *cosmologyFunctions_, *cosmologyParameters_, *darkMatterHaloScale_, *virialDensityContrast_, *darkMatterProfileConcentration_"/>
     !!]
 
-    allocate(self%mergerTreeMassResolutionFixed_)
-    allocate(self%mergerTreeBuilderSmoothAccretion_)
-    allocate(self%darkMatterProfileScaleRadius_)
-    !![
-    <referenceConstruct isResult="yes" owner="self" object="mergerTreeMassResolutionFixed_" constructor="mergerTreeMassResolutionFixed(massResolution)"/>
-    <referenceConstruct isResult="yes" owner="self" object="mergerTreeBuilderSmoothAccretion_" constructor="mergerTreeBuilderSmoothAccretion(massHaloDeclineFactor,timeEarliest,cosmologyFunctions_,darkMatterHaloMassAccretionHistory_,self%mergerTreeMassResolutionFixed_)"/>
-    <referenceConstruct isResult="yes" owner="self" object="darkMatterProfileScaleRadius_" constructor="darkMatterProfileScaleRadiusConcentration(.false., .false., cosmologyParameters_, cosmologyFunctions_, darkMatterHaloScale_, darkMatterProfileDMO_, virialDensityContrast_, darkMatterProfileConcentration_)"/>
-    !!]
-
     !![
     <addMetaProperty component="darkMatterProfile" name="tau"      id="self%tauID"      isEvolvable="yes" isCreator="yes"/>
     <addMetaProperty component="darkMatterProfile" name="VmaxSIDM" id="self%VmaxSIDMID" isEvolvable="yes"  isCreator="yes"/>
     <addMetaProperty component="darkMatterProfile" name="RmaxSIDM" id="self%RmaxSIDMID" isEvolvable="yes"  isCreator="yes"/>
     <addMetaProperty component="basic" name="nodeFormationTimeSIDM" id="self%nodeFormationTimeSIDMID" isEvolvable="no" isCreator="yes"/>
-    !!]
+    !!]    
     return
   end function SIDMParametricConstructorInternal
 
@@ -205,10 +202,16 @@ contains
     type (mergerTree)                                         :: treeNew
     class(nodeComponentBasic        ),                pointer :: basic, basicParent, basicNode, basicChild, basicNew, basicBase, basicNewChild
     class(nodeComponentDarkMatterProfile),            pointer :: darkMatterProfile, darkMatterProfileChild, darkMatterProfileCopy
+    type (mergerTreeMassResolutionFixed),             pointer :: mergerTreeMassResolutionFixed_
+    type (mergerTreeBuilderSmoothAccretion),          pointer :: mergerTreeBuilderSmoothAccretion_
+    type (darkMatterProfileScaleRadiusConcentration), pointer :: darkMatterProfileScaleRadius_
 
     double precision :: formationMassFraction = 0.5d0
     double precision :: timeFormation
     double precision :: VmaxSIDMPrevious, tc, tau, dtr, VmaxSIDM
+    double precision :: massHaloDeclineFactor=0.99d0, timeEarliest=0.0d0, massResolution
+
+
 
     print *, 'Test inside SIDM parametric NodeTreeInitialize ...'
     call self%nodeInitialize(node)
@@ -223,8 +226,8 @@ contains
        basicParent => nodeParent%basic()
        print *, 'what is parent time: ', basicParent%time()
        print *, 'parent index: ', nodeParent%index()
-!       timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
-       timeFormation = 2.1903d0
+       timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
+!       timeFormation = 2.1903d0
        if (nodeParent%isPrimaryProgenitor()) then
           nodeParent => nodeParent%parent
        else
@@ -239,13 +242,24 @@ contains
 !    in-progress !!!!!
     print *, 'Test starting below resolution tree generation ...'
     if (.not.associated(node%firstChild)) then
-         print *, 'node time: ', basic%time()
-         print *, 'node Formation time: ', basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)
-         if (basic%time() > basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)) then
+       print *, 'node time: ', basic%time()
+       print *, 'node Formation time: ', basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)
+       if (basic%time() > basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)) then
           ! if this node is at the tip of the branch and the time associated to it is larger than the formation time of the
           ! branch then we need to build the rest of the tree (extrapolate back in time) to start the parametric SIDM
           ! calculation from then
           
+          massResolution = basic%mass()/2.0d0
+          timeEarliest = basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID) - 1
+
+          allocate(mergerTreeMassResolutionFixed_)
+          allocate(mergerTreeBuilderSmoothAccretion_)
+          allocate(darkMatterProfileScaleRadius_)
+          !![
+          <referenceConstruct object="mergerTreeMassResolutionFixed_" constructor="mergerTreeMassResolutionFixed(massResolution)"/>
+          <referenceConstruct object="mergerTreeBuilderSmoothAccretion_" constructor="mergerTreeBuilderSmoothAccretion(massHaloDeclineFactor,timeEarliest,self%cosmologyFunctions_,self%darkMatterHaloMassAccretionHistory_,mergerTreeMassResolutionFixed_)"/>
+          <referenceConstruct object="darkMatterProfileScaleRadius_" constructor="darkMatterProfileScaleRadiusConcentration(.false., .true., self%cosmologyParameters_, self%cosmologyFunctions_, self%darkMatterHaloScale_, self%darkMatterProfileDMO_, self%virialDensityContrast_, self%darkMatterProfileConcentration_)"/>
+          !!]
 
           print *, 'let`s test this ...!'
           treeNew%randomNumberGenerator_ => node%hostTree%randomNumberGenerator_
@@ -254,7 +268,7 @@ contains
 
           print *, 'end of copying the last node into the new tree'
 
-          call self%mergerTreeBuilderSmoothAccretion_%build(treeNew)
+          call mergerTreeBuilderSmoothAccretion_%build(treeNew)
 
           print *, 'new tree is generated!'
           
@@ -264,7 +278,7 @@ contains
              print *, 'nodeChild index and time, mass: ', nodeChild%index(), basicChild%time(), basicChild%mass()
 
              darkMatterProfile => nodeChild%darkMatterProfile(autoCreate=.true.)
-             call darkMatterProfile%scaleSet(self%darkMatterProfileScaleRadius_%radius(nodeChild))
+             call darkMatterProfile%scaleSet(darkMatterProfileScaleRadius_%radius(nodeChild))
 
              if (basicChild%time() > timeFormation) then
                 nodeNew => nodeChild
@@ -334,6 +348,12 @@ contains
 
           call treeNew%nodeBase%destroyBranch()
           deallocate(treeNew%nodeBase)
+
+          !![
+          <objectDestructor name="mergerTreeMassResolutionFixed_"/>
+          <objectDestructor name="mergerTreeBuilderSmoothAccretion_"/>
+          <objectDestructor name="darkMatterProfileScaleRadius_"/>
+          !!]
 
        end if
     end if
@@ -465,8 +485,8 @@ contains
 
     basic => node%basic()
     time = basic%time()
-!!    timeFormation = basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)
-    timeFormation = 2.1903d0
+    timeFormation = basic%floatRank0MetaPropertyGet(self%nodeFormationTimeSIDMID)
+!    timeFormation = 2.1903d0
 !    timeFormation = 1.7887838371779103d0
 
 
