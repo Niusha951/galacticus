@@ -339,13 +339,6 @@ contains
 
           end do
 
-!          do while (.not.nodeNew%index() == treeNew%nodeBase%index())
-!             basicNew => nodeNew%basic()
-!             print *, 'nodeNew index and time, mass: ', nodeNew%index(), basicNew%time(), basicNew%mass()
-
-!             nodeNew => nodeNew%parent
-!          end do
-
           call treeNew%nodeBase%destroyBranch()
           deallocate(treeNew%nodeBase)
 
@@ -358,30 +351,9 @@ contains
        end if
     end if
 
-!    !calculating the formation time
-!    if (.not.associated(node%firstChild)) then
-!       print *, 'Node that has no first child, has the time: ', basicNode%time()
-!       nodeParent    => node
-!       nodeFormation => node
-!       do while (associated(nodeParent))
-!!          basic         => nodeParent%basic()
-!          basic => nodeFormation%basic()
-!          basicParent => nodeParent%basic()
-!          print *, 'if it has no child, now what is its parent time: ', basicParent%time()
-!          timeFormation =  Dark_Matter_Halo_Formation_Time(node=nodeParent, formationMassFraction=formationMassFraction, darkMatterHaloMassAccretionHistory_=self%darkMatterHaloMassAccretionHistory_)
-!          if (nodeParent%isPrimaryProgenitor()) then
-!             nodeParent => nodeParent%parent
-!          else
-!             nodeParent => null()
-!          end if 
-!       end do
-!       call basic%floatRank0MetaPropertySet(self%nodeFormationTimeID,timeFormation)
-!       print *, 'Formation time: ', basic%floatRank0MetaPropertyGet(self%nodeFormationTimeID)
-!    end if
 
     print *, 'Test end of initialization ...'
 
-!    call self%calculateTau(node, basic%floatRank0MetaPropertyGet(self%nodeFormationTimeID))
     return
   end subroutine SIDMParametricNodeTreeInitialize
 
@@ -468,7 +440,7 @@ contains
     double precision :: RmaxNFW0, VmaxNFW0, r_sNFW0, rho_sNFW0, rho_s, r_s, r_c
     double precision :: VmaxSIDM=0.0d0, RmaxSIDM=0.0d0, VmaxSIDMPrevious, RmaxSIDMPrevious, VmaxCDM, RmaxCDM, VmaxCDMPrevious, RmaxCDMPrevious
     double precision :: dtr
-    double precision :: tau, VmaxSIDM, tc, dvdt
+    double precision :: tau, VmaxSIDM, tc, dvdt, drdt
 
     logical, intent(inout) :: interrupt
     procedure(interruptTask), intent(inout), pointer :: functionInterrupt
@@ -503,14 +475,20 @@ contains
 
             tau = darkMatterProfile%floatRank0MetaPropertyGet(self%tauID)
             dvdt = dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node)) * (1.0d0) / tc
+            drdt = drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)) * (1.0d0) / tc
             call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, dvdt)
+            call darkMatterProfile%floatRank0MetaPropertyRate(self%RmaxSIDMID, drdt)
 
             print *, 'Read Here!'
             print *, time, timeFormation, tc, tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
+           
+            print *, 'RmaxCDM and SIDM: '
+!            print *, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
 
     else
             call darkMatterProfile%floatRank0MetaPropertyRate(self%tauID, 0.0d0)
             call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, 0.0d0)
+            call darkMatterProfile%floatRank0MetaPropertyRate(self%RmaxSIDMID, 0.0d0)
     end if
     
 
