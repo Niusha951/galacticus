@@ -202,7 +202,7 @@ contains
 
     double precision :: formationMassFraction = 0.5d0
     double precision :: timeFormation
-    double precision :: VmaxSIDMPrevious, tc, tau, dtr, VmaxSIDM
+    double precision :: VmaxSIDMPrevious, tc, tau, dtr, VmaxSIDM, RmaxSIDM
     double precision :: massHaloDeclineFactor=0.99d0, timeEarliest=0.0d0, massResolution
 
 
@@ -314,8 +314,12 @@ contains
 
              VmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID) + dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew)) * (basicNew%time() - basicNewChild%time())/tc
 
-             print *, 'dvmaxSIDM cumulative: ', VmaxSIDM
+             RmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%RmaxSIDMID) + drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeNew)) * (basicNew%time() - basicNewChild%time())/tc
+             
+             print *, 'dvmaxSIDM and drmaxSIDM cumulative: ', VmaxSIDM, RmaxSIDM
              call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID, VmaxSIDM)
+
+             call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID, RmaxSIDM)
 
              !copy the values from the new tree to the tip of the original branch
              darkMatterProfile => node%darkMatterProfile()
@@ -323,7 +327,7 @@ contains
 
              call darkMatterProfile%floatRank0MetaPropertySet(self%tauID,darkMatterProfileCopy%floatRank0MetaPropertyGet(self%tauID))
              call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID,darkMatterProfileCopy%floatRank0MetaPropertyGet(self%VmaxSIDMID))
-
+             call darkMatterProfile%floatRank0MetaPropertySet(self%RmaxSIDMID,darkMatterProfileCopy%floatRank0MetaPropertyGet(self%RmaxSIDMID))
 
              if (.not.nodeNew%index() == treeNew%nodeBase%index()) then
                 nodeNew => nodeNew%parent
