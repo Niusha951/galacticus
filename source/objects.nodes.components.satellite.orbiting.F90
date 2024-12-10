@@ -26,15 +26,13 @@ module Node_Component_Satellite_Orbiting
   !!{
   Implements the orbiting satellite component.
   !!}
-  use :: Cosmology_Parameters    , only : cosmologyParametersClass
-  use :: Cosmology_Functions     , only : cosmologyFunctionsClass
-  use :: Dark_Matter_Profiles_DMO, only : darkMatterProfileDMOClass
-  use :: Galactic_Structure      , only : galacticStructureClass
-  use :: Virial_Density_Contrast , only : virialDensityContrastClass
-  use :: Dark_Matter_Halo_Scales , only : darkMatterHaloScaleClass
-  use :: Kepler_Orbits           , only : keplerOrbit
-  use :: Tensors                 , only : tensorRank2Dimension3Symmetric
-  use :: Virial_Orbits           , only : virialOrbit                    , virialOrbitClass
+  use :: Cosmology_Parameters   , only : cosmologyParametersClass
+  use :: Cosmology_Functions    , only : cosmologyFunctionsClass
+  use :: Virial_Density_Contrast, only : virialDensityContrastClass
+  use :: Dark_Matter_Halo_Scales, only : darkMatterHaloScaleClass
+  use :: Kepler_Orbits          , only : keplerOrbit
+  use :: Tensors                , only : tensorRank2Dimension3Symmetric
+  use :: Virial_Orbits          , only : virialOrbit                    , virialOrbitClass
   implicit none
   private
   public :: Node_Component_Satellite_Orbiting_Scale_Set        , Node_Component_Satellite_Orbiting_Create             , &
@@ -122,14 +120,12 @@ module Node_Component_Satellite_Orbiting
   !!]
 
   ! Objects used by this module.
-  class(darkMatterProfileDMOClass ), pointer :: darkMatterProfileDMO_
   class(virialDensityContrastClass), pointer :: virialDensityContrast_
   class(cosmologyParametersClass  ), pointer :: cosmologyParameters_
   class(cosmologyFunctionsClass   ), pointer :: cosmologyFunctions_
   class(darkMatterHaloScaleClass  ), pointer :: darkMatterHaloScale_
   class(virialOrbitClass          ), pointer :: virialOrbit_
-  class(galacticStructureClass    ), pointer :: galacticStructure_
-  !$omp threadprivate(darkMatterHaloScale_,virialOrbit_,darkMatterProfileDMO_,virialDensityContrast_,cosmologyParameters_,cosmologyFunctions_,galacticStructure_)
+  !$omp threadprivate(darkMatterHaloScale_,virialOrbit_,virialDensityContrast_,cosmologyParameters_,cosmologyFunctions_)
 
   ! Option controlling whether or not unbound virial orbits are acceptable.
   logical                                                     , parameter :: acceptUnboundOrbits          =.false.
@@ -239,11 +235,9 @@ contains
        !![
        <objectBuilder class="cosmologyFunctions"    name="cosmologyFunctions_"    source="subParameters"/>
        <objectBuilder class="cosmologyParameters"   name="cosmologyParameters_"   source="subParameters"/>
-       <objectBuilder class="darkMatterProfileDMO"  name="darkMatterProfileDMO_"  source="subParameters"/>
        <objectBuilder class="virialDensityContrast" name="virialDensityContrast_" source="subParameters"/>
        <objectBuilder class="darkMatterHaloScale"   name="darkMatterHaloScale_"   source="subParameters"/>
        <objectBuilder class="virialOrbit"           name="virialOrbit_"           source="subParameters"/>
-       <objectBuilder class="galacticStructure"     name="galacticStructure_"     source="subParameters"/>
        !!]
        dependenciesSubhaloPromotion(1)=dependencyExact(dependencyDirectionBefore,'mergerTreeNodeEvolver')
        call       subhaloPromotionEvent%attach(thread,subhaloPromotion      ,openMPThreadBindingAtLevel,label='nodeComponentSatelliteOrbiting',dependencies=dependenciesSubhaloPromotion)
@@ -272,11 +266,9 @@ contains
        !![
        <objectDestructor name="cosmologyFunctions_"   />
        <objectDestructor name="cosmologyParameters_"  />
-       <objectDestructor name="darkMatterProfileDMO_" />
        <objectDestructor name="virialDensityContrast_"/>
        <objectDestructor name="darkMatterHaloScale_"  />
        <objectDestructor name="virialOrbit_"          />
-       <objectDestructor name="galacticStructure_"    />
        !!]
        if (      subhaloPromotionEvent%isAttached(thread,subhaloPromotion      )) call       subhaloPromotionEvent%detach(thread,subhaloPromotion      )
        if (satellitePreHostChangeEvent%isAttached(thread,satellitePreHostChange)) call satellitePreHostChangeEvent%detach(thread,satellitePreHostChange)
@@ -451,6 +443,7 @@ contains
     class(*                     ), intent(inout)          :: self
     type (treeNode              ), intent(inout), target  :: node
     class(nodeComponentSatellite)               , pointer :: satellite, satelliteParent
+    type  (keplerOrbit          )                         :: orbit    , orbitParent
     !$GLC attributes unused :: self
 
     satelliteParent => node%parent%satellite()
@@ -459,7 +452,11 @@ contains
        satellite => node%satellite()
        select type (satellite)
        type is (nodeComponentSatellite)
-          ! This is as expected - nothing to do.
+          ! This is as expected - nothing to do. 
+       type is (nodeComponentSatelliteOrbiting)
+          orbitParent=satelliteParent%virialOrbit()
+          orbit      =satellite      %virialOrbit()
+          if (.not. orbit == orbitParent) call Error_Report('multiple satellite components defined on branch have differnt orbits'//{introspection:location})
        class default
           call Error_Report('multiple satellite components defined on branch'//{introspection:location})
        end select
@@ -584,14 +581,15 @@ contains
     !!{
     Set the initial bound mass of the satellite.
     !!}
+    use :: Mass_Distributions                  , only : massDistributionClass
     use :: Dark_Matter_Profile_Mass_Definitions, only : Dark_Matter_Profile_Mass_Definition
     use :: Error                               , only : Error_Report
     use :: Galacticus_Nodes                    , only : nodeComponentSatellite             , nodeComponentSatelliteOrbiting, treeNode
     implicit none
     class           (nodeComponentSatellite), intent(inout) :: satellite
     type            (treeNode              ), intent(inout) :: node
-    double precision                                        :: virialRadius , maximumRadius, &
-         &                                                     massSatellite
+    class           (massDistributionClass ), pointer       :: massDistribution_
+    double precision                                        :: massSatellite    , maximumRadius
 
     select type (satellite)
     class is (nodeComponentSatelliteOrbiting)
@@ -600,9 +598,10 @@ contains
           ! Do nothing. The bound mass of this satellite is set to the node mass by default.
        case (initializationTypeMassBoundMaximumRadius  %ID)
           ! Set the initial bound mass of this satellite by integrating the density profile up to a maximum radius.
-          virialRadius =darkMatterHaloScale_%radiusVirial(node              )
-          maximumRadius=radiusMaximumOverRadiusVirial*virialRadius
-          massSatellite=galacticStructure_  %massEnclosed(node,maximumRadius)
+          maximumRadius     =  +                     radiusMaximumOverRadiusVirial                &
+               &               *darkMatterHaloScale_%radiusVirial                 (node         )
+          massDistribution_ =>  node                %massDistribution             (             )
+          massSatellite     =   massDistribution_   %massEnclosedBySphere         (maximumRadius)
           call satellite%boundMassSet(massSatellite)
        case (initializationTypeMassBoundDensityContrast%ID)
           ! Set the initial bound mass of this satellite by assuming a specified density contrast.
@@ -611,7 +610,6 @@ contains
                &                                                                   densityContrastMassBound, &
                &                                            cosmologyParameters_  =cosmologyParameters_    , &
                &                                            cosmologyFunctions_   =cosmologyFunctions_     , &
-               &                                            darkMatterProfileDMO_ =darkMatterProfileDMO_   , &
                &                                            virialDensityContrast_=virialDensityContrast_    &
                &                                           )
           call satellite%boundMassSet(massSatellite)
@@ -640,7 +638,7 @@ contains
 
     call displayMessage('Storing state for: componentSatellite -> orbiting',verbosity=verbosityLevelInfo)
     !![
-    <stateStore variables="darkMatterHaloScale_ virialOrbit_ darkMatterProfileDMO_ virialDensityContrast_ cosmologyParameters_ cosmologyFunctions_ galacticStructure_"/>
+    <stateStore variables="darkMatterHaloScale_ virialOrbit_ virialDensityContrast_ cosmologyParameters_ cosmologyFunctions_"/>
     !!]
     return
   end subroutine Node_Component_Satellite_Orbiting_State_Store
@@ -663,7 +661,7 @@ contains
 
     call displayMessage('Retrieving state for: componentSatellite -> orbiting',verbosity=verbosityLevelInfo)
     !![
-    <stateRestore variables="darkMatterHaloScale_ virialOrbit_ darkMatterProfileDMO_ virialDensityContrast_ cosmologyParameters_ cosmologyFunctions_ galacticStructure_"/>
+    <stateRestore variables="darkMatterHaloScale_ virialOrbit_ virialDensityContrast_ cosmologyParameters_ cosmologyFunctions_"/>
     !!]
     return
   end subroutine Node_Component_Satellite_Orbiting_State_Restore

@@ -188,9 +188,12 @@ contains
 
     use :: Galacticus_Nodes  , only : mergerTree, nodeComponentBasic, nodeComponentDarkMatterProfile
     use :: Dark_Matter_Halo_Formation_Times, only : Dark_Matter_Halo_Formation_Time
+    use :: Mass_Distributions        , only : massDistributionClass
+    use :: Galactic_Structure_Options, only : componentTypeDarkHalo, componentTypeDarkMAtterOnly , massTypeDark , weightByMass
 
     implicit none
     class(nodeOperatorSIDMParametric), intent(inout), target  :: self
+    class(massDistributionClass     ),                pointer :: massDistribution_        
     type (treeNode                  ), intent(inout), target  :: node
     type (treeNode                  ),                pointer :: nodeParent, nodeBase, nodeChild, nodeNew
     type (mergerTree)                                         :: treeNew
@@ -294,11 +297,14 @@ contains
              darkMatterProfileChild => nodeNew%firstChild%darkMatterProfile()   
              print *, 'nodeNew index and time, mass: ', nodeNew%firstChild%index(), basicNewChild%time(), basicNewChild%mass()
 
-             VmaxSIDMPrevious = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew%firstChild)
+             massDistribution_ => nodeNew%massDistribution(componentTypeDarkMatterOnly,massTypeDark)
+             VmaxSIDMPrevious = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID)+massDistribution_%velocityRotationCurveMaximum() !self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew%firstChild)
 
              print *, 'VmaxSIDMPrevious: ', VmaxSIDMPrevious
 
-             tc = get_tc(self, nodeNew, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeNew), VmaxSIDMPrevious)
+!             tc = get_tc(self, nodeNew, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew),
+!             self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeNew), VmaxSIDMPrevious)
+             tc = get_tc(self, nodeNew, massDistribution_%velocityRotationCurveMaximum(), massDistribution_%radiusRotationCurveMaximum(), VmaxSIDMPrevious)
 
              print *, 'tc: ', tc
 
@@ -312,10 +318,14 @@ contains
                 print *, 'Gravothermal evolution too fast, dtr: ', dtr
              end if
 
-             VmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID) + dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew)) * (basicNew%time() - basicNewChild%time())/tc
+!             VmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID) + dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew)) * (basicNew%time() - basicNewChild%time())/tc
 
-             RmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%RmaxSIDMID) + drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeNew)) * (basicNew%time() - basicNewChild%time())/tc
-             
+             VmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID) + dvmaxt(tau, massDistribution_%velocityRotationCurveMaximum()) * (basicNew%time() - basicNewChild%time())/tc
+
+!             RmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%RmaxSIDMID) + drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(nodeNew)) * (basicNew%time() - basicNewChild%time())/tc
+
+             RmaxSIDM = darkMatterProfileChild%floatRank0MetaPropertyGet(self%RmaxSIDMID) + drmaxt(tau, massDistribution_%radiusRotationCurveMaximum()) * (basicNew%time() - basicNewChild%time())/tc
+
              print *, 'dvmaxSIDM and drmaxSIDM cumulative: ', VmaxSIDM, RmaxSIDM
              call darkMatterProfile%floatRank0MetaPropertySet(self%VmaxSIDMID, VmaxSIDM)
 
@@ -344,6 +354,7 @@ contains
           <objectDestructor name="mergerTreeMassResolutionFixed_"/>
           <objectDestructor name="mergerTreeBuilderSmoothAccretion_"/>
           <objectDestructor name="darkMatterProfileScaleRadius_"/>
+          <objectDestructor name="massDistribution_"/>
           !!]
 
        end if
@@ -417,6 +428,8 @@ contains
 !    use Dark_Matter_Halo_Mass_Accretion_Histories, only: darkMatterHaloMassAccretionHistoryClass
 !    use Dark_Matter_Profiles_DMO , only : darkMatterProfileDMOClass
     use :: Dark_Matter_Halo_Formation_Times, only : Dark_Matter_Halo_Formation_Time
+    use :: Mass_Distributions        , only : massDistributionClass
+    use :: Galactic_Structure_Options, only : componentTypeDarkHalo, componentTypeDarkMAtterOnly , massTypeDark , weightByMass
 
     type(treeNode), intent(inout), target :: node
     type(treeNode), pointer :: nodeFinal
@@ -428,6 +441,7 @@ contains
     class(nodeOperatorSIDMParametric), intent(inout), target :: self
 !    class(darkMatterHaloMassAccretionHistoryClass), target :: darkMatterHaloMassAccretionHistory_
 !    class(darkMatterHaloMassAccretionHistoryClass), pointer :: darkMatterHaloMassAccretionHistory_
+    class(massDistributionClass     ),                pointer :: massDistribution_
     class(nodeComponentBasic), pointer :: basic, basicParent
     class(nodeComponentDarkMatterProfile), pointer :: darkMatterProfile
 !    class(darkMatterProfileDMOClass), pointer :: darkMatterProfileDMO_
@@ -467,20 +481,26 @@ contains
 
     if (time > timeFormation) then
 
-            VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
-            tc = get_tc(self, node, self%darkMatterProfileDMO_%circularVelocityMaximum(node), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node), VmaxSIDM)
+            massDistribution_ => node%massDistribution(componentTypeDarkMatterOnly,massTypeDark)
+!            VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
+            VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+massDistribution_%velocityRotationCurveMaximum()
+!            tc = get_tc(self, node, self%darkMatterProfileDMO_%circularVelocityMaximum(node), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node), VmaxSIDM)
+            tc = get_tc(self, node, massDistribution_%velocityRotationCurveMaximum(), massDistribution_%radiusRotationCurveMaximum(), VmaxSIDM)
             call darkMatterProfile%floatRank0MetaPropertyRate(self%tauID, 1.0d0/tc)
 
             tau = darkMatterProfile%floatRank0MetaPropertyGet(self%tauID)
-            dvdt = dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node)) * (1.0d0) / tc
-            drdt = drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)) * (1.0d0) / tc
-            call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, dvdt)
+!            dvdt = dvmaxt(tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node)) * (1.0d0) / tc
+!            drdt = drmaxt(tau, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)) * (1.0d0) / tc
+            dvdt = dvmaxt(tau, massDistribution_%velocityRotationCurveMaximum()) * (1.0d0) / tc
+            drdt = drmaxt(tau, massDistribution_%radiusRotationCurveMaximum()) * (1.0d0) / tc
+
+            call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, dvdt) 
             call darkMatterProfile%floatRank0MetaPropertyRate(self%RmaxSIDMID, drdt)
 
             print *, 'Read Here!'
-            print *, time, timeFormation, tc, tau, self%darkMatterProfileDMO_%circularVelocityMaximum(node), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
+            print *, time, timeFormation, tc, tau, massDistribution_%velocityRotationCurveMaximum(), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+massDistribution_%velocityRotationCurveMaximum()
 
-            RmaxCDM = self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
+            RmaxCDM = massDistribution_%radiusRotationCurveMaximum()
 
             RmaxSIDM = RmaxCDM+darkMatterProfile%floatRank0MetaPropertyGet(self%RmaxSIDMID)   
 

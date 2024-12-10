@@ -4,7 +4,7 @@
 <parameters>
   <!-- Parameters for tutorial on constraining Galacticus parameters - https://github.com/galacticusorg/galacticus/wiki/Tutorial%3A-Constraining-Galacticus-Parameters -->
   <formatVersion>2</formatVersion>
-  <version>0.9.4</version>
+  <lastModified revision="165490f4968c699f7e5bb73ef60bcb7e626f51e6"/>
 
   <!-- Task and work control -->
   <task                   value="evolveForests"/>
@@ -139,7 +139,7 @@
     <redshiftInterval                     value="1"      />
     <computeScatter                       value="false"  />
     <systematicErrorPolynomialCoefficient value="0.0 0.0"/>
-    <likelihoodBin                        value="11"     />
+    <likelihoodBins                       value="9"      />
   </outputAnalysis>
 
 </parameters>

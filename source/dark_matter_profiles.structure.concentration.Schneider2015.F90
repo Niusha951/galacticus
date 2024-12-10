@@ -54,9 +54,16 @@
      class           (cosmologicalMassVarianceClass      ), pointer :: referenceCosmologicalMassVariance => null(), cosmologicalMassVariance_ => null()
      type            (rootFinder                         )          :: finder
      double precision                                               :: massFractionFormation
-  contains
+   contains
+     !![
+     <methods>
+     <method method="concentrationCompute" description="Compute the concentration for the given {\normalfont \ttfamily node}"/>
+     </methods>
+     !!]
     final     ::                                   schneider2015Destructor
     procedure :: concentration                  => schneider2015Concentration
+    procedure :: concentrationMean              => schneider2015ConcentrationMean
+    procedure :: concentrationCompute           => schneider2015ConcentrationCompute
     procedure :: densityContrastDefinition      => schneider2015DensityContrastDefinition
     procedure :: darkMatterProfileDMODefinition => schneider2015DarkMatterProfileDefinition
  end type darkMatterProfileConcentrationSchneider2015
@@ -138,11 +145,11 @@ contains
     implicit none
     type            (darkMatterProfileConcentrationSchneider2015)                        :: self
     class           (darkMatterProfileConcentrationClass        ), intent(in   ), target :: referenceConcentration
-    class           (criticalOverdensityClass                   ), intent(in   ), target :: referenceCriticalOverdensity            , criticalOverdensity_
-    class           (cosmologicalMassVarianceClass              ), intent(in   ), target :: referenceCosmologicalMassVariance       , cosmologicalMassvariance_
-    class           (cosmologyFunctionsClass                    ), intent(in   ), target :: referenceCosmologyFunctions             , cosmologyFunctions_
+    class           (criticalOverdensityClass                   ), intent(in   ), target :: referenceCriticalOverdensity           , criticalOverdensity_
+    class           (cosmologicalMassVarianceClass              ), intent(in   ), target :: referenceCosmologicalMassVariance      , cosmologicalMassvariance_
+    class           (cosmologyFunctionsClass                    ), intent(in   ), target :: referenceCosmologyFunctions            , cosmologyFunctions_
     double precision                                             , intent(in   )         :: massFractionFormation
-    double precision                                             , parameter             :: toleranceAbsolute                =0.0d00, toleranceRelative        =1.0d-6
+    double precision                                             , parameter             :: toleranceAbsolute                =0.0d0, toleranceRelative        =1.0d-6
     !![
     <constructorAssign variables="massFractionFormation, *referenceConcentration, *referenceCriticalOverdensity, *referenceCosmologicalMassVariance, *referenceCosmologyFunctions, *criticalOverdensity_, *cosmologicalMassvariance_, *cosmologyFunctions_"/>
     !!]
@@ -179,7 +186,33 @@ contains
     return
   end subroutine schneider2015Destructor
 
-  double precision function schneider2015Concentration(self,node)
+  double precision function schneider2015Concentration(self,node) result(concentration)
+    !!{
+    Return the concentration of the dark matter halo profile of {\normalfont \ttfamily node} using the algorithm of
+    \cite{schneider_structure_2015}.
+    !!}
+    implicit none
+    class(darkMatterProfileConcentrationSchneider2015), intent(inout), target :: self
+    type (treeNode                                   ), intent(inout), target :: node
+
+    concentration=self%concentrationCompute(node,mean=.false.)
+    return
+  end function schneider2015Concentration
+  
+  double precision function schneider2015ConcentrationMean(self,node) result(concentration)
+    !!{
+    Return the mean concentration of the dark matter halo profile of {\normalfont \ttfamily node} using the algorithm of
+    \cite{schneider_structure_2015}.
+    !!}
+    implicit none
+    class(darkMatterProfileConcentrationSchneider2015), intent(inout)         :: self
+    type (treeNode                                   ), intent(inout), target :: node
+
+    concentration=self%concentrationCompute(node,mean=.true.)
+    return
+  end function schneider2015ConcentrationMean
+  
+  double precision function schneider2015ConcentrationCompute(self,node,mean) result(concentration)
     !!{
     Return the concentration of the dark matter halo profile of {\normalfont \ttfamily node} using the algorithm of
     \cite{schneider_structure_2015}.
@@ -190,11 +223,13 @@ contains
     implicit none
     class           (darkMatterProfileConcentrationSchneider2015), intent(inout), target  :: self
     type            (treeNode                                   ), intent(inout), target  :: node
+    logical                                                      , intent(in   )          :: mean
     class           (nodeComponentBasic                         )               , pointer :: basic
+    double precision                                             , parameter              :: toleranceTimeRelative      =1.0d-6
     integer                                                                               :: status
-    double precision                                                                      :: mass                                     , &
-         &                                                                                   collapseCriticalOverdensity, timeCollapse, &
-         &                                                                                   massReference              , variance    , &
+    double precision                                                                      :: mass                                            , &
+         &                                                                                   collapseCriticalOverdensity       , timeCollapse, &
+         &                                                                                   massReference                     , variance    , &
          &                                                                                   timeNow
 
     ! Get the basic component and the halo mass and time.
@@ -227,23 +262,33 @@ contains
     timeCollapse         =self%criticalOverdensity_%timeOfCollapse(collapseCriticalOverdensity,mass)
     ! Compute time of collapse in the reference model, assuming same redshift of collapse in both models.
     timeCollapseReference=self%referenceCosmologyFunctions%cosmicTime(self%cosmologyFunctions_%expansionFactor(timeCollapse))
-    ! Find the mass of a halo collapsing at the same time in the reference model.
-    self_                 => self
-    massReferencePrevious =  -1.0d0
-    if (schneider2015ReferenceCollapseMassRoot(massReferenceMaximum) > 0.0d0) then
-       ! No solution can be found even at the maximum allowed mass. Simply set the reference mass to the maximum allowed mass -
-       ! the choice should not matter too much as the abundances of such halos should be hugely suppressed.
-       massReference        =massReferenceMaximum
+    ! Check for a collapse time very close to the present time.
+    if (timeCollapseReference > time_*(1.0d0-toleranceTimeRelative)) then
+       ! Collapse is happening at the current time - which will correspond to arbitrarily massive halos in the reference model.
+       massReference=massReferenceMaximum
     else
-       massReference        =self%finder%find(rootGuess=mass,status=status)
-       if (status /= errorStatusSuccess) call Error_Report('failed to determine reference mass'//{introspection:location})
-    end if
+       ! Find the mass of a halo collapsing at the same time in the reference model.
+       self_                 => self
+       massReferencePrevious =  -1.0d0
+       if (schneider2015ReferenceCollapseMassRoot(massReferenceMaximum) > -time_*toleranceTimeRelative) then
+          ! No solution can be found even at the maximum allowed mass. Simply set the reference mass to the maximum allowed mass -
+          ! the choice should not matter too much as the abundances of such halos should be hugely suppressed.
+          massReference        =massReferenceMaximum
+       else
+          massReference        =self%finder%find(rootGuess=mass,status=status)
+          if (status /= errorStatusSuccess) call Error_Report('failed to determine reference mass'//{introspection:location})
+       end if
+   end if
     ! Compute the concentration of a node of this mass in the reference model.
     call basic%massSet(massReference)
-    schneider2015Concentration=self%referenceConcentration%concentration(node)
+    if (mean) then
+       concentration=self%referenceConcentration%concentrationMean(node)
+    else
+       concentration=self%referenceConcentration%concentration    (node)
+    end if
     call basic%massSet(mass         )
     return
-  end function schneider2015Concentration
+  end function schneider2015ConcentrationCompute
 
   double precision function schneider2015ReferenceCollapseMassRoot(massReference)
     !!{

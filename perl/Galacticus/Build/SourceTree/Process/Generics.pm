@@ -23,6 +23,7 @@ sub Process_Generics {
     my $depth = 0;    
     while ( $node ) {
 	if ( $node->{'type'} eq "generic" ) {
+	    $node->{'directive'}->{'processed'} = 1;
 	    # Build regExs.
 	    my $genericRegEx   = qr/\{$node->{'directive'}->{'identifier'}¦.*\}/;
 	    # Iterate over all sibling nodes.
@@ -82,7 +83,8 @@ sub Process_Generics {
 				$copyNode = &Galacticus::Build::SourceTree::Walk_Tree($copyNode,\$copyDepth);
 			    }
 			    # Reparse the new content.
-			    my $copyReparsed = &Galacticus::Build::SourceTree::ParseCode(&Galacticus::Build::SourceTree::Serialize($copy),$tree->{'name'}, instrument => 0 ,reinstateBlocks => 1);
+			    (my $copySerialized ) = &Galacticus::Build::SourceTree::Serialize($copy);
+			    my $copyReparsed = &Galacticus::Build::SourceTree::ParseCode($copySerialized,$tree->{'name'}, instrument => 0 ,reinstateBlocks => 1);
 			    # Push copy to list of copies.
 			    push(@copies,$copyReparsed);
 			}

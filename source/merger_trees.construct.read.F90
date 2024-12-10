@@ -382,6 +382,9 @@
   ! Counter used to assign unique IDs to split forests.
   type(mpiCounter) :: splitForestUniqueID
 
+  ! Fractional offset in time used for cloned nodes.
+  double precision :: fractionOffsetTimeClones=1.0d-9
+
 contains
 
   function readConstructorParameters(parameters) result(self)
@@ -841,14 +844,14 @@ contains
          &                   {introspection:location}                                             &
          &                  )
     ! Check that half-mass radius information is present if required.
-    if     (                                                                                                                                              &
-         &   self%presetScaleRadii                                                                                                                        &
-         &  .and.                                                                                                                                         &
-         &   .not.self%mergerTreeImporter_%scaleRadiiAvailable()                                                                                          &
-         & )  call Error_Report(                                                                                                                          &
-         &                      "presetting scale radii requires that at least one of readRadiusHalfMass or scaleRadius datasets be present in merger"//  &
-         &                      "tree file; try setting"//char(10)//"  [presetScaleRadii]=false"                                                      //  &
-         &                      {introspection:location}                                                                                                  &
+    if     (                                                                                                                                               &
+         &   self%presetScaleRadii                                                                                                                         &
+         &  .and.                                                                                                                                          &
+         &   .not.self%mergerTreeImporter_%scaleRadiiAvailable()                                                                                           &
+         & )  call Error_Report(                                                                                                                           &
+         &                      "presetting scale radii requires that at least one of readRadiusHalfMass or scaleRadius datasets be present in merger "//  &
+         &                      "tree file; try setting"//char(10)//"  [presetScaleRadii]=false"                                                       //  &
+         &                      {introspection:location}                                                                                                   &
          &                     )
     ! Check that angular momentum information is present if required.
     if     (                                                                                                  &
@@ -995,12 +998,13 @@ contains
     ! Find the maximum tree number in the current file.
     treeNumberMaximum=int(self%mergerTreeImporter_%treeCount(),kind=c_size_t)
     ! Check if we need to move to a new file.
-    if (treeNumber-self%treeNumberOffset > treeNumberMaximum .and. self%fileCurrent < size(self%fileNames)) then
+    do while (treeNumber-self%treeNumberOffset > treeNumberMaximum .and. self%fileCurrent < size(self%fileNames))
        self%fileCurrent     =self%fileCurrent     +1
        self%treeNumberOffset=self%treeNumberOffset+treeNumberMaximum
        call self%mergerTreeImporter_%close(                                                        )
        call self%mergerTreeImporter_%open (File_Name_Expand(char(self%fileNames(self%fileCurrent))))
-    end if
+       treeNumberMaximum=int(self%mergerTreeImporter_%treeCount(),kind=c_size_t)
+    end do
     treeNumberOffset=treeNumber-self%treeNumberOffset
     if (treeNumberOffset <= treeNumberMaximum) then
        ! Set tree properties.
@@ -1607,9 +1611,11 @@ contains
     !!{
     Scan for cases where a subhalo stops being a subhalo and so must be promoted.
     !!}
-    use :: Galacticus_Nodes          , only : nodeEvent                  , nodeEventSubhaloPromotion, treeNode, treeNodeList
-    use :: Merger_Tree_Read_Importers, only : nodeData
-    use :: Node_Subhalo_Promotions   , only : nodeSubhaloPromotionPerform
+    use :: Galacticus_Nodes            , only : nodeEvent                  , nodeEventSubhaloPromotion, treeNode, treeNodeList, &
+         &                                      nodeComponentSatellite
+    use :: Merger_Tree_Read_Importers  , only : nodeData
+    use :: Node_Subhalo_Promotions     , only : nodeSubhaloPromotionPerform
+    use :: Satellite_Merging_Timescales, only : satelliteMergeTimeInfinite
     implicit none
     class           (mergerTreeConstructorRead), intent(inout)                              :: self
     class           (nodeData                 ), target       , dimension(:), intent(inout) :: nodes
@@ -1619,6 +1625,7 @@ contains
     type            (treeNode                 ), pointer                                    :: promotionNode           , node             , &
          &                                                                                     nodeNew
     class           (nodeComponentBasic       ), pointer                                    :: basic
+    class           (nodeComponentSatellite   ), pointer                                    :: satellite
     integer         (c_size_t                 )                                             :: iNode
     integer                                                                                 :: i
     logical                                                                                 :: isolatedProgenitorExists, nodeIsMostMassive, &
@@ -1690,7 +1697,7 @@ contains
                       nodeNew                                         %event          => null()
                       nodeList(descendantNode%isolatedNodeIndex)%node%firstChild      => nodeNew
                       basic                                                           => nodeNew                                        %basic     ()
-                      call basic%timeSet(basic%time()*(1.0d0-1.0d-6))
+                      call basic%timeSet(basic%time()*(1.0d0-fractionOffsetTimeClones))
                       promotionNode        =>                                                  nodeNew
                       timeSubhaloPromotion =  basic                                           %    time()
                    else
@@ -1698,6 +1705,18 @@ contains
                       timeSubhaloPromotion =  descendantNode                                  %nodeTime
                    end if
                    node                    => nodeList      (nodes(iNode)  %isolatedNodeIndex)%node
+                   ! If the node being promoted has a merging time set we unset it now. This was a subhalo which was flagged for
+                   ! merging, but we are now promoting it as the primary progenitor of the current node, so it can no longer
+                   ! merge.
+                   satellite => node%satellite()
+                   if (satellite%timeOfMerging() < satelliteMergeTimeInfinite) then
+                      call satellite%timeOfMergingSet(satelliteMergeTimeInfinite)
+                      if (associated(node%mergeTarget)) then
+                         call node%removeFromMergee()
+                         nullify(node%mergeTarget)
+                      end if
+                   end if
+                   ! Create the event.
                    allocate(nodeEventSubhaloPromotion ::  newEvent)
                    allocate(nodeEventSubhaloPromotion :: pairEvent)
                    call          node%attachEvent( newEvent)
@@ -2056,7 +2075,7 @@ contains
          &                                                                                               useFallbackScaleMethod
     type            (rootFinder                       )           , save                              :: finder
     logical                                                       , save                              :: finderConstructed          =.false.
-    !$omp threadprivate(finder)
+    !$omp threadprivate(finder,finderConstructed)
     type            (varying_string                   )                                               :: message
     character       (len=16                           )                                               :: label
 
@@ -2162,11 +2181,11 @@ contains
              ! The node mass is below the reliability threshold, or no scale information is available. Set the scale radius using
              ! the fallback method.
              node_ => nodeList(iIsolatedNode)%node
-             radiusScale=max(                                                                                                         &
-                  &          min(                                                                                                     &
+             radiusScale=max(                                                                                                      &
+                  &          min(                                                                                                  &
                   &              self%darkMatterProfileScaleRadius_%radius      (node_)                                          , &
                   &              self%darkMatterHaloScale_         %radiusVirial(node_)/self%presetScaleRadiiConcentrationMinimum  &
-                  &             )                                                                                                   , &
+                  &             )                                                                                                , &
                   &              self%darkMatterHaloScale_         %radiusVirial(node_)/self%presetScaleRadiiConcentrationMaximum  &
                   &         )
              call darkMatterProfile%scaleSet(radiusScale)
@@ -2193,15 +2212,17 @@ contains
     use :: Error                     , only : Error_Report
     use :: Galacticus_Nodes          , only : nodeComponentBasic, nodeComponentSpin, treeNodeList
     use :: Merger_Tree_Read_Importers, only : nodeData
-    implicit none
+    use :: Mass_Distributions        , only : massDistributionClass
+  implicit none
     class           (mergerTreeConstructorRead)                       , intent(inout) :: self
     class           (nodeData                 )         , dimension(:), intent(inout) :: nodes
     type            (treeNodeList             )         , dimension(:), intent(inout) :: nodeList
     class           (nodeComponentBasic       ), pointer                              :: basic
     class           (nodeComponentSpin        ), pointer                              :: spin
+    class           (massDistributionClass    ), pointer                              :: massDistribution_
     integer                                                                           :: iNode
     integer         (c_size_t                 )                                       :: iIsolatedNode
-    double precision                                                                  :: angularMomentum
+    double precision                                                                  :: angularMomentum  , radiusVirial
     double precision                                    , dimension(3)                :: angularMomentum3D
 
     do iNode=1,size(nodes)
@@ -2209,8 +2230,10 @@ contains
        if (nodes(iNode)%isolatedNodeIndex /= nodeReachabilityUnreachable%ID) then
           iIsolatedNode=nodes(iNode)%isolatedNodeIndex
           ! Get basic and spin components.
-          basic => nodeList(iIsolatedNode)%node%basic(                 )
-          spin  => nodeList(iIsolatedNode)%node%spin (autoCreate=.true.)
+          basic             =>                                         nodeList(iIsolatedNode)%node%basic(                 )
+          spin              =>                                         nodeList(iIsolatedNode)%node%spin (autoCreate=.true.)
+          radiusVirial      =  self%darkMatterHaloScale_ %radiusVirial(nodeList(iIsolatedNode)%node                         )
+          massDistribution_ => self%darkMatterProfileDMO_%get         (nodeList(iIsolatedNode)%node                         )
           if (self%presetAngularMomenta  ) then
              if      (self%mergerTreeImporter_%angularMomentaAvailable()) then
                 ! If angular momenta are available directly, use them.
@@ -2237,6 +2260,9 @@ contains
                 call Error_Report('no method exists to set vector angular momenta'//{introspection:location})
              end if
           end if
+          !![
+	  <objectDestructor name="massDistribution_"/>
+	  !!]
        end if
     end do
     return
@@ -2249,9 +2275,9 @@ contains
       !!}
       use :: Numerical_Constants_Astronomical, only : gravitationalConstantGalacticus
       implicit none
-      spinNormalization=+gravitationalConstantGalacticus                                            &
-           &            *basic%mass()**2.5d0                                                        &
-           &            /sqrt(abs(self%darkMatterProfileDMO_%energy(nodeList(iIsolatedNode)%node)))
+      spinNormalization=+gravitationalConstantGalacticus                                     &
+           &            *basic%mass()**2.5d0                                                 &
+           &            /sqrt(abs(massDistribution_%energy(radiusVirial,massDistribution_)))
       return
     end function spinNormalization
 
@@ -2296,13 +2322,21 @@ contains
     !!{
     Function used to find scale radius of dark matter halos given their half-mass radius.
     !!}
+    use :: Calculations_Resets, only : Calculations_Reset
+    use :: Mass_Distributions , only : massDistributionClass
     implicit none
-    double precision, intent(in   ) :: radius
+    double precision                       , intent(in   ) :: radius
+    class           (massDistributionClass), pointer       :: massDistribution_
 
     ! Set scale radius to current guess.
     call darkMatterProfile_%scaleSet(radius)
+    call Calculations_Reset(node_)
     ! Compute difference between mass fraction enclosed at half mass radius and one half.
-    readRadiusHalfMassRoot=self_%darkMatterProfileDMO_%enclosedMass(node_,radiusHalfMass_)/basic_%mass()-0.50d0
+    massDistribution_      => self_            %darkMatterProfileDMO_%get(node_          )
+    readRadiusHalfMassRoot =  massDistribution_%massEnclosedBySphere     (radiusHalfMass_)/basic_%mass()-0.5d0
+    !![
+    <objectDestructor name="massDistribution_"/>
+    !!]
     return
   end function readRadiusHalfMassRoot
 
@@ -2733,6 +2767,7 @@ contains
     class  (mergerTreeConstructorRead)              , intent(inout) :: self
     class  (nodeData                 ), dimension(:), intent(inout) :: nodes
     type   (treeNodeList             ), dimension(:), intent(inout) :: nodeList
+    type   (treeNode                 ), pointer                     :: nodeMergeTarget
     integer                                                         :: iNode
     integer(c_size_t                 )                              :: jNode
     type   (varying_string           )                              :: message
@@ -2750,18 +2785,25 @@ contains
                 message=message//'] merger in which subhalo has no isolated node progenitor - this should not happen'
                 call Error_Report(message//{introspection:location})
              else
+                ! Check for a cloned copy.
+                nodeMergeTarget => nodeList(nodes(jNode)%isolatedNodeIndex)%node
+                if     (                                                               &
+                     &   associated(nodeMergeTarget%firstChild)                        &
+                     &  .and.                                                          &
+                     &   nodeMergeTarget%index() == nodeMergeTarget%firstChild%index() &
+                     & ) nodeMergeTarget => nodeMergeTarget%firstChild
                 ! Set pointer from merging node (a.k.a. the "mergee") to node that will be merged with.
-                nodeList(nodes(iNode)%isolatedNodeIndex)%node%mergeTarget => nodeList(nodes(jNode)%isolatedNodeIndex)%node
+                nodeList(nodes(iNode)%isolatedNodeIndex)%node%mergeTarget => nodeMergeTarget
                 ! Make a backward pointer from the merge target to the mergee. Check if the target already has mergees associated with it.
-                if (associated(nodeList(nodes(jNode)%isolatedNodeIndex)%node%firstMergee)) then
+                if (associated(nodeMergeTarget%firstMergee)) then
                    ! It does: unlink them and attached to the "siblingMergee" pointer of the current mergee.
-                   nodeList(nodes(iNode)%isolatedNodeIndex)%node%siblingMergee => nodeList(nodes(jNode)%isolatedNodeIndex)%node%firstMergee
+                   nodeList(nodes(iNode)%isolatedNodeIndex)%node%siblingMergee => nodeMergeTarget%firstMergee
                 else
                    ! It does not: simply nullify the next mergee pointer of the mergee.
                    nodeList(nodes(iNode)%isolatedNodeIndex)%node%siblingMergee => null()
                 end if
                 ! Append the mergee as the first mergee on the target node.
-                nodeList(nodes(jNode)%isolatedNodeIndex)%node%firstMergee => nodeList(nodes(iNode)%isolatedNodeIndex)%node
+                nodeMergeTarget%firstMergee => nodeList(nodes(iNode)%isolatedNodeIndex)%node
              end if
           end if
        end do
@@ -2927,16 +2969,16 @@ contains
              if (subhaloJumps) then
                 if (timeOfJump < 0.0d0)                   &
                      & timeOfJump=descendantNode%nodeTime
-                jumpToHost => descendantNode%descendant%host
+                 jumpToHost => descendantNode%descendant%host
                 ! Find an isolated host.
                 do while (jumpToHost%isSubhalo)
                    jumpToHost => jumpToHost%host
                 end do
                 call readCreateBranchJumpEvent(                                                    &
-                     &                        nodeList(iIsolatedNode                      )%node, &
-                     &                        nodeList(jumpToHost%primaryIsolatedNodeIndex)%node, &
-                     &                        timeOfJump                                          &
-                     &                       )
+                     &                         nodeList(iIsolatedNode                      )%node, &
+                     &                         nodeList(jumpToHost%primaryIsolatedNodeIndex)%node, &
+                     &                         timeOfJump                                          &
+                     &                        )
              end if
              ! Move to the descendant.
              previousNode   => descendantNode
@@ -2982,7 +3024,7 @@ contains
 
     allocate(nodeEventBranchJump ::  newEvent)
     allocate(nodeEventBranchJump :: pairEvent)
-    call node  %attachEvent( newEvent)
+    call node      %attachEvent( newEvent)
     call jumpToHost%attachEvent(pairEvent)
     newEvent %time =  timeOfJump
     newEvent %node => jumpToHost
@@ -3154,7 +3196,7 @@ contains
     class  (nodeData          ), dimension(:), intent(inout) :: nodes
     type   (treeNode          ), pointer                     :: nodeNew , nodeSatellite
     class  (nodeComponentBasic), pointer                     :: basicNew
-    integer                                                  :: iNode
+    integer                                                  :: iNode   , i
 
     ! Search for cases where a node has no progenitors which do not descend into subhalos.
     do iNode=1,size(nodes)
@@ -3170,6 +3212,12 @@ contains
                 ! quantities which use the node index as a label in dataset names for example).
                 allocate(nodeNew)
                 call nodes(iNode)%node%parent%copyNodeTo(nodeNew)
+                if (nodeNew%satelliteCount() > 0) then
+                   ! Remove any satellite component from the copied node - each branch should have only a single satellite.
+                   do i=nodeNew%satelliteCount(),1,-1
+                      call nodeNew%satelliteRemove(i)
+                   end do
+                end if
                 nodeNew%sibling                     => nodes(iNode)%node
                 nodeNew%parent                      => nodes(iNode)%node%parent
                 nodeNew%firstChild                  => null()
@@ -3177,7 +3225,7 @@ contains
                 nodeNew%siblingMergee               => null()
                 nodes(iNode)%node%parent%firstChild => nodeNew
                 basicNew                            => nodeNew%basic()
-                call basicNew%timeSet(basicNew%time()*(1.0d0-1.0d-6))
+                call basicNew%timeSet(basicNew%time()*(1.0d0-fractionOffsetTimeClones))
                 ! Events remain attached to the original and we do not want to duplicate them.
                 nodeNew%event => null()
                 ! Any satellites are now attached to the copy.
@@ -3349,6 +3397,7 @@ contains
     use :: Merger_Tree_Read_Importers, only : nodeData
     use :: String_Handling           , only : operator(//)
     use :: Vectors                   , only : Vector_Magnitude
+    use :: Calculations_Resets       , only : Calculations_Reset
     implicit none
     class           (mergerTreeConstructorRead)                       , intent(inout) :: self
     class           (nodeData                 )                       , intent(in   ) :: lastSeenNode
@@ -3443,6 +3492,10 @@ contains
              end if
              satelliteNode%parent         => hostNode
              hostNode     %firstSatellite => satelliteNode
+             ! Perform a calculation reset as technically these nodes have changed. (Specifically, they may have the same unique
+             ! ID as the prior time this function was called, and yet be new copies. Not resetting calculations could result in
+             ! the old - now destroyed - copies of these nodes being accessed.)
+             call Calculations_Reset(satelliteNode)
              ! Determine the time until merging.
              timeUntilMerging=self%satelliteMergingTimescales_%timeUntilMerging(satelliteNode,orbit)
              ! Clean up.
@@ -3481,19 +3534,38 @@ contains
     use :: Vectors      , only : Vector_Magnitude, Vector_Product
     implicit none
     type            (keplerOrbit)                              :: orbit
-    double precision                           , intent(in   ) :: mass1   , mass2
-    double precision             , dimension(3), intent(in   ) :: position, velocity
+    double precision                           , intent(in   ) :: mass1             , mass2
+    double precision             , dimension(3), intent(in   ) :: position          , velocity
+    double precision             , dimension(3)                :: velocityTangential, velocityRadial  , &
+         &                                                        vectorEpsilon1    , vectorEpsilon2  , &
+         &                                                        vectorRadial 
+    double precision                                           :: positionMagnitude , velocityEpsilon1, &
+         &                                                        velocityEpsilon2
 
+    positionMagnitude =Vector_Magnitude(position)
+    vectorRadial      =+position          &
+         &             /positionMagnitude
+    velocityRadial    =+Dot_Product(velocity,position) &
+         &             *vectorRadial
+    velocityTangential=+velocity       &
+         &             -velocityRadial
+    vectorEpsilon1    =Vector_Product(vectorRadial  ,[0.0d0,0.0d0,1.0d0])
+    vectorEpsilon2    =Vector_Product(vectorEpsilon1,vectorRadial       )
+    vectorEpsilon1    =vectorEpsilon1/Vector_Magnitude(vectorEpsilon1)
+    vectorEpsilon2    =vectorEpsilon2/Vector_Magnitude(vectorEpsilon2)
+    velocityEpsilon1  =Dot_Product(velocityTangential,vectorEpsilon1)
+    velocityEpsilon2  =Dot_Product(velocityTangential,vectorEpsilon2)
     call orbit%reset()
     call orbit%massesSet            (       &
          &                           mass1, &
          &                           mass2  &
          &                          )
-    call orbit%radiusSet            (                                                   Vector_Magnitude(position))
-    call orbit%velocityRadialSet    (                    Dot_Product(velocity,position)/Vector_Magnitude(position))
-    call orbit%velocityTangentialSet(Vector_Magnitude(Vector_Product(velocity,position)/Vector_Magnitude(position)))
-    call orbit%thetaSet             (acos (position(3)/sqrt(sum(position**2))            ))
-    call orbit%phiSet               (atan2(position(2)                       ,position(1)))
+    call orbit%radiusSet            (                                     positionMagnitude)
+    call orbit%velocityRadialSet    (Dot_Product     (velocity,position )/positionMagnitude)
+    call orbit%velocityTangentialSet(Vector_Magnitude(velocityTangential)                  )
+    call orbit%thetaSet             (acos (position        (3)/positionMagnitude                    ))
+    call orbit%phiSet               (atan2(position        (2)                  ,position        (1)))
+    call orbit%epsilonSet           (atan2(velocityEpsilon2                     ,velocityEpsilon1   ))
     return
   end function readOrbitConstruct
 
@@ -4020,7 +4092,7 @@ contains
     class           (nodeData                 ), pointer                             :: node
     type            (treeNode                 ), pointer                             :: nodeNew          , satellite
     class           (nodeComponentBasic       ), pointer                             :: basicNew
-    integer                                                                          :: iNode
+    integer                                                                          :: iNode            , i
     integer         (c_size_t                 )                                      :: iIsolatedNode    , progenitorLocation, &
          &                                                                              iPull
     integer         (kind_int8                )                                      :: progenitorIndex
@@ -4088,6 +4160,12 @@ contains
                       else
                          allocate                                    (nodeNew)
                          call nodeList(iIsolatedNode)%node%copyNodeTo(nodeNew)
+                         if (nodeNew%satelliteCount() > 0) then
+                            ! Remove any satellite component from the copied node - each branch should have only a single satellite.
+                            do i=nodeNew%satelliteCount(),1,-1
+                               call nodeNew%satelliteRemove(i)
+                            end do
+                         end if
                          nodeNew%sibling                         => nodeList(iIsolatedNode)%node%firstChild
                          nodeNew%parent                          => nodeList(iIsolatedNode)%node
                          nodeNew%firstChild                      => null()
@@ -4095,7 +4173,7 @@ contains
                          nodeNew%siblingMergee                   => null()
                          nodeList(iIsolatedNode)%node%firstChild => nodeNew
                          basicNew                                => nodeNew%basic()
-                         call basicNew%timeSet(basicNew%time()*(1.0d0-1.0d-6))
+                         call basicNew%timeSet(basicNew%time()*(1.0d0-fractionOffsetTimeClones))
                          ! Events remain attached to the original and we do not want to duplicate them.
                          nodeNew%event => null()
                          ! Any satellites are now attached to the copy.
@@ -4121,6 +4199,12 @@ contains
                       if (.not.associated(nodeList(iIsolatedNode)%node%firstChild)) then
                          allocate                                    (nodeNew)
                          call nodeList(iIsolatedNode)%node%copyNodeTo(nodeNew)
+                         if (nodeNew%satelliteCount() > 0) then
+                            ! Remove any satellite component from the copied node - each branch should have only a single satellite.
+                            do i=nodeNew%satelliteCount(),1,-1
+                               call nodeNew%satelliteRemove(i)
+                            end do
+                         end if
                          nodeNew%parent                          => nodeList(iIsolatedNode)%node
                          nodeNew%sibling                         => null()
                          nodeNew%firstChild                      => null()
@@ -4128,7 +4212,7 @@ contains
                          nodeNew%siblingMergee                   => null()
                          nodeList(iIsolatedNode)%node%firstChild => nodeNew
                          basicNew                                => nodeNew%basic()
-                         call basicNew%timeSet(basicNew%time()*(1.0d0-1.0d-6))
+                         call basicNew%timeSet(basicNew%time()*(1.0d0-fractionOffsetTimeClones))
                          ! Events remain attached to the original and we do not want to duplicate them.
                          nodeNew%event => null()
                          ! Any satellites are now attached to the copy.

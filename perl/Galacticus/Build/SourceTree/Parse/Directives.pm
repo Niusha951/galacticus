@@ -10,7 +10,8 @@ use XML::SAX::ParserFactory;
 use XML::Validator::Schema;
 
 # Insert hooks for our functions.
-$Galacticus::Build::SourceTree::Hooks::parseHooks{'directives'} = \&Parse_Directives;
+$Galacticus::Build::SourceTree::Hooks::parseHooks      {'directives'} = \&Parse_Directives;
+$Galacticus::Build::SourceTree::Hooks::postprocessHooks{'directives'} = \&PostProcess_Directives;
 
 sub Parse_Directives {
     # Get the tree.
@@ -69,6 +70,9 @@ sub Parse_Directives {
 		    $rawCode           .= $line;
 		} elsif ( $line =~ m/^\s*!!\[/ ) {
 		    $rawOpener          = $line;
+		} else {
+		    $rawCodeLine      = $lineNumber+1;
+		    $rawDirectiveLine = $lineNumber+1;
 		}
 		# Process code and directive blocks as necessary.
 		if ( ( $inDirective == 1 || eof($code) ) && $rawCode      ) {
@@ -167,6 +171,22 @@ sub Parse_Directives {
 		# New nodes created, insert them, replacing the old node.
 		&Galacticus::Build::SourceTree::ReplaceNode($node,\@newNodes);
 	    }
+	}
+	$node = &Galacticus::Build::SourceTree::Walk_Tree($node,\$depth);
+    }    
+}
+
+sub PostProcess_Directives {
+    # Get the tree.
+    my $tree = shift();
+    # Walk the tree, looking for directives.
+    my $node  = $tree;
+    my $depth = 0;
+    while ( $node ) {
+	# Find directives.
+	if ( exists($node->{'directive'}) ) {
+	    die("directive '".$node->{'type'}."' was not processed at line ".$node->{'line'}." in ".$tree->{'name'})
+		unless ( exists($node->{'directive'}->{'processed'}) && $node->{'directive'}->{'processed'} );
 	}
 	$node = &Galacticus::Build::SourceTree::Walk_Tree($node,\$depth);
     }    

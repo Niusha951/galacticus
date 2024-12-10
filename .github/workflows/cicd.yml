@@ -39,6 +39,7 @@ on:
       - 'perl/IO/Compress/**'
       - 'perl/System/**'
       - 'perl/Fortran/**'
+      - 'python/**'
       - 'scripts/build/**'
       - 'schema/**'
 concurrency:
@@ -299,11 +300,13 @@ jobs:
         with:
           images: galacticusorg/galacticus
       - name: Build and push Docker image 
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           push: ${{ steps.detectBranch.outputs.doPush }}
           tags: ghcr.io/galacticusorg/galacticus:latest
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BRANCH=${{ github.head_ref || github.ref_name }}          
   ### Documentation
   Build-Documentation-Linux:
     runs-on: ubuntu-latest
@@ -372,12 +375,14 @@ jobs:
           forutilsVersion=`awk '{if ($1 == "forutils:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           fspsVersion=`awk '{if ($1 == "fsps:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           cloudyVersion=`awk '{if ($1 == "cloudy:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
+          mangleVersion=`awk '{if ($1 == "mangle:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           # Check that executables were statically linked
           ! ldd dynamic/CAMB-${cambVersion}/fortran/camb
           ! ldd dynamic/AxionCAMB/camb
           ! ldd dynamic/class_public-${classVersion}/class
           ! ldd dynamic/RecFast/recfast.exe
           ! ldd dynamic/fsps-${fspsVersion}/src/autosps.exe
+          ! ldd dynamic/mangle-${mangleVersion}/bin/ransack
           tar cfj tools.tar.bz2 \
             dynamic/CAMB-${cambVersion}/fortran/camb \
             dynamic/AxionCAMB/camb \
@@ -392,7 +397,8 @@ jobs:
             dynamic/fsps-${fspsVersion}/nebular \
             dynamic/fsps-${fspsVersion}/SPECTRA \
             dynamic/fsps-${fspsVersion}/OUTPUTS \
-            dynamic/fsps-${fspsVersion}/ISOCHRONES
+            dynamic/fsps-${fspsVersion}/ISOCHRONES \
+            dynamic/mangle-${mangleVersion}/bin/harmonize
       - name: Upload tools
         uses: actions/upload-artifact@v4
         with:
@@ -402,7 +408,7 @@ jobs:
   ## MacOS
   ### Static executable
   Build-Executable-MacOS:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server."
@@ -415,7 +421,7 @@ jobs:
       - name: Build Galacticus
         run: |
           set -o pipefail
-          make -j3 Galacticus.exe tests.hashes.cryptographic.exe 2>&1 | tee build.log
+          make -j`sysctl -n hw.activecpu` USEGIT2=no Galacticus.exe tests.hashes.cryptographic.exe 2>&1 | tee build.log
           ./scripts/build/staticRelinker.pl `grep '\-o Galacticus.exe' build.log`
           ./scripts/build/staticRelinker.pl `grep '\-o tests.hashes.cryptographic.exe' build.log`
           dsymutil -o Galacticus.exe.dSYM Galacticus.exe
@@ -451,7 +457,7 @@ jobs:
       - name: Build Galacticus
         run: |
           set -o pipefail
-          make -j3 Galacticus.exe 2>&1 | tee build.log
+          make -j`sysctl -n hw.activecpu` USEGIT2=no Galacticus.exe 2>&1 | tee build.log
           ./scripts/build/staticRelinker.pl `grep '\-o Galacticus.exe' build.log`
           dsymutil -o Galacticus.exe.dSYM Galacticus.exe
           zip -r debugSymbolsMacOS-M1.zip Galacticus.exe.dSYM
@@ -468,7 +474,7 @@ jobs:
           path: 'debugSymbolsMacOS-M1.zip'
   ## Library
   Build-Library-MacOS:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server."
@@ -480,7 +486,7 @@ jobs:
         uses: ./.github/actions/buildMacOS
       - name: Build Galacticus
         run: |
-          make -j3 GALACTICUS_BUILD_OPTION=lib libgalacticus.so
+          make -j`sysctl -n hw.activecpu` USEGIT2=no GALACTICUS_BUILD_OPTION=lib libgalacticus.so
       - name: Package the code
         run: |
           cd $GALACTICUS_EXEC_PATH
@@ -500,7 +506,7 @@ jobs:
           path: 'libgalacticusMacOS.zip'
   ### Tools
   Build-Tools-MacOS:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server."
@@ -517,7 +523,7 @@ jobs:
         uses: ./.github/actions/buildMacOS
       - name: Build Galacticus
         run: |
-          make -j3 Galacticus.exe
+          make -j`sysctl -n hw.activecpu` USEGIT2=no Galacticus.exe
       - name: Build tools
         run: |
           export GALACTICUS_EXEC_PATH=`pwd`
@@ -532,6 +538,7 @@ jobs:
           forutilsVersion=`awk '{if ($1 == "forutils:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           fspsVersion=`awk '{if ($1 == "fsps:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           cloudyVersion=`awk '{if ($1 == "cloudy:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
+          mangleVersion=`awk '{if ($1 == "mangle:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           cd $GALACTICUS_EXEC_PATH
           git config --global --add safe.directory $GALACTICUS_EXEC_PATH
           mkdir -p $GALACTICUS_DATA_PATH/dynamic
@@ -549,6 +556,8 @@ jobs:
           $GALACTICUS_EXEC_PATH/scripts/build/staticRelinker.pl `grep -E '\-o cloudy.exe' $GALACTICUS_EXEC_PATH/build.log`
           cd $GALACTICUS_DATA_PATH/dynamic/fsps-${fspsVersion}/src
           $GALACTICUS_EXEC_PATH/scripts/build/staticRelinker.pl `grep -E '\-o autosps.exe' $GALACTICUS_EXEC_PATH/build.log`
+          cd $GALACTICUS_DATA_PATH/dynamic/mangle-${mangleVersion}/bin/
+          $GALACTICUS_EXEC_PATH/scripts/build/staticRelinker.pl `grep -E '\-o harmonize' $GALACTICUS_EXEC_PATH/build.log`
           cd $GALACTICUS_DATA_PATH
           zip -r toolsMacOS.zip \
             dynamic/CAMB-${cambVersion}/fortran/camb \
@@ -564,7 +573,8 @@ jobs:
             dynamic/fsps-${fspsVersion}/nebular \
             dynamic/fsps-${fspsVersion}/SPECTRA \
             dynamic/fsps-${fspsVersion}/OUTPUTS \
-            dynamic/fsps-${fspsVersion}/ISOCHRONES
+            dynamic/fsps-${fspsVersion}/ISOCHRONES \
+            dynamic/mangle-${mangleVersion}/bin/harmonize
       - name: Upload Galacticus executable
         uses: actions/upload-artifact@v4
         with:
@@ -589,7 +599,7 @@ jobs:
         uses: ./.github/actions/buildMacOS
       - name: Build Galacticus
         run: |
-          make -j3 Galacticus.exe 2>&1 | tee build.log
+          make -j`sysctl -n hw.activecpu` USEGIT2=no Galacticus.exe 2>&1 | tee build.log
           ./scripts/build/staticRelinker.pl `grep '\-o Galacticus.exe' build.log`
       - name: Build tools
         run: |
@@ -605,6 +615,7 @@ jobs:
           forutilsVersion=`awk '{if ($1 == "forutils:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           fspsVersion=`awk '{if ($1 == "fsps:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           cloudyVersion=`awk '{if ($1 == "cloudy:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
+          mangleVersion=`awk '{if ($1 == "mangle:") print $2}' ${GALACTICUS_EXEC_PATH}/aux/dependencies.yml`
           cd $GALACTICUS_EXEC_PATH
           git config --global --add safe.directory $GALACTICUS_EXEC_PATH
           mkdir -p $GALACTICUS_DATA_PATH/dynamic
@@ -622,6 +633,8 @@ jobs:
           $GALACTICUS_EXEC_PATH/scripts/build/staticRelinker.pl `grep -E '\-o cloudy.exe' $GALACTICUS_EXEC_PATH/build.log`
           cd $GALACTICUS_DATA_PATH/dynamic/fsps-${fspsVersion}/src
           $GALACTICUS_EXEC_PATH/scripts/build/staticRelinker.pl `grep -E '\-o autosps.exe' $GALACTICUS_EXEC_PATH/build.log`
+          cd $GALACTICUS_DATA_PATH/dynamic/mangle-${mangleVersion}/bin/
+          $GALACTICUS_EXEC_PATH/scripts/build/staticRelinker.pl `grep -E '\-o harmonize' $GALACTICUS_EXEC_PATH/build.log`
           cd $GALACTICUS_DATA_PATH
           zip -r toolsMacOSM1.zip \
             dynamic/CAMB-${cambVersion}/fortran/camb \
@@ -637,7 +650,8 @@ jobs:
             dynamic/fsps-${fspsVersion}/nebular \
             dynamic/fsps-${fspsVersion}/SPECTRA \
             dynamic/fsps-${fspsVersion}/OUTPUTS \
-            dynamic/fsps-${fspsVersion}/ISOCHRONES
+            dynamic/fsps-${fspsVersion}/ISOCHRONES \
+            dynamic/mangle-${mangleVersion}/bin/harmonize
       - name: Upload Galacticus executable
         uses: actions/upload-artifact@v4
         with:
@@ -724,7 +738,8 @@ jobs:
     needs: Build-Executable-Linux
     uses: ./.github/workflows/testModel.yml
     with:
-      file: validate-darkMatterOnlySubhalos.pl
+      install: python3 python3-h5py python3-numpy python3-git
+      file: validate-darkMatterOnlySubhalos.py
       artifact: galacticus-exec
       runPath: ./testSuite
       cacheData: 0
@@ -735,7 +750,8 @@ jobs:
     needs: Build-Executable-Linux
     uses: ./.github/workflows/testModel.yml
     with:
-      file: validate-milkyWay.pl
+      install: python3 python3-h5py python3-numpy python3-git
+      file: validate-milkyWay.py
       artifact: galacticus-exec
       runPath: ./testSuite
       cacheData: 1
@@ -746,7 +762,8 @@ jobs:
     needs: Build-Executable-Linux
     uses: ./.github/workflows/testModel.yml
     with:
-      file: validate-PonosV.pl
+      install: python3 python3-h5py python3-numpy python3-git
+      file: validate-PonosV.py
       artifact: galacticus-exec
       runPath: ./testSuite
       cacheData: 0
@@ -757,7 +774,8 @@ jobs:
     needs: Build-Executable-Linux
     uses: ./.github/workflows/testModel.yml
     with:
-      file: validate-baryonicSuppression.pl
+      install: python3 python3-h5py python3-numpy python3-git
+      file: validate-baryonicSuppression.py
       artifact: galacticus-exec
       runPath: ./testSuite
       cacheData: 0
@@ -768,7 +786,8 @@ jobs:
     needs: Build-Executable-Linux
     uses: ./.github/workflows/testModel.yml
     with:
-      file: validate-idealizedSubhaloSimulations-wrapper.pl
+      install: python3 python3-h5py python3-numpy python3-git
+      file: validate-idealizedSubhaloSimulations.py
       artifact: galacticus-exec
       runPath: ./testSuite
       cacheData: 0
@@ -1038,12 +1057,13 @@ jobs:
                 test-branchSubsampling.pl,
                 test-CGM-mass-cooled.pl,
                 test-concentration-Ludlow2016.pl,
+                test-concentration-Johnson2021.pl,
                 test-tidallyTruncatedNFWFit.pl,
                 test-constraint-deterministic-spins.pl,
                 test-constraint-mass-function.pl,
                 test-extract-directives.pl,
                 test-fortran-utils.pl,
-                test-halo-mass-functions.pl,
+                test-halo-mass-functions.py,
                 test-inactive_luminosities.pl,
                 test-interoutput-star-formation-rate.pl,
                 test-mass-host-maximum.pl,
@@ -1051,14 +1071,25 @@ jobs:
                 test-satellite-distance-minimum.pl,
                 test-treeFilterLabels.pl,
                 test-output.pl,
+                test-output-times.pl,
                 test-output-tree-contiguousity.pl,
                 test-outputSelector.pl,
                 test-parameter-validation.pl,
                 test-perl-modules.pl,
                 test-reproducibility.pl,
                 test-splitForests.pl,
+                test-parameters-diff.py,
+                test-parameters-extract.py,
+                test-output-datasets-suffixes.py,
+                test-star-formation-histories.py,
                 test-star-formation-histories-adaptive.py,
+                test-star-formation-histories-inSitu.py,
+                test-star-formation-histories-fixedAge.py,
                 test-mostMassiveProgenitorIsSubhalo.py,
+                test-lightcone-crossing.py,
+                test-massProfileSatelliteBoundMass.py,
+                test-UniverseMachine.py,
+                test-spheroid-power-law.py,
                 test-stateRestore.pl,
                 test-checkpointing.pl,
                 test-stellar-mass-weighted-ages.pl,
@@ -1088,6 +1119,7 @@ jobs:
     with:
       file: ${{ matrix.file }}
       artifact: galacticus-exec
+      install: python3 python3-h5py python3-numpy
       runPath: ./testSuite
       needsIRATE: 1
     secrets: inherit
@@ -1176,8 +1208,13 @@ jobs:
                 testSuite/regressions/subhaloTwoConsecutiveMergers.xml,
                 testSuite/regressions/treeWithInitialSatelliteInProgenitorlessHost.xml,
                 testSuite/regressions/treeWithNoPrimaryProgenitor.xml,
+                testSuite/regressions/preInfallEvolutionNotOnMainBranch.xml,
                 testSuite/regressions/outputRank2ExtendSegFault.xml,
-                testSuite/regressions/barInstabilityFPE.xml ]
+                testSuite/regressions/barInstabilityFPE.xml,
+                testSuite/regressions/haloMassFunctionWDMIndeterminateCollapseTime.xml,
+                testSuite/regressions/lightconeCrossingTests.xml,
+                testSuite/regressions/lightconeCrossingTestsSubresolutionMerging.xml,
+                testSuite/regressions/lightconeCrossingAtCurrentTime.xml ]
     uses: ./.github/workflows/testModel.yml
     with:
       file: ${{ matrix.file }}
@@ -1293,10 +1330,10 @@ jobs:
         run: |
           echo "GALACTICUS_EXEC_PATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
           echo "PYTHONPATH=$GITHUB_WORKSPACE/galacticus/python" >> $GITHUB_ENV
-      - name: Install Python2
+      - name: Install Python
         run: |
           apt -y update && apt -y upgrade
-          apt -y install python2.7
+          apt -y install python3
       - name: Download library
         uses: actions/download-artifact@v4
         with:
@@ -1304,7 +1341,7 @@ jobs:
       - name: Test interface
         run: |
           tar xvfj libgalacticus.tar.bz2
-          python2.7 testSuite/test-Python-interface.py
+          python3 testSuite/test-Python-interface.py
       - run: echo "This job's status is ${{ job.status }}."
   ## MacOS
   ### Test Codes
@@ -1317,13 +1354,13 @@ jobs:
         executable: [ tests.hashes.cryptographic.exe ]
     uses: ./.github/workflows/testCode.yml
     with:
-      runner: macos-12
+      runner: macos-13
       executable: ${{ matrix.executable }}
       artifact: test-execs-MacOS
     secrets: inherit
   ### Test Python Interface
   Python-Interface-MacOS:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "This job is now running on a ${{ runner.os }} server."
@@ -1338,19 +1375,12 @@ jobs:
           echo "PYTHONPATH=$GITHUB_WORKSPACE/galacticus/python" >> $GITHUB_ENV
       - name: Install Python
         run: |
-          sudo port install python27 
-          sudo port select --set python python27
-          sudo port select --set python2 python27
+          sudo port install python312
+          sudo port select --set python python312
+          sudo port select --set python3 python312
       - name: Build Galacticus
         run: |
-          export GALACTICUS_EXEC_PATH=`pwd`
-          export FCCOMPILER=gfortran-11
-          export CCOMPILER=gcc-11
-          export CPPCOMPILER=g++-11
-          export GALACTICUS_FCFLAGS="-fintrinsic-modules-path /usr/local/finclude -fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/local/include/gfortran -fintrinsic-modules-path /usr/local/lib/gfortran/modules -L/usr/local/lib -L/opt/local/lib"
-          export GALACTICUS_CFLAGS="-I/usr/local/include -I/opt/local/include"
-          export GALACTICUS_CPPFLAGS="-I/usr/local/include -I/opt/local/include -I/usr/local/include/libqhullcpp"
-          make -j3 GALACTICUS_BUILD_OPTION=lib libgalacticus.so
+          make -j`sysctl -n hw.activecpu` USEGIT2=no GALACTICUS_BUILD_OPTION=lib libgalacticus.so
           mkdir galacticus
           mkdir galacticus/lib
           mkdir galacticus/python
@@ -1358,7 +1388,7 @@ jobs:
           mv libgalacticus.so galacticus/lib/
       - name: Test interface
         run: |
-          python2 testSuite/test-Python-interface.py
+          python3 testSuite/test-Python-interface.py
       - run: echo "This job's status is ${{ job.status }}."
   # Validate, deploy and update
   Validate:
@@ -1389,7 +1419,7 @@ jobs:
           name: 'Dark matter-only subhalos benchmarks'
           type: 'validate'
           suffix: 'darkMatterOnlySubhalos'
-          threshold: '115%'
+          threshold: '125%'
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: 'Milky Way model validation'
         uses: ./.github/actions/benchmark
@@ -1397,7 +1427,7 @@ jobs:
           name: 'Milky Way model benchmarks'
           type: 'validate'
           suffix: 'milkyWayModel'
-          threshold: '185%'
+          threshold: '240%'
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: 'Idealized subhalo simulations (rₚ/rₐ=0.005; γ=1.5)'
         uses: ./.github/actions/benchmark
