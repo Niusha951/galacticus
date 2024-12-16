@@ -56,7 +56,7 @@
 !     type (mergerTreeBuilderSmoothAccretion),        pointer :: mergerTreeBuilderSmoothAccretion_ => null() 
 !     type (mergerTreeMassResolutionFixed),           pointer :: mergerTreeMassResolutionFixed_ => null()
 !     type (darkMatterProfileScaleRadiusConcentration),pointer:: darkMatterProfileScaleRadius_ => null()
-     integer                                                 :: tauID, VmaxSIDMID, RmaxSIDMID, nodeFormationTimeSIDMID
+     integer                                                 :: tauID, VmaxSIDMID, RmaxSIDMID, nodeFormationTimeSIDMID, RhosSIDMID, RsSIDMID, RcSIDMID
    contains
      !![
      <methods>
@@ -70,9 +70,9 @@
      procedure :: differentialEvolution               => SIDMParametriCalculateTauDifferentialEvolution
 !     procedure :: differentialEvolutionAnalytics      => SIDMParametriDifferentialVmaxAnalytics
 !     procedure :: differentialEvolutionSolveAnalytics => SIDMParametriDifferentialVmaxSolveAnalytics
-     procedure :: getTauID                            => getTauID_SIDMParametric
-     procedure :: getVmaxSIDMID                       => getVmaxSIDMID_SIDMParametric
-     procedure :: getRmaxSIDMID                       => getRmaxSIDMID_SIDMParametric
+!     procedure :: getTauID                            => getTauID_SIDMParametric
+!     procedure :: getVmaxSIDMID                       => getVmaxSIDMID_SIDMParametric
+!     procedure :: getRmaxSIDMID                       => getRmaxSIDMID_SIDMParametric
   end type nodeOperatorSIDMParametric
   
   interface nodeOperatorSIDMParametric
@@ -155,6 +155,9 @@ contains
     <addMetaProperty component="darkMatterProfile" name="VmaxSIDM" id="self%VmaxSIDMID" isEvolvable="yes"  isCreator="yes"/>
     <addMetaProperty component="darkMatterProfile" name="RmaxSIDM" id="self%RmaxSIDMID" isEvolvable="yes"  isCreator="yes"/>
     <addMetaProperty component="basic" name="nodeFormationTimeSIDM" id="self%nodeFormationTimeSIDMID" isEvolvable="no" isCreator="yes"/>
+    <addMetaProperty component="darkMatterProfile" name="RhosSIDM" id="self%RhosSIDMID" isEvolvable="yes"  isCreator="yes"/>
+    <addMetaProperty component="darkMatterProfile" name="RsSIDM" id="self%RsSIDMID" isEvolvable="yes"  isCreator="yes"/>
+    <addMetaProperty component="darkMatterProfile" name="RcSIDM" id="self%RcSIDMID" isEvolvable="yes"  isCreator="yes"/>
     !!]    
     return
   end function SIDMParametricConstructorInternal
@@ -297,7 +300,8 @@ contains
              darkMatterProfileChild => nodeNew%firstChild%darkMatterProfile()   
              print *, 'nodeNew index and time, mass: ', nodeNew%firstChild%index(), basicNewChild%time(), basicNewChild%mass()
 
-             massDistribution_ => nodeNew%massDistribution(componentTypeDarkMatterOnly,massTypeDark)
+!             massDistribution_ => nodeNew%massDistribution(componentTypeDarkMatterOnly,massTypeDark)
+             massDistribution_ => self%darkMatterProfileDMO_%get(nodeNew)
              VmaxSIDMPrevious = darkMatterProfileChild%floatRank0MetaPropertyGet(self%VmaxSIDMID)+massDistribution_%velocityRotationCurveMaximum() !self%darkMatterProfileDMO_%circularVelocityMaximum(nodeNew%firstChild)
 
              print *, 'VmaxSIDMPrevious: ', VmaxSIDMPrevious
@@ -481,7 +485,8 @@ contains
 
     if (time > timeFormation) then
 
-            massDistribution_ => node%massDistribution(componentTypeDarkMatterOnly,massTypeDark)
+!            massDistribution_ => node%massDistribution(componentTypeDarkMatterOnly,massTypeDark)
+            massDistribution_ => self%darkMatterProfileDMO_%get(node)
 !            VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+self%darkMatterProfileDMO_%circularVelocityMaximum(node)
             VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+massDistribution_%velocityRotationCurveMaximum()
 !            tc = get_tc(self, node, self%darkMatterProfileDMO_%circularVelocityMaximum(node), self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node), VmaxSIDM)
@@ -497,6 +502,8 @@ contains
             call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, dvdt) 
             call darkMatterProfile%floatRank0MetaPropertyRate(self%RmaxSIDMID, drdt)
 
+            VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+massDistribution_%velocityRotationCurveMaximum()
+
             print *, 'Read Here!'
             print *, time, timeFormation, tc, tau, massDistribution_%velocityRotationCurveMaximum(), darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+massDistribution_%velocityRotationCurveMaximum()
 
@@ -506,12 +513,44 @@ contains
 
             print *, 'RmaxCDM and SIDM: ', RmaxCDM, RmaxSIDM
 
-!            print *, self%darkMatterProfileDMO_%radiusCircularVelocityMaximum(node)
+            RmaxNFW0 = Rmax_NFW(RmaxSIDM, tau)
+            VmaxNFW0 = Vmax_NFW(VmaxSIDM, tau)
+
+            r_sNFW0 = r_s0(RmaxNFW0)
+            rho_sNFW0 = rho_s0(r_sNFW0, VmaxNFW0)
+
+            rho_s = get_rho_s(rho_sNFW0, tau)
+            r_s = get_r_s(r_sNFW0, tau)
+            r_c = get_r_c(r_sNFW0, tau)
+
+            call darkMatterProfile%floatRank0MetaPropertySet(self%RhosSIDMID, rho_s)
+            call darkMatterProfile%floatRank0MetaPropertySet(self%RsSIDMID, r_s)
+            call darkMatterProfile%floatRank0MetaPropertySet(self%RcSIDMID, r_c)
 
     else
             call darkMatterProfile%floatRank0MetaPropertyRate(self%tauID, 0.0d0)
             call darkMatterProfile%floatRank0MetaPropertyRate(self%VmaxSIDMID, 0.0d0)
             call darkMatterProfile%floatRank0MetaPropertyRate(self%RmaxSIDMID, 0.0d0)
+
+!            massDistribution_ => node%massDistribution(componentTypeDarkMatterOnly,massTypeDark)
+            massDistribution_ => self%darkMatterProfileDMO_%get(node)
+            VmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%VmaxSIDMID)+massDistribution_%velocityRotationCurveMaximum()
+            RmaxSIDM = darkMatterProfile%floatRank0MetaPropertyGet(self%RmaxSIDMID)+massDistribution_%radiusRotationCurveMaximum()
+
+            RmaxNFW0 = Rmax_NFW(RmaxSIDM, tau)
+            VmaxNFW0 = Vmax_NFW(VmaxSIDM, tau)
+
+            r_sNFW0 = r_s0(RmaxNFW0)
+            rho_sNFW0 = rho_s0(r_sNFW0, VmaxNFW0)
+
+            rho_s = get_rho_s(rho_sNFW0, tau)
+            r_s = get_r_s(r_sNFW0, tau)
+            r_c = get_r_c(r_sNFW0, tau)
+
+            call darkMatterProfile%floatRank0MetaPropertySet(self%RhosSIDMID, rho_s)
+            call darkMatterProfile%floatRank0MetaPropertySet(self%RsSIDMID, r_s)
+            call darkMatterProfile%floatRank0MetaPropertySet(self%RcSIDMID, r_c)
+
     end if
     
 
@@ -602,14 +641,26 @@ contains
 
   double precision function Rmax_NFW(RmaxSIDM, tau)
     double precision, intent(in) :: RmaxSIDM, tau
+    double precision :: tau_local
 
-    Rmax_NFW = RmaxSIDM / (1 + 0.007623d0 * tau - 0.7200d0 * tau ** 2 + 0.3376d0 * tau ** 3 - 0.1375d0 * tau ** 4)
+    tau_local = tau
+    if (tau_local > 1.1d0) then
+      tau_local = 1.1d0
+    end if
+
+    Rmax_NFW = RmaxSIDM / (1 + 0.007623d0 * tau_local - 0.7200d0 * tau_local ** 2 + 0.3376d0 * tau_local ** 3 - 0.1375d0 * tau_local ** 4)
   end function Rmax_NFW
 
   double precision function Vmax_NFW(VmaxSIDM, tau)
     double precision, intent(in) :: VmaxSIDM, tau
+    double precision :: tau_local
 
-    Vmax_NFW = VmaxSIDM / (1 + 0.1777d0 * tau - 4.399d0 * tau ** 3 + 16.66d0 * tau ** 4 - 18.87d0 * tau ** 5 + 9.077d0 * tau ** 7 - 2.436d0 * tau ** 9)
+    tau_local = tau
+    if (tau_local > 1.1d0) then
+      tau_local = 1.1d0
+    end if
+
+    Vmax_NFW = VmaxSIDM / (1 + 0.1777d0 * tau_local - 4.399d0 * tau_local ** 3 + 16.66d0 * tau_local ** 4 - 18.87d0 * tau_local ** 5 + 9.077d0 * tau_local ** 7 - 2.436d0 * tau_local ** 9)
   end function Vmax_NFW
 
   double precision function r_s0(Rmax)
@@ -628,52 +679,70 @@ contains
 
   double precision function get_rho_s(rho_s0, tau)
     double precision, intent(in) :: rho_s0, tau
+    double precision :: tau_local
 
-    get_rho_s = rho_s0 * (2.033d0 + 0.7381d0 * tau + 7.264d0 * tau ** 5 - 12.73d0 * tau ** 7 + 9.915d0 * tau ** 9 + (1.0d0 + 2.033d0) * log(tau + 0.001d0) / log(0.001d0))
+    tau_local = tau
+    if (tau_local > 1.1d0) then
+      tau_local = 1.1d0
+    end if
+
+    get_rho_s = rho_s0 * (2.033d0 + 0.7381d0 * tau_local + 7.264d0 * tau_local ** 5 - 12.73d0 * tau_local ** 7 + 9.915d0 * tau_local ** 9 + (1.0d0 + 2.033d0) * log(tau_local + 0.001d0) / log(0.001d0))
   end function get_rho_s
 
   double precision function get_r_s(r_s0, tau)
     double precision, intent(in) :: r_s0, tau
+    double precision :: tau_local
 
-    get_r_s = r_s0 * (0.7178d0 - 0.1026d0 * tau + 0.2474d0 * tau ** 2 - 0.4079d0 * tau ** 3 + (1.0d0 - 0.7178d0) * log(tau + 0.001d0) / log(0.001d0))
+    tau_local = tau
+    if (tau_local > 1.1d0) then
+      tau_local = 1.1d0
+    end if
+
+    get_r_s = r_s0 * (0.7178d0 - 0.1026d0 * tau_local + 0.2474d0 * tau_local ** 2 - 0.4079d0 * tau_local ** 3 + (1.0d0 - 0.7178d0) * log(tau_local + 0.001d0) / log(0.001d0))
   end function get_r_s
 
   double precision function get_r_c(r_s0, tau)
     double precision, intent(in) :: r_s0, tau
+    double precision :: tau_local
 
-    get_r_c = r_s0 * (2.555d0 * sqrt(tau) - 3.632d0 * tau + 2.131d0 * tau ** 2 - 1.415d0 * tau ** 3 + 0.4683d0 * tau ** 4)
+    tau_local = tau
+    if (tau_local > 1.1d0) then
+      tau_local = 1.1d0
+    end if
+
+    get_r_c = r_s0 * (2.555d0 * sqrt(tau_local) - 3.632d0 * tau_local + 2.131d0 * tau_local ** 2 - 1.415d0 * tau_local ** 3 + 0.4683d0 * tau_local ** 4)
   end function get_r_c
+ 
+!  double precision function SIDMDensityProfileIsolated(rho_s, r_s, r_c, r)
+!    double precision, intent(in) :: rho_s, r_s, r_c, r
+!    double precision :: beta = 4.0d0, term1, term2
 
-  double precision function SIDMDensityProfileIsolated(rho_s, r_s, r_c, r)
-    double precision, intent(in) :: rho_s, r_s, r_c, r
-    double precision :: beta = 4.0d0, term1, term2
+!    term1 = ((r ** beta + r_c ** beta) ** (1.0d0 / beta) / r_s)
+!    term2 = (1.0d0 + r / r_s) ** 2
 
-    term1 = ((r ** beta + r_c ** beta) ** (1.0d0 / beta) / r_s)
-    term2 = (1.0d0 + r / r_s) ** 2
+!    SIDMDensityProfileIsolated = rho_s / (term1 * term2)
+!  end function SIDMDensityProfileIsolated
 
-    SIDMDensityProfileIsolated = rho_s / (term1 * term2)
-  end function SIDMDensityProfileIsolated
+!  function getTauID_SIDMParametric(self) result(tauID)
+!    implicit none
+!    class(nodeOperatorSIDMParametric), intent(in) :: self
+!    integer :: tauID
+!    tauID = self%tauID
+!  end function getTauID_SIDMParametric
 
-  function getTauID_SIDMParametric(self) result(tauID)
-    implicit none
-    class(nodeOperatorSIDMParametric), intent(in) :: self
-    integer :: tauID
-    tauID = self%tauID
-  end function getTauID_SIDMParametric
+!  function getVmaxSIDMID_SIDMParametric(self) result(VmaxSIDMID)
+!    implicit none
+!    class(nodeOperatorSIDMParametric), intent(in) :: self
+!    integer :: VmaxSIDMID
+!    VmaxSIDMID = self%VmaxSIDMID
+!  end function getVmaxSIDMID_SIDMParametric
 
-  function getVmaxSIDMID_SIDMParametric(self) result(VmaxSIDMID)
-    implicit none
-    class(nodeOperatorSIDMParametric), intent(in) :: self
-    integer :: VmaxSIDMID
-    VmaxSIDMID = self%VmaxSIDMID
-  end function getVmaxSIDMID_SIDMParametric
-
-  function getRmaxSIDMID_SIDMParametric(self) result(RmaxSIDMID)
-    implicit none
-    class(nodeOperatorSIDMParametric), intent(in) :: self
-    integer :: RmaxSIDMID
-    RmaxSIDMID = self%RmaxSIDMID
-  end function getRmaxSIDMID_SIDMParametric
+!  function getRmaxSIDMID_SIDMParametric(self) result(RmaxSIDMID)
+!    implicit none
+!    class(nodeOperatorSIDMParametric), intent(in) :: self
+!    integer :: RmaxSIDMID
+!    RmaxSIDMID = self%RmaxSIDMID
+!  end function getRmaxSIDMID_SIDMParametric
 
 
  
